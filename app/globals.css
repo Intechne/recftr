@@ -1,0 +1,65 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root { --ink: #10192F; --cyan: #29B9E5; }
+
+html { scroll-behavior: smooth; }
+body { @apply bg-paper text-ink font-sans antialiased; }
+
+/* Saha karo grid dokusu */
+.field-grid {
+  background-image:
+    linear-gradient(to right, rgba(16,25,47,0.05) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(16,25,47,0.05) 1px, transparent 1px);
+  background-size: 180px 160px;
+}
+.field-grid-dark {
+  background-image:
+    linear-gradient(to right, rgba(255,255,255,0.05) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(255,255,255,0.05) 1px, transparent 1px);
+  background-size: 180px 160px;
+}
+
+/* Duyuru şeridi marquee */
+@keyframes marquee { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+.marquee-track { animation: marquee 40s linear infinite; }
+.marquee-track:hover { animation-play-state: paused; }
+
+/* Hero satır giriş animasyonu */
+@keyframes rise { from { opacity: 0; transform: translateY(18px); } to { opacity: 1; transform: translateY(0); } }
+.rise { animation: rise .6s cubic-bezier(.2,.7,.3,1) both; }
+.rise-1 { animation-delay: 0ms; } .rise-2 { animation-delay: 120ms; }
+.rise-3 { animation-delay: 240ms; } .rise-4 { animation-delay: 360ms; }
+
+/* Scroll reveal (Reveal bileşeni) */
+.reveal { opacity: 0; transform: translateY(22px); transition: opacity .6s ease, transform .6s cubic-bezier(.2,.7,.3,1); }
+.reveal.in { opacity: 1; transform: none; }
+
+/* Plaka kartı hover */
+.plate-hover { transition: transform .15s ease, box-shadow .15s ease; }
+.plate-hover:hover { transform: translateY(-6px); box-shadow: 10px 10px 0 0 var(--tw-shadow-color); }
+
+/* CANLI/KAYIT AÇIK nabız */
+@keyframes pulseSoft { 0%,100% { opacity: 1; } 50% { opacity: .55; } }
+.pulse-soft { animation: pulseSoft 2s ease-in-out infinite; }
+
+/* Rota çizgisi çizimi */
+.route-path { stroke-dasharray: 8 8; }
+.route-draw { stroke-dashoffset: 1600; stroke-dasharray: 1600; transition: stroke-dashoffset 1.6s ease; }
+.route-draw.in { stroke-dashoffset: 0; }
+
+/* Eşkenar dörtgen işaret */
+.diamond { transform: rotate(45deg); }
+.diamond > * { transform: rotate(-45deg); }
+
+::selection { background: #29B9E5; color: #10192F; }
+:focus-visible { outline: 3px solid #29B9E5; outline-offset: 2px; }
+
+@media (prefers-reduced-motion: reduce) {
+  .marquee-track, .rise, .pulse-soft { animation: none !important; }
+  .reveal, .route-draw, .plate-hover { transition: none !important; }
+  .reveal { opacity: 1; transform: none; }
+  .route-draw { stroke-dashoffset: 0; }
+  html { scroll-behavior: auto; }
+}

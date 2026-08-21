@@ -1,0 +1,6 @@
+git recf.db
+recf.db*
+.env*.local
+.env
+node_modules
+node_modules
