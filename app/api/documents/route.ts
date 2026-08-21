@@ -1,20 +1,9 @@
-import { NextRequest, NextResponse } from "next/server";
-import { verifySessionToken } from "@/lib/session";
-import { addDocument, deleteDocument, listDocuments } from "@/lib/db";
-export const dynamic = "force-dynamic";
-const isAdmin = async (r: NextRequest) => (await verifySessionToken(r.cookies.get("recf_session")?.value)) === "admin";
-
-export async function GET() { return NextResponse.json(await listDocuments()); }
-export async function POST(req: NextRequest) {
-  if (!(await isAdmin(req))) return NextResponse.json({ error: "Yetkisiz" }, { status: 401 });
-  const b = await req.json();
-  if (!b.name?.trim() || !b.cat?.trim()) return NextResponse.json({ error: "Ad ve kategori zorunlu." }, { status: 400 });
-  await addDocument(b);
-  return NextResponse.json({ ok: true }, { status: 201 });
-}
-export async function DELETE(req: NextRequest) {
-  if (!(await isAdmin(req))) return NextResponse.json({ error: "Yetkisiz" }, { status: 401 });
-  const { id } = await req.json();
-  await deleteDocument(Number(id));
-  return NextResponse.json({ ok: true });
-}
+import {NextRequest,NextResponse} from "next/server";
+import {contentSession} from "@/lib/auth";
+import {addDocument,audit,deleteDocument,getDocument,listDocuments,updateDocument} from "@/lib/db";
+import {PUBLIC_BUCKET,removeObject} from "@/lib/storage";
+export const dynamic="force-dynamic";
+export async function GET(req:NextRequest){const all=req.nextUrl.searchParams.get('all')==='1';if(all&&!(await contentSession(req)))return NextResponse.json({error:'Yetkisiz'},{status:401});return NextResponse.json(await listDocuments(all));}
+export async function POST(req:NextRequest){const s=await contentSession(req);if(!s)return NextResponse.json({error:'Yetkisiz'},{status:401});const b=await req.json();if(!b.name||!b.cat||!b.url)return NextResponse.json({error:'Ad, kategori ve dosya/URL zorunlu'},{status:400});const r=await addDocument(b);await audit(s.email,'create','document',String(r.id),{name:b.name});return NextResponse.json(r,{status:201});}
+export async function PUT(req:NextRequest){const s=await contentSession(req);if(!s)return NextResponse.json({error:'Yetkisiz'},{status:401});const b=await req.json();if(!b.name||!b.cat||!b.url)return NextResponse.json({error:'Ad, kategori ve dosya/URL zorunlu'},{status:400});const old:any=await getDocument(Number(b.id));const r=await updateDocument(Number(b.id),b);if(old?.file_path&&old.file_path!==r?.file_path)await removeObject(PUBLIC_BUCKET,old.file_path).catch(()=>{});await audit(s.email,'update','document',String(b.id),{name:b.name});return NextResponse.json(r);}
+export async function DELETE(req:NextRequest){const s=await contentSession(req);if(!s)return NextResponse.json({error:'Yetkisiz'},{status:401});const {id}=await req.json();const old=await deleteDocument(Number(id));if(old?.file_path)await removeObject(PUBLIC_BUCKET,old.file_path).catch(()=>{});await audit(s.email,'delete','document',String(id));return NextResponse.json({ok:true});}

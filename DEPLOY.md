@@ -1,60 +1,132 @@
-# RECF Türkiye — Supabase + Vercel Production Deploy
+# V2 → V3 Production Upgrade
 
-This hardened copy targets Next.js 15.5.21 (Maintenance LTS), React 19.2.x and Node.js 24.x.
+Bu akış mevcut GitHub/Vercel/Supabase kurulumunu koruyarak V3'e yükseltir.
 
-## 1. Supabase
-1. Create a Supabase project in a region close to users.
-2. Open SQL Editor and run `supabase/schema.sql`.
-3. Do NOT run `supabase/seed.demo.sql` on production.
-4. Dashboard → Connect → copy Transaction pooler URI (port 6543).
+## 1. Supabase migration
 
-## 2. Local environment
-Copy `.env.example` to `.env.local` and set:
-- DATABASE_URL (or POSTGRES_URL from the Vercel Supabase integration)
-- SESSION_SECRET (`openssl rand -base64 48`)
-- ADMIN_EMAIL / ADMIN_PASSWORD
-- MENTOR_EMAIL / MENTOR_PASSWORD
+Önce Supabase Dashboard → SQL Editor → New Query açın ve:
 
-Then run:
+`supabase/migration-3-complete-cms.sql`
+
+ dosyasının tamamını çalıştırın.
+
+Migration şunları ekler/günceller:
+
+- program içerikleri
+- CMS kullanıcı/rolleri ve public ekip profilleri
+- etkinlik kayıtları
+- medya
+- belge gereksinimleri
+- private takım evrakları
+- ödemeler
+- iletişim kayıtları
+- audit log
+- site ayarları ve kayıt ücretleri
+- `recf-public` ve `team-private` Storage bucket'ları
+
+## 2. Vercel environment variables
+
+Mevcut değişkenlere ek olarak kesinlikle ekleyin:
+
+```text
+SUPABASE_URL
+SUPABASE_SECRET_KEY
+```
+
+Tam set:
+
+```text
+DATABASE_URL
+SUPABASE_URL
+SUPABASE_SECRET_KEY
+SESSION_SECRET
+ADMIN_EMAIL
+ADMIN_PASSWORD
+```
+
+`SUPABASE_SECRET_KEY` değeri Supabase → Project Settings / API Keys bölümündeki server-side secret key (`sb_secret_...`) olmalıdır.
+
+## 3. V3 dosyalarını repo üzerine aktar
+
+ZIP'i geçici klasöre açın. Örnek:
+
 ```bash
+rm -rf /tmp/recf-v3
+mkdir -p /tmp/recf-v3
+unzip ~/Downloads/recf-turkiye-v3-complete.zip -d /tmp/recf-v3
+```
+
+Repo klasörüne girin:
+
+```bash
+cd ~/Downloads/recf-turkiye-production-ready
+```
+
+Mevcut `.git`, `.env.local` ve lokal cache'leri koruyarak V3'ü birebir senkronize edin:
+
+```bash
+rsync -av --delete \
+  --exclude='.git' \
+  --exclude='.env.local' \
+  --exclude='node_modules' \
+  --exclude='.next' \
+  /tmp/recf-v3/recf-turkiye-v3-complete/ ./
+```
+
+`--delete` önemlidir: V2'den kalan demo/SQLite/eski migration dosyalarını ve eski `package-lock.json` dosyasını kaldırır.
+
+## 4. Yeni dependency lock oluştur ve build et
+
+```bash
+rm -rf node_modules .next
 npm install
+npm run typecheck
+npm run build
+```
+
+Build temizse lokal test:
+
+```bash
 npm run dev
 ```
 
-## 3. GitHub
+## 5. GitHub'a gönder
+
 ```bash
-git init
+git status
 git add -A
-git commit -m "RECF Türkiye production deploy"
-git branch -M main
-git remote add origin <YOUR_GITHUB_REPO_URL>
-git push -u origin main
+git commit -m "v3: complete CMS + team portal + Supabase Storage"
+git push
 ```
 
-## 4. Vercel
-1. Import the GitHub repository.
-2. Framework Preset: Next.js.
-3. Node.js Version: 24.x (also pinned in package.json).
-4. Add Production/Preview environment variables:
-   - DATABASE_URL (or POSTGRES_URL from the Vercel Supabase integration)
-   - SESSION_SECRET
-   - ADMIN_EMAIL
-   - ADMIN_PASSWORD
-   - MENTOR_EMAIL (optional for current single-team demo portal)
-   - MENTOR_PASSWORD (optional)
-5. Deploy.
+Vercel GitHub entegrasyonu açıksa otomatik deployment başlar.
 
-## 5. Smoke test
-- `/` loads.
-- `/kayit` creates a row in Supabase `applications`.
-- Admin login opens `/admin`.
-- `/admin/onaylar` approval creates a row in `teams`.
-- `/takimlar` shows the approved team.
-- `/admin/haberler` publishes a record into `news` and `/duyurular` displays it.
-- Mentor can access `/portal` but cannot access `/admin`.
+## 6. Vercel'de environment değiştiyse Redeploy
 
-## 6. Custom domain
-Vercel Project → Settings → Domains → add your domain and apply the DNS records Vercel shows.
+Environment variable'ları Git push'tan sonra eklediyseniz son deployment için yeniden deploy yapın.
 
-## Current portal limitation
-The current mentor portal is still a single-team prototype: `app/api/members/route.ts` uses `TEAM = "905A"`. Do not onboard multiple real mentor accounts with this model. For multi-team production, migrate mentor login/team ownership to Supabase Auth + profiles/team_members before public rollout of the portal.
+## 7. Production smoke test
+
+1. `/cms-giris` admin girişi
+2. `/admin/programlar` program düzenleme
+3. `/admin/etkinlikler` etkinlik oluştur + kapak yükle
+4. `/admin/haberler` haber oluştur + kapak yükle
+5. `/admin/medya` görsel yükle/sil
+6. `/admin/dokumanlar` PDF yükle/sil
+7. `/admin/belge-gereksinimleri` bir gereksinim ekle
+8. `/kayit` test takım başvurusu
+9. `/admin/onaylar` başvuruyu onayla, geçici mentor şifresini kaydet
+10. `/giris` mentor hesabıyla giriş
+11. `/portal/belgeler` private dosya yükle
+12. `/admin/takim-belgeleri` belgeyi aç/onayla
+13. `/portal/etkinlikler` etkinlik kaydı yap
+14. `/admin/etkinlik-kayitlari` kaydı onayla ve pit ata
+15. `/hakkimizda` iletişim formu gönder → `/admin/iletisim`
+
+## Güvenlik notları
+
+- `.env.local` Git'e eklenmez.
+- `SUPABASE_SECRET_KEY` hiçbir `NEXT_PUBLIC_*` değişkeninde kullanılmaz.
+- Takım belgeleri public URL taşımaz; süreli signed URL ile açılır.
+- Public Storage yüklemeleri de yalnızca yetkili CMS/mentor oturumundan signed upload URL alabilir.
+- Takım portalı sunucu tarafında session içindeki `teamNum` ile sınırlandırılır; istemciden başka takım numarası kabul edilmez.

@@ -1,0 +1,1 @@
+import {NextResponse} from "next/server";import {getProgram} from "@/lib/db";export const dynamic="force-dynamic";export async function GET(_:Request,{params}:{params:Promise<{slug:string}>}){const {slug}=await params;const p=await getProgram(slug);return p?NextResponse.json(p):NextResponse.json({error:'Program yok'},{status:404});}

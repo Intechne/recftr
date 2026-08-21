@@ -1,0 +1,3 @@
+import {NextResponse} from "next/server";import {getSettings} from "@/lib/db";
+export const dynamic="force-dynamic";
+export async function GET(){const s=await getSettings(['registration_fee_engage','registration_fee_achieve','registration_fee_inspire','registration_fee_adc','registration_fee_adc-pro','field_kit_fee','registration_discount']);return NextResponse.json({fees:{engage:Number(s.registration_fee_engage)||0,achieve:Number(s.registration_fee_achieve)||0,inspire:Number(s.registration_fee_inspire)||0,adc:Number(s.registration_fee_adc)||0,'adc-pro':Number(s['registration_fee_adc-pro'])||0},fieldKitFee:Number(s.field_kit_fee)||0,discount:Number(s.registration_discount)||0});}

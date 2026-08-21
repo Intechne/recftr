@@ -1,6 +1,11 @@
 import Link from "next/link";
 import type { Metadata } from "next";
-import { registrationFaqs } from "@/lib/data";
+const registrationFaqs = [
+  { q: "Kimler takım kurabilir?", a: "Programın yaş/kademe koşullarını sağlayan öğrenciler, 18 yaş üstü bir mentor eşliğinde takım oluşturabilir." },
+  { q: "Takım numarası nasıl alınır?", a: "Bu sitedeki takım kayıt formunu gönderin. Başvuru CMS üzerinden onaylandıktan sonra takımınız oluşturulur ve mentor portal hesabı açılır." },
+  { q: "Etkinlik kaydı nasıl yapılır?", a: "Onaylı takım mentorları Takım Portalı > Etkinlikler bölümünden programlarına uygun etkinliklere başvurabilir." },
+  { q: "Belgeleri nereye yükleyeceğiz?", a: "Takım Portalı > Belgeler bölümünde programınıza tanımlanan zorunlu ve opsiyonel evrakları yükleyebilirsiniz." },
+];
 import { PageHead } from "@/components/Ui";
 import { Reveal } from "@/components/Motion";
 
@@ -12,7 +17,7 @@ const steps = [
   { title: "EKİBİNİ TOPLA", link: { t: "Mentor rehberi", h: "/rehber/mentor" },
     desc: "Engage için en az 2 öğrenci, Achieve için 1+ öğrenci yeterli; ideal ekip 4–6 kişidir. Her takımın 18 yaş üstü bir yetişkin mentoru (öğretmen, veli veya gönüllü) olmalı. Okul zorunlu değil — kulüp ve bağımsız topluluklar da kaydolabilir." },
   { title: "RECFEVENTS.ORG'DA TAKIMINI KAYDET", link: { t: "Ön kayıt formu", h: "/kayit" },
-    desc: "Resmi kayıt platformu recfevents.org'da mentor hesabı aç, programını seç, takım bilgilerini gir ve sezon lisans ücretini öde. Sistem sana benzersiz takım numaranı (plakanı) verir — ör. 905A. Bu numara tüm sezonun kimliğidir." },
+    desc: "Resmi kayıt platformu recfevents.org'da mentor hesabı aç, programını seç, takım bilgilerini gir ve sezon lisans ücretini öde. Sistem sana benzersiz takım numaranı (plakanı) verir — ör. 123A. Bu numara tüm sezonun kimliğidir." },
   { title: "DONANIMINI EDİN", link: { t: "Donanım rehberi", h: "/dokumanlar" },
     desc: "Engage: VEX IQ® veya LEGO® SPIKE/Mindstorms. Achieve: VEX V5® elektronik + Robits®/TETRIX® MAX yapı. ADC/ADC Pro: onaylı drone kitleri. Başlangıç kitleri ve yerel tedarik seçenekleri için Dokümanlar'daki donanım rehberine bak." },
   { title: "İLK ETKİNLİĞİNE BAŞVUR", link: { t: "Etkinlik takvimi", h: "/etkinlikler" },

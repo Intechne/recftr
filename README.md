@@ -1,72 +1,107 @@
-# RECF Türkiye — Broadcast Konsept · Tam Sistem
+# RECF Türkiye V3 — Complete CMS + Team Portal
 
-Web sitesi + Takım Portalı + CMS + canlı backend (SQLite). Next.js 14 · TypeScript · Tailwind.
-
-## Çalıştırma
-```bash
-npm install
-npm run dev     # http://localhost:3000
-```
-
-## Demo Hesaplar (/giris)
-| Rol | E-posta | Şifre | Erişim |
-|---|---|---|---|
-| Yönetici | admin@recfturkiye.org | recf2026 | /admin (CMS) + /portal |
-| Mentor | mentor@voltran.org | 905a | /portal (Takım 905A) |
-
-## Canlı Akışlar
-- **/kayit** → başvuru SQLite'a yazılır → **/admin/onaylar**'da ONAYLA → takım anında **/takimlar**'da "YENİ KAYIT" rozetiyle görünür.
-- **/admin/haberler** → YAYINLA → haber **/duyurular**'da "CANLI" etiketiyle listelenir; detay sayfası DB'den render edilir.
-- **/portal/uyeler** → davet et → üye listesi DB'de güncellenir.
-- Oturum: `POST /api/auth` httpOnly cookie · `middleware.ts` /admin'i admin'e, /portal'ı mentor+admin'e kilitler.
+Next.js 15 + TypeScript + Supabase PostgreSQL/Storage + Vercel için hazırlanmış production sürümü.
 
 ## Mimari
-- `lib/db.ts` — repository katmanı (better-sqlite3, WAL). Supabase/Postgres'e geçiş: yalnızca bu dosyadaki fonksiyon gövdeleri değişir.
-- `app/api/*` — applications, applications/[id], teams, members, news, auth rotaları.
-- Veri: `recf.db` otomatik oluşturulur ve örnek başvuru/üyelerle tohumlanır (`RECF_DB_PATH` ile taşınabilir).
-- Not: Vercel gibi sunucusuz ortamlarda dosya tabanlı SQLite kalıcı değildir — üretimde Supabase önerilir.
 
-## Sayfa Haritası
-**Site:** / · /programlar(+5) · /etkinlikler(+7, sekmeli detay) · /duyurular(+detay, DB fallback) · /dokumanlar · /takimlar · /kayit (4 adım, canlı plaka) · /rehber/takim-kaydi · /rehber/mentor · /hakkimizda · /giris · 404
-**Portal:** panel · üyeler (canlı) · etkinlik kayıtları · belgeler · ödemeler · takım ayarları
-**CMS:** genel bakış · etkinlikler · haberler (canlı yayın) · onaylar (canlı) · dokümanlar · medya · ekip & yetkiler · site ayarları
+- **Public site:** programlar, etkinlikler, haber/duyurular, dokümanlar, takımlar, galeri, kurumsal sayfalar ve takım kayıt formu.
+- **CMS:** `/cms-giris` → `/admin`
+- **Takım portalı:** `/giris` → `/portal`
+- **Database:** yalnızca Supabase PostgreSQL. SQLite fallback yoktur.
+- **Storage:** `recf-public` (public medya/doküman/logo) + `team-private` (takım evrakları).
+- **Oturum:** HMAC imzalı, HttpOnly cookie; CMS ve mentor girişleri ayrıdır.
 
-Zorunlu ibare: "RECF ve VEX Robotics ayrı kuruluşlardır" (footer).
+## CMS modülleri
 
+1. Programlar
+2. Etkinlikler
+3. Haberler & Duyurular
+4. Public Dokümanlar
+5. Medya Kütüphanesi
+6. Sayfalar
+7. Takım Başvuruları
+8. Takımlar
+9. Etkinlik Kayıtları
+10. Belge Gereksinimleri
+11. Takım Belgeleri
+12. Ödemeler
+13. İletişim Kutusu
+14. Ekip & Yetkiler / public ekip profilleri
+15. Site Ayarları / hero / ticker / iletişim / sosyal hesaplar / kayıt ücretleri
+16. Audit / işlem geçmişi
 
-## 🚀 Yayına Alma — Supabase + Vercel (≈10 dk)
+## Takım portalı
 
-### 1) Supabase veritabanı
-1. [supabase.com](https://supabase.com) → **New project** (bölge: `eu-central-1` Frankfurt önerilir).
-2. Sol menü **SQL Editor** → `supabase/schema.sql` dosyasının içeriğini yapıştır → **Run**. (Tablolar + örnek veriler kurulur.)
-3. **Project Settings → Database → Connection string → URI** sekmesinden **Transaction pooler** (port **6543**) adresini kopyala:
-   `postgresql://postgres.xxxx:[ŞİFRE]@aws-0-eu-central-1.pooler.supabase.com:6543/postgres`
+- Takım dashboard
+- Üye ekle / düzenle / sil
+- Programına uygun etkinliğe kayıt / iptal
+- Program bazlı belge gereksinimleri
+- Private Storage belge yükleme / yeniden yükleme / inceleme sonucu
+- Ödeme/fatura takibi
+- Takım profili ve logo
+- Mentor şifre değiştirme
 
-### 2) Kodu GitHub'a it
-```bash
-git init && git add -A && git commit -m "RECF Türkiye v1"
-git remote add origin https://github.com/KULLANICI/recf-turkiye.git
-git push -u origin main
+## Roller
+
+- `admin`: tam yetki
+- `editor`: public içerik, programlar, etkinlikler, haberler, medya, sayfalar ve site ayarları
+- `approvals`: başvurular, takımlar, etkinlik kayıtları, belgeler, ödemeler
+- `technical`: takım belgeleri ve belge gereksinimleri
+- `mentor`: yalnızca kendisine bağlı takım portalı
+
+## Zorunlu environment variables
+
+```env
+DATABASE_URL=postgresql://...
+SUPABASE_URL=https://PROJECT_REF.supabase.co
+SUPABASE_SECRET_KEY=sb_secret_...
+SESSION_SECRET=uzun-rastgele-deger
+ADMIN_EMAIL=admin@recfturkiye.org
+ADMIN_PASSWORD=cok-guclu-sifre
 ```
 
-### 3) Vercel
-1. [vercel.com](https://vercel.com) → **Add New → Project** → GitHub deposunu seç (framework otomatik: Next.js).
-2. **Environment Variables** bölümüne ekle:
-   | Ad | Değer |
-   |---|---|
-   | `DATABASE_URL` | 1. adımdaki pooler URI'si |
-   | `ADMIN_EMAIL` / `ADMIN_PASSWORD` | gerçek yönetici bilgileri |
-   | `MENTOR_EMAIL` / `MENTOR_PASSWORD` | demo takım hesabı |
-3. **Deploy** → `https://recf-turkiye.vercel.app` canlı.
-4. Özel alan adı: Project → **Domains** → `recfturkiye.org` ekle → DNS'te gösterilen A/CNAME kayıtlarını gir.
+`SUPABASE_SECRET_KEY` sadece server-side kullanılmalıdır ve GitHub'a / tarayıcı koduna konulmamalıdır.
 
-### Doğrulama listesi (canlıda)
-- [ ] `/kayit` → başvuru gönder → Supabase **Table Editor → applications**'da satır göründü mü?
-- [ ] `/giris` (admin) → `/admin/onaylar` → ONAYLA → `/takimlar`'da "YENİ KAYIT" ✓
-- [ ] `/admin/haberler` → YAYINLA → `/duyurular/...` DB'den render ✓
-- [ ] Yanlış şifre → 401; mentor ile `/admin` → /giris'e yönlenme ✓
+## Veritabanı kurulumu
 
-### Notlar
-- `DATABASE_URL` **boşken** uygulama otomatik SQLite'a döner (yalnız yerel geliştirme için; Vercel'de kalıcı değildir).
-- Bağlantı **Transaction pooler (6543)** olmalı — `prepare:false` bu mod için ayarlı. Doğrudan 5432 kullanacaksan sorun olmaz, ancak sunucusuz ortamda pooler önerilir.
-- Bir sonraki güvenlik adımı: cookie-rol oturumunu **Supabase Auth**'a taşımak ve RLS politikalarını role göre açmak (repository katmanı sayesinde `lib/db.ts` dışında değişiklik gerekmez).
+### Mevcut V1/V2 Supabase projesi
+
+Supabase SQL Editor'da yalnızca:
+
+`supabase/migration-3-complete-cms.sql`
+
+çalıştırın. Migration mevcut takım/başvuru verilerini silmez.
+
+### Sıfırdan proje
+
+`supabase/setup-production-v3.sql`
+
+çalıştırın.
+
+SQL aynı zamanda iki Storage bucket'ını oluşturur.
+
+> KVKK ve Gizlilik sayfalarında başlangıç metni yer tutucudur. Production yayını öncesi kurumunuza özel hukuk onaylı metinleri CMS > Sayfalar bölümünden girin.
+
+## Lokal doğrulama
+
+```bash
+npm install
+npm run typecheck
+npm run build
+npm run dev
+```
+
+Kontrol edin:
+
+- `/kayit` → Supabase `applications`
+- `/cms-giris` → admin
+- `/admin/etkinlikler` → etkinlik CRUD + görsel yükleme
+- `/admin/medya` → Storage upload/delete
+- `/admin/dokumanlar` → dosya upload/delete
+- `/admin/belge-gereksinimleri` → portal zorunlu belge şablonları
+- Başvuru onayı → `teams` + mentor hesabı
+- `/giris` → mentor geçici şifresi
+- `/portal/belgeler` → private upload + CMS onay
+- `/portal/etkinlikler` → kayıt + CMS onay
+
+Ayrıntılı yükseltme için `DEPLOY.md` dosyasına bakın.

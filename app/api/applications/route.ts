@@ -1,33 +1,6 @@
-import { NextRequest, NextResponse } from "next/server";
-import { verifySessionToken } from "@/lib/session";
-import { createApplication, listApplications } from "@/lib/db";
-import { calculateRegistrationTotal, REGISTRATION_FEES } from "@/lib/pricing";
-
-export const dynamic = "force-dynamic";
-
-export async function GET(req: NextRequest) {
-  if ((await verifySessionToken(req.cookies.get("recf_session")?.value)) !== "admin")
-    return NextResponse.json({ error: "Yetkisiz" }, { status: 401 });
-  return NextResponse.json(await listApplications());
-}
-
-export async function POST(req: NextRequest) {
-  const b = await req.json();
-  for (const f of ["num", "team", "org", "city", "type", "program", "mentor", "email", "phone"])
-    if (!b[f] || typeof b[f] !== "string" || !b[f].trim())
-      return NextResponse.json({ error: `Eksik alan: ${f}` }, { status: 400 });
-  if (!/^[A-Z0-9-]{2,8}$/.test(b.num))
-    return NextResponse.json({ error: "Takım numarası 2–8 karakter, harf/rakam olmalı." }, { status: 400 });
-  if (!b.email.includes("@"))
-    return NextResponse.json({ error: "Geçerli bir e-posta girin." }, { status: 400 });
-  if (!(b.program in REGISTRATION_FEES))
-    return NextResponse.json({ error: "Geçersiz program." }, { status: 400 });
-  const kit = !!b.kit;
-  const total = calculateRegistrationTotal(b.program, kit);
-  if (total === null) return NextResponse.json({ error: "Ücret hesaplanamadı." }, { status: 400 });
-  const { id } = await createApplication({
-    num: b.num.trim(), team: b.team.trim(), org: b.org.trim(), city: b.city.trim(), type: b.type.trim(),
-    program: b.program, mentor: b.mentor.trim(), email: b.email.trim(), phone: b.phone.trim(), kit, total
-  });
-  return NextResponse.json({ ok: true, id }, { status: 201 });
-}
+import {NextRequest,NextResponse} from "next/server";
+import {approvalsSession} from "@/lib/auth";
+import {createApplication,getSettings,listApplications} from "@/lib/db";
+export const dynamic="force-dynamic";
+export async function GET(req:NextRequest){if(!(await approvalsSession(req)))return NextResponse.json({error:'Yetkisiz'},{status:401});return NextResponse.json(await listApplications());}
+export async function POST(req:NextRequest){const b=await req.json();for(const f of ['num','team','org','city','type','program','mentor','email','phone'])if(!String(b[f]??'').trim())return NextResponse.json({error:`Eksik alan: ${f}`},{status:400});const num=String(b.num).trim().toUpperCase();if(!/^[A-Z0-9-]{2,10}$/.test(num))return NextResponse.json({error:'Takım numarası geçersiz.'},{status:400});if(!String(b.email).includes('@'))return NextResponse.json({error:'Geçerli e-posta girin.'},{status:400});const program=String(b.program);const s=await getSettings([`registration_fee_${program}`,'field_kit_fee','registration_discount']);const base=Number(s[`registration_fee_${program}`]);if(!Number.isFinite(base))return NextResponse.json({error:'Geçersiz program veya kayıt ücreti tanımsız.'},{status:400});const total=Math.max(0,base+(b.kit?Number(s.field_kit_fee)||0:0)-(Number(s.registration_discount)||0));try{const out=await createApplication({num,team:String(b.team).trim(),org:String(b.org).trim(),city:String(b.city).trim(),type:String(b.type).trim(),program,mentor:String(b.mentor).trim(),email:String(b.email).trim().toLowerCase(),phone:String(b.phone).trim(),kit:!!b.kit,total});return NextResponse.json({ok:true,...out},{status:201});}catch(e:any){const msg=String(e?.message||'');if(msg.includes('TEAM_NUM_USED')||msg.includes('unique')||msg.includes('duplicate'))return NextResponse.json({error:'Bu takım numarası kullanımda veya bekleyen bir başvuruda.'},{status:409});return NextResponse.json({error:'Başvuru kaydedilemedi.'},{status:500});}}

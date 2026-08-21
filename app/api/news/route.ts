@@ -1,20 +1,9 @@
-import { NextRequest, NextResponse } from "next/server";
-import { verifySessionToken } from "@/lib/session";
-import { publishNews, listPublishedNews } from "@/lib/db";
-export const dynamic = "force-dynamic";
-
-export async function GET() {
-  return NextResponse.json(await listPublishedNews());
-}
-export async function POST(req: NextRequest) {
-  if ((await verifySessionToken(req.cookies.get("recf_session")?.value)) !== "admin")
-    return NextResponse.json({ error: "Yetkisiz" }, { status: 401 });
-  const b = await req.json();
-  if (!b.title?.trim() || !b.slug?.trim())
-    return NextResponse.json({ error: "Başlık gerekli." }, { status: 400 });
-  await publishNews({
-    slug: b.slug, tag: b.tag ?? "DUYURU", title: b.title,
-    excerpt: b.excerpt ?? "", body: b.body ?? "", published: !!b.published,
-  });
-  return NextResponse.json({ ok: true, slug: b.slug }, { status: 201 });
-}
+import {NextRequest,NextResponse} from "next/server";
+import {contentSession} from "@/lib/auth";
+import {audit,deleteNews,getNews,listNews,slugify,upsertNews} from "@/lib/db";
+import {pathFromPublicUrl,PUBLIC_BUCKET,removeObject} from "@/lib/storage";
+export const dynamic="force-dynamic";
+async function cleanup(url?:string){const p=pathFromPublicUrl(url);if(p)await removeObject(PUBLIC_BUCKET,p).catch(()=>{});}
+export async function GET(req:NextRequest){const all=req.nextUrl.searchParams.get('all')==='1';if(all&&!(await contentSession(req)))return NextResponse.json({error:'Yetkisiz'},{status:401});return NextResponse.json(await listNews(all));}
+export async function POST(req:NextRequest){const s=await contentSession(req);if(!s)return NextResponse.json({error:'Yetkisiz'},{status:401});const b=await req.json();const slug=slugify(b.slug||b.title||'');if(!slug||!String(b.title??'').trim())return NextResponse.json({error:'Başlık ve slug zorunlu'},{status:400});const old:any=await getNews(slug,true);const r=await upsertNews({...b,slug});if(old?.cover_url&&old.cover_url!==r.cover_url)await cleanup(old.cover_url);await audit(s.email,'save','news',slug,{title:b.title});return NextResponse.json(r,{status:201});}
+export async function DELETE(req:NextRequest){const s=await contentSession(req);if(!s)return NextResponse.json({error:'Yetkisiz'},{status:401});const {slug}=await req.json();const old:any=await getNews(String(slug),true);await deleteNews(String(slug));if(old?.cover_url)await cleanup(old.cover_url);await audit(s.email,'delete','news',String(slug));return NextResponse.json({ok:true});}

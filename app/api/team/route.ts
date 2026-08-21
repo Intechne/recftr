@@ -1,25 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { verifySessionToken } from "@/lib/session";
-import { getSettings, listPayments, listTeamDocs, setSetting, setTeamDocStatus } from "@/lib/db";
-export const dynamic = "force-dynamic";
-const TEAM = process.env.MENTOR_TEAM_NUM ?? "905A";
-const ok = async (r: NextRequest) => ["mentor", "admin"].includes((await verifySessionToken(r.cookies.get("recf_session")?.value)) ?? "");
-
-export async function GET(req: NextRequest) {
-  if (!(await ok(req))) return NextResponse.json({ error: "Yetkisiz" }, { status: 401 });
-  const s = await getSettings([`team:${TEAM}`]);
-  const profile = s[`team:${TEAM}`] ? JSON.parse(s[`team:${TEAM}`]) : { name: "", school: "", city: "", slogan: "", email: "", phone: "" };
-  return NextResponse.json({ num: TEAM, profile, docs: await listTeamDocs(TEAM), payments: await listPayments(TEAM) });
-}
-export async function PATCH(req: NextRequest) { // belge durumu
-  if (!(await ok(req))) return NextResponse.json({ error: "Yetkisiz" }, { status: 401 });
-  const { id } = await req.json();
-  await setTeamDocStatus(Number(id), TEAM, "İNCELEMEDE", new Date().toLocaleDateString("tr-TR", { day: "numeric", month: "short" }));
-  return NextResponse.json({ ok: true });
-}
-export async function PUT(req: NextRequest) { // profil
-  if (!(await ok(req))) return NextResponse.json({ error: "Yetkisiz" }, { status: 401 });
-  const b = await req.json();
-  await setSetting(`team:${TEAM}`, JSON.stringify(b));
-  return NextResponse.json({ ok: true });
-}
+import { portalSession } from "@/lib/auth";
+import { getTeam, listPayments, listTeamDocs, updateTeam } from "@/lib/db";
+export const dynamic="force-dynamic";
+export async function GET(req:NextRequest){const s=await portalSession(req);if(!s?.teamNum)return NextResponse.json({error:"Yetkisiz"},{status:401});const team=await getTeam(s.teamNum);if(!team)return NextResponse.json({error:"Takım bulunamadı"},{status:404});return NextResponse.json({num:s.teamNum,profile:team,docs:await listTeamDocs(s.teamNum),payments:await listPayments(s.teamNum)});}
+export async function PUT(req:NextRequest){const s=await portalSession(req);if(!s?.teamNum)return NextResponse.json({error:"Yetkisiz"},{status:401});const current=await getTeam(s.teamNum);if(!current)return NextResponse.json({error:"Takım yok"},{status:404});const b=await req.json();const allowed={...current,name:b.name??current.name,school:b.school??current.school,city:b.city??current.city,program:current.program,status:current.status,visible:current.visible,mentor_name:b.mentor_name??current.mentor_name,mentor_email:b.mentor_email??current.mentor_email,phone:b.phone??current.phone,slogan:b.slogan??current.slogan,logo_url:b.logo_url??current.logo_url};return NextResponse.json(await updateTeam(s.teamNum,allowed));}

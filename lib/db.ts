@@ -1,366 +1,155 @@
-// ─────────────────────────────────────────────────────────────
-// Veri erişim katmanı — ÇİFT ADAPTÖR
-//   • DATABASE_URL tanımlıysa  → Postgres (Supabase, üretim/Vercel)
-//   • tanımlı değilse          → SQLite  (yerel geliştirme)
-// Tüm fonksiyonlar async; çağıran taraf adaptörden bağımsızdır.
-// ─────────────────────────────────────────────────────────────
-import path from "path";
+import { randomBytes, scryptSync, timingSafeEqual } from "crypto";
 
 const PG_URL = process.env.DATABASE_URL ?? process.env.POSTGRES_URL;
-console.log(
-  "[DATABASE]",
-  PG_URL ? "SUPABASE POSTGRES" : "LOCAL SQLITE"
-);
-/* ══ Postgres (Supabase) ══ */
-let _sql: any = null;
-async function pg() {
+let _sql: any;
+async function db() {
+  if (!PG_URL) throw new Error("DATABASE_URL is required. RECF V3 is Supabase/Postgres only.");
   if (_sql) return _sql;
   const postgres = (await import("postgres")).default;
-  // prepare:false → Supabase transaction pooler (pgbouncer) uyumu
-  _sql = postgres(PG_URL!, { ssl: "require", prepare: false, max: 1 });
+  _sql = postgres(PG_URL, { ssl: "require", prepare: false, max: 3, idle_timeout: 20 });
   return _sql;
 }
 
-/* ══ SQLite (yerel) ══ */
-let _db: any = null;
-function sqlite() {
-  if (process.env.NODE_ENV === "production") {
-    throw new Error("DATABASE_URL or POSTGRES_URL is required in production; SQLite fallback is disabled on Vercel.");
-  }
-  if (_db) return _db;
-  // eslint-disable-next-line @typescript-eslint/no-var-requires
-  const Database = require("better-sqlite3");
-  _db = new Database(process.env.RECF_DB_PATH ?? path.join(process.cwd(), "recf.db"));
-  _db.pragma("journal_mode = WAL");
-  migrateSqlite(_db);
-  return _db;
+export function slugify(input: string) {
+  return input.toLowerCase().replace(/[ç]/g,"c").replace(/[ğ]/g,"g").replace(/[ı]/g,"i").replace(/[ö]/g,"o").replace(/[ş]/g,"s").replace(/[ü]/g,"u")
+    .replace(/[^a-z0-9\s-]/g, "").trim().replace(/\s+/g, "-").replace(/-+/g, "-").slice(0, 64);
 }
-function migrateSqlite(d: any) {
-  d.exec(`
-  CREATE TABLE IF NOT EXISTS applications (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    num TEXT NOT NULL, team TEXT NOT NULL, org TEXT NOT NULL,
-    city TEXT NOT NULL, type TEXT NOT NULL, program TEXT NOT NULL,
-    mentor TEXT NOT NULL, email TEXT NOT NULL, phone TEXT NOT NULL,
-    kit INTEGER NOT NULL DEFAULT 0, total INTEGER NOT NULL,
-    status TEXT NOT NULL DEFAULT 'ÖDEME DOĞRULANDI',
-    created_at TEXT NOT NULL DEFAULT (datetime('now'))
-  );
-  CREATE TABLE IF NOT EXISTS teams (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    num TEXT NOT NULL UNIQUE, name TEXT NOT NULL, school TEXT NOT NULL,
-    city TEXT NOT NULL, program TEXT NOT NULL,
-    created_at TEXT NOT NULL DEFAULT (datetime('now'))
-  );
-  CREATE TABLE IF NOT EXISTS members (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    team_num TEXT NOT NULL, name TEXT NOT NULL,
-    role TEXT NOT NULL DEFAULT '—', cat TEXT NOT NULL DEFAULT '—',
-    consent TEXT NOT NULL DEFAULT '—', status TEXT NOT NULL DEFAULT 'DAVET GÖNDERİLDİ'
-  );
-  CREATE TABLE IF NOT EXISTS news (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    slug TEXT NOT NULL UNIQUE, tag TEXT NOT NULL, title TEXT NOT NULL,
-    excerpt TEXT NOT NULL, body TEXT NOT NULL DEFAULT '',
-    published INTEGER NOT NULL DEFAULT 0,
-    date TEXT NOT NULL DEFAULT (datetime('now'))
-  );`);
-  const empty = (t: string) => (d.prepare(`SELECT COUNT(*) c FROM ${t}`).get() as any).c === 0;
-  if (empty("applications")) {
-    const ins = d.prepare(`INSERT INTO applications (num,team,org,city,type,program,mentor,email,phone,kit,total,status) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)`);
-    ins.run("905B","Voltran Robotics 2","Pendik Fen Lisesi","İstanbul","Okul Takımı","achieve","A. Yılmaz","mentor@voltran.org","0500 000 00 00",1,6400,"ÖDEME DOĞRULANDI");
-    ins.run("TR-DR21","Gökyüzü Akademisi","Ankara BİLSEM","Ankara","Okul Takımı","adc","B. Kaya","bilsem@ornek.org","0500 000 00 01",0,3100,"ÖDEME BEKLENİYOR");
-    ins.run("512C","Robo Kaşifler","Karşıyaka Ortaokulu","İzmir","Okul Takımı","engage","C. Demir","kasifler@ornek.org","0500 000 00 02",1,5400,"ÖDEME DOĞRULANDI");
-    ins.run("PRO-31","Otonom Kartallar","YTÜ","İstanbul","Kulüp / Dernek","adc-pro","D. Arslan","kartallar@ornek.org","0500 000 00 03",0,5100,"BELGE EKSİK (öğrenci belgesi)");
-    ins.run("1453K","Fatih Robotics","Fatih Anadolu Lisesi","İstanbul","Okul Takımı","achieve","E. Koç","fatih@ornek.org","0500 000 00 04",0,3600,"ÖDEME DOĞRULANDI");
-  }
-  if (empty("members")) {
-    const ins = d.prepare(`INSERT INTO members (team_num,name,role,cat,consent,status) VALUES ('905A',?,?,?,?,?)`);
-    ins.run("Ahmet Yılmaz","MENTOR","—","—","AKTİF");
-    ins.run("Elif Kaya","KAPTAN · SÜRÜCÜ","U19","✓ Onaylı","AKTİF");
-    ins.run("Mert Demir","SÜRÜCÜ 2","U19","✓ Onaylı","AKTİF");
-    ins.run("Zeynep Arslan","YAZILIM","U15","✓ Onaylı","AKTİF");
-    ins.run("Can Öztürk","MEKANİK","U15","⚠ Eksik","AKTİF");
-    ins.run("Selin Koç","DEFTER & MEDYA","U19","⚠ Eksik","AKTİF");
-    ins.run("deniz@ornek.com","—","—","—","DAVET GÖNDERİLDİ");
-    ins.run("baris@ornek.com","—","—","—","DAVET GÖNDERİLDİ");
-  }
+export function hashPassword(password: string) {
+  const salt = randomBytes(16).toString("hex");
+  const hash = scryptSync(password, salt, 64).toString("hex");
+  return `scrypt$${salt}$${hash}`;
+}
+export function verifyPassword(password: string, stored: string) {
+  try {
+    const [algo, salt, hash] = stored.split("$");
+    if (algo !== "scrypt" || !salt || !hash) return false;
+    const a = Buffer.from(hash, "hex");
+    const b = scryptSync(password, salt, a.length);
+    return a.length === b.length && timingSafeEqual(a, b);
+  } catch { return false; }
+}
+export function tempPassword() {
+  return `RECF-${randomBytes(5).toString("base64url").replace(/[-_]/g,"A")}!`;
 }
 
-/* ══ Ortak API ══ */
-export type NewApplication = { num: string; team: string; org: string; city: string; type: string; program: string; mentor: string; email: string; phone: string; kit: boolean; total: number };
-
-export async function createApplication(a: NewApplication): Promise<{ id: number }> {
-  if (PG_URL) {
-    const sql = await pg();
-    const [row] = await sql`INSERT INTO applications (num,team,org,city,type,program,mentor,email,phone,kit,total)
-      VALUES (${a.num},${a.team},${a.org},${a.city},${a.type},${a.program},${a.mentor},${a.email},${a.phone},${a.kit},${a.total}) RETURNING id`;
-    return { id: row.id };
-  }
-  const r = sqlite().prepare(`INSERT INTO applications (num,team,org,city,type,program,mentor,email,phone,kit,total) VALUES (@num,@team,@org,@city,@type,@program,@mentor,@email,@phone,@kit,@total)`)
-    .run({ ...a, kit: a.kit ? 1 : 0 });
-  return { id: Number(r.lastInsertRowid) };
+export type NewApplication = { num:string; team:string; org:string; city:string; type:string; program:string; mentor:string; email:string; phone:string; kit:boolean; total:number };
+export async function createApplication(a: NewApplication) {
+  const sql = await db();
+  return sql.begin(async(tx:any)=>{const [used]=await tx`SELECT 1 FROM teams WHERE num=${a.num} UNION ALL SELECT 1 FROM applications WHERE num=${a.num} AND status IN ('BAŞVURU ALINDI','ONAYLANDI') LIMIT 1`; if(used)throw new Error('TEAM_NUM_USED'); const [row] = await tx`INSERT INTO applications (num,team,org,city,type,program,mentor,email,phone,kit,total,status) VALUES (${a.num},${a.team},${a.org},${a.city},${a.type},${a.program},${a.mentor},${a.email},${a.phone},${a.kit},${a.total},'BAŞVURU ALINDI') RETURNING id`; return {id:Number(row.id)};});
 }
-
-export async function listApplications(): Promise<any[]> {
-  if (PG_URL) {
-    const sql = await pg();
-    return await sql`SELECT * FROM applications ORDER BY created_at DESC`;
-  }
-  return sqlite().prepare(`SELECT * FROM applications ORDER BY created_at DESC`).all();
-}
-
-export async function resolveApplication(id: number, action: "approve" | "reject"): Promise<any | null> {
-  if (PG_URL) {
-    const sql = await pg();
-    const [app] = await sql`SELECT * FROM applications WHERE id=${id}`;
+export async function listApplications() { const sql=await db(); return sql`SELECT * FROM applications ORDER BY created_at DESC`; }
+export async function resolveApplication(id:number, action:"approve"|"reject") {
+  const sql=await db();
+  return sql.begin(async (tx:any) => {
+    const [app] = await tx`SELECT * FROM applications WHERE id=${id} FOR UPDATE`;
     if (!app) return null;
-    if (action === "approve") {
-      await sql`INSERT INTO teams (num,name,school,city,program) VALUES (${app.num},${app.team},${app.org},${app.city},${app.program}) ON CONFLICT (num) DO NOTHING`;
+    if (action === "reject") { await tx`UPDATE applications SET status='REDDEDİLDİ', reviewed_at=now() WHERE id=${id}`; return { app, action }; }
+    await tx`INSERT INTO teams (num,name,school,city,program,status,visible,mentor_name,mentor_email,phone)
+      VALUES (${app.num},${app.team},${app.org},${app.city},${app.program},'AKTİF',true,${app.mentor},${app.email},${app.phone})
+      ON CONFLICT (num) DO UPDATE SET name=EXCLUDED.name,school=EXCLUDED.school,city=EXCLUDED.city,program=EXCLUDED.program,
+      mentor_name=EXCLUDED.mentor_name,mentor_email=EXCLUDED.mentor_email,phone=EXCLUDED.phone,updated_at=now()`;
+    const [existing] = await tx`SELECT id FROM cms_users WHERE lower(email)=lower(${app.email})`;
+    let password:string|undefined;
+    if (!existing) {
+      password = tempPassword();
+      await tx`INSERT INTO cms_users (email,name,role,password_hash,team_num,active)
+        VALUES (${app.email.toLowerCase()},${app.mentor},'mentor',${hashPassword(password)},${app.num},true)`;
+    } else {
+      await tx`UPDATE cms_users SET team_num=${app.num}, active=true, updated_at=now() WHERE id=${existing.id} AND role='mentor'`;
     }
-    await sql`DELETE FROM applications WHERE id=${id}`;
-    return app;
-  }
-  const d = sqlite();
-  const app = d.prepare(`SELECT * FROM applications WHERE id=?`).get(id);
-  if (!app) return null;
-  const tx = d.transaction(() => {
-    if (action === "approve") {
-      d.prepare(`INSERT OR IGNORE INTO teams (num,name,school,city,program) VALUES (?,?,?,?,?)`)
-        .run(app.num, app.team, app.org, app.city, app.program);
-    }
-    d.prepare(`DELETE FROM applications WHERE id=?`).run(id);
+    const [mentorMember] = await tx`SELECT id FROM members WHERE team_num=${app.num} AND lower(coalesce(email,''))=lower(${app.email}) LIMIT 1`;
+    if (!mentorMember) await tx`INSERT INTO members (team_num,name,email,role,cat,consent,status) VALUES (${app.num},${app.mentor},${app.email},'MENTOR','—','—','AKTİF')`;
+    await tx`UPDATE applications SET status='ONAYLANDI', reviewed_at=now() WHERE id=${id}`;
+    return { app, action, temporaryPassword: password };
   });
-  tx();
-  return app;
 }
 
-export async function listTeams(): Promise<any[]> {
-  if (PG_URL) {
-    const sql = await pg();
-    return await sql`SELECT * FROM teams ORDER BY created_at DESC`;
-  }
-  return sqlite().prepare(`SELECT * FROM teams ORDER BY created_at DESC`).all();
+export async function listTeams(all=true) {
+  const sql=await db();
+  return all ? sql`SELECT * FROM teams ORDER BY created_at DESC` : sql`SELECT * FROM teams WHERE visible=true AND status='AKTİF' ORDER BY num`;
 }
+export async function getTeam(num:string) { const sql=await db(); const [r]=await sql`SELECT * FROM teams WHERE num=${num}`; return r??null; }
+export async function updateTeam(num:string,b:any) {
+  const sql=await db();
+  const [r]=await sql`INSERT INTO teams(num,name,school,city,program,status,visible,mentor_name,mentor_email,phone,slogan,logo_url) VALUES(${num},${b.name},${b.school},${b.city},${b.program},${b.status??'AKTİF'},${b.visible!==false},${b.mentor_name??''},${b.mentor_email??''},${b.phone??''},${b.slogan??''},${b.logo_url??''}) ON CONFLICT(num) DO UPDATE SET name=EXCLUDED.name,school=EXCLUDED.school,city=EXCLUDED.city,program=EXCLUDED.program,status=EXCLUDED.status,visible=EXCLUDED.visible,mentor_name=EXCLUDED.mentor_name,mentor_email=EXCLUDED.mentor_email,phone=EXCLUDED.phone,slogan=EXCLUDED.slogan,logo_url=EXCLUDED.logo_url,updated_at=now() RETURNING *`;
+  return r??null;
+}
+export async function deleteTeam(num:string) { const sql=await db(); await sql.begin(async(tx:any)=>{await tx`DELETE FROM event_registrations WHERE team_num=${num}`;await tx`DELETE FROM members WHERE team_num=${num}`;await tx`DELETE FROM team_docs WHERE team_num=${num}`;await tx`DELETE FROM payments WHERE team_num=${num}`;await tx`UPDATE cms_users SET active=false,team_num=NULL,updated_at=now() WHERE team_num=${num} AND role='mentor'`;await tx`DELETE FROM teams WHERE num=${num}`;}); }
 
-export async function listMembers(teamNum: string): Promise<any[]> {
-  if (PG_URL) {
-    const sql = await pg();
-    return await sql`SELECT * FROM members WHERE team_num=${teamNum} ORDER BY id`;
-  }
-  return sqlite().prepare(`SELECT * FROM members WHERE team_num=? ORDER BY id`).all(teamNum);
-}
+export async function listMembers(teamNum:string){ const sql=await db(); return sql`SELECT * FROM members WHERE team_num=${teamNum} ORDER BY id`; }
+export async function createMember(teamNum:string,b:any){ const sql=await db(); const [r]=await sql`INSERT INTO members(team_num,name,email,role,cat,consent,status) VALUES(${teamNum},${b.name},${b.email??''},${b.role??'ÜYE'},${b.cat??'—'},${b.consent??'—'},${b.status??'AKTİF'}) RETURNING *`; return r; }
+export async function updateMember(teamNum:string,id:number,b:any){ const sql=await db(); const [r]=await sql`UPDATE members SET name=${b.name},email=${b.email??''},role=${b.role??'ÜYE'},cat=${b.cat??'—'},consent=${b.consent??'—'},status=${b.status??'AKTİF'} WHERE id=${id} AND team_num=${teamNum} RETURNING *`; return r??null; }
+export async function deleteMember(teamNum:string,id:number){ const sql=await db(); await sql`DELETE FROM members WHERE id=${id} AND team_num=${teamNum}`; }
 
-export async function inviteMember(teamNum: string, email: string): Promise<{ id: number }> {
-  if (PG_URL) {
-    const sql = await pg();
-    const [row] = await sql`INSERT INTO members (team_num,name) VALUES (${teamNum},${email}) RETURNING id`;
-    return { id: row.id };
-  }
-  const r = sqlite().prepare(`INSERT INTO members (team_num,name) VALUES (?,?)`).run(teamNum, email);
-  return { id: Number(r.lastInsertRowid) };
-}
+export async function listNews(all=false){ const sql=await db(); return all ? sql`SELECT * FROM news ORDER BY date DESC` : sql`SELECT * FROM news WHERE published=true ORDER BY featured DESC,date DESC`; }
+export async function getNews(slug:string, includeDraft=false){ const sql=await db(); const [r]=includeDraft ? await sql`SELECT * FROM news WHERE slug=${slug}` : await sql`SELECT * FROM news WHERE slug=${slug} AND published=true`; return r??null; }
+export async function upsertNews(n:any){ const sql=await db(); const [r]=await sql`INSERT INTO news(slug,tag,title,excerpt,body,published,cover_url,featured,author,date)
+  VALUES(${n.slug},${n.tag??'DUYURU'},${n.title},${n.excerpt??''},${n.body??''},${!!n.published},${n.cover_url??''},${!!n.featured},${n.author??'RECF Türkiye'},${n.date??new Date().toISOString()})
+  ON CONFLICT(slug) DO UPDATE SET tag=EXCLUDED.tag,title=EXCLUDED.title,excerpt=EXCLUDED.excerpt,body=EXCLUDED.body,published=EXCLUDED.published,
+  cover_url=EXCLUDED.cover_url,featured=EXCLUDED.featured,author=EXCLUDED.author,date=EXCLUDED.date,updated_at=now() RETURNING *`; return r; }
+export async function deleteNews(slug:string){ const sql=await db(); await sql`DELETE FROM news WHERE slug=${slug}`; }
 
-export async function publishNews(n: { slug: string; tag: string; title: string; excerpt: string; body: string; published: boolean }): Promise<{ slug: string }> {
-  if (PG_URL) {
-    const sql = await pg();
-    await sql`INSERT INTO news (slug,tag,title,excerpt,body,published) VALUES (${n.slug},${n.tag},${n.title},${n.excerpt},${n.body},${n.published})
-      ON CONFLICT (slug) DO UPDATE SET tag=EXCLUDED.tag, title=EXCLUDED.title, excerpt=EXCLUDED.excerpt, body=EXCLUDED.body, published=EXCLUDED.published`;
-    return { slug: n.slug };
-  }
-  sqlite().prepare(`INSERT INTO news (slug,tag,title,excerpt,body,published) VALUES (@slug,@tag,@title,@excerpt,@body,@published)
-    ON CONFLICT(slug) DO UPDATE SET tag=@tag,title=@title,excerpt=@excerpt,body=@body,published=@published`)
-    .run({ ...n, published: n.published ? 1 : 0 });
-  return { slug: n.slug };
-}
+export async function listPrograms(all=false){ const sql=await db(); return all ? sql`SELECT * FROM program_content ORDER BY sort_order,slug` : sql`SELECT * FROM program_content WHERE active=true ORDER BY sort_order,slug`; }
+export async function getProgram(slug:string,includeInactive=false){ const sql=await db(); const [r]=includeInactive ? await sql`SELECT * FROM program_content WHERE slug=${slug}` : await sql`SELECT * FROM program_content WHERE slug=${slug} AND active=true`; return r??null; }
+export async function saveProgram(b:any){ const sql=await db(); const slug=slugify(b.slug||b.name||''); const chips=JSON.stringify(Array.isArray(b.chips)?b.chips:[]); const match=JSON.stringify(Array.isArray(b.match_types)?b.match_types:[]); const facts=JSON.stringify(Array.isArray(b.facts)?b.facts:[]); const [r]=await sql`INSERT INTO program_content(slug,code,name,game,age,age_detail,color_hex,short,long,chips,match_types,facts,source,cover_url,active,sort_order) VALUES(${slug},${b.code},${b.name},${b.game??''},${b.age??''},${b.age_detail??''},${b.color_hex??'#29B9E5'},${b.short??''},${b.long??''},${chips}::jsonb,${match}::jsonb,${facts}::jsonb,${b.source??''},${b.cover_url??''},${b.active!==false},${Number(b.sort_order)||0}) ON CONFLICT(slug) DO UPDATE SET code=EXCLUDED.code,name=EXCLUDED.name,game=EXCLUDED.game,age=EXCLUDED.age,age_detail=EXCLUDED.age_detail,color_hex=EXCLUDED.color_hex,short=EXCLUDED.short,long=EXCLUDED.long,chips=EXCLUDED.chips,match_types=EXCLUDED.match_types,facts=EXCLUDED.facts,source=EXCLUDED.source,cover_url=EXCLUDED.cover_url,active=EXCLUDED.active,sort_order=EXCLUDED.sort_order,updated_at=now() RETURNING *`; return r; }
+export async function deleteProgram(slug:string){ const sql=await db(); await sql`UPDATE program_content SET active=false,updated_at=now() WHERE slug=${slug}`; }
 
-export async function listPublishedNews(): Promise<any[]> {
-  if (PG_URL) {
-    const sql = await pg();
-    return await sql`SELECT * FROM news WHERE published=true ORDER BY date DESC`;
-  }
-  return sqlite().prepare(`SELECT * FROM news WHERE published=1 ORDER BY date DESC`).all();
-}
+export async function listEvents(all=false){ const sql=await db(); return all ? sql`SELECT * FROM events ORDER BY COALESCE(event_start,created_at),id` : sql`SELECT * FROM events WHERE published=true ORDER BY COALESCE(event_start,created_at),id`; }
+export async function getEvent(slug:string,includeDraft=false){ const sql=await db(); const [r]=includeDraft ? await sql`SELECT * FROM events WHERE slug=${slug}` : await sql`SELECT * FROM events WHERE slug=${slug} AND published=true`; return r??null; }
+export async function upsertEvent(e:any){ const sql=await db(); const [r]=await sql`INSERT INTO events(slug,code,title,city,venue,date_label,event_start,event_end,capacity,status,excerpt,body,published,featured,cover_url,registration_enabled)
+  VALUES(${e.slug},${e.code},${e.title},${e.city},${e.venue??''},${e.date_label??''},${e.event_start||null},${e.event_end||null},${Number(e.capacity)||64},${e.status??'KAYIT AÇIK'},${e.excerpt??''},${e.body??''},${!!e.published},${!!e.featured},${e.cover_url??''},${e.registration_enabled!==false})
+  ON CONFLICT(slug) DO UPDATE SET code=EXCLUDED.code,title=EXCLUDED.title,city=EXCLUDED.city,venue=EXCLUDED.venue,date_label=EXCLUDED.date_label,event_start=EXCLUDED.event_start,event_end=EXCLUDED.event_end,capacity=EXCLUDED.capacity,status=EXCLUDED.status,excerpt=EXCLUDED.excerpt,body=EXCLUDED.body,published=EXCLUDED.published,featured=EXCLUDED.featured,cover_url=EXCLUDED.cover_url,registration_enabled=EXCLUDED.registration_enabled,updated_at=now() RETURNING *`; return r; }
+export async function deleteEvent(slug:string){ const sql=await db(); await sql`DELETE FROM events WHERE slug=${slug}`; }
+export async function listEventRegistrations(eventId?:number,teamNum?:string){ const sql=await db(); if(eventId) return sql`SELECT r.*,t.name team_name,t.school,e.title event_title,e.slug event_slug FROM event_registrations r JOIN teams t ON t.num=r.team_num JOIN events e ON e.id=r.event_id WHERE r.event_id=${eventId} ORDER BY r.created_at`; if(teamNum) return sql`SELECT r.*,e.title event_title,e.slug event_slug,e.date_label,e.city,e.venue,e.status event_status FROM event_registrations r JOIN events e ON e.id=r.event_id WHERE r.team_num=${teamNum} ORDER BY COALESCE(e.event_start,e.created_at)`; return sql`SELECT r.*,t.name team_name,e.title event_title FROM event_registrations r JOIN teams t ON t.num=r.team_num JOIN events e ON e.id=r.event_id ORDER BY r.created_at DESC`; }
+export async function registerEvent(teamNum:string,eventId:number){ const sql=await db(); return sql.begin(async(tx:any)=>{ const [e]=await tx`SELECT * FROM events WHERE id=${eventId} AND published=true FOR UPDATE`; if(!e) throw new Error('Etkinlik bulunamadı.'); if(!e.registration_enabled) throw new Error('Etkinlik kaydı kapalı.'); const [team]=await tx`SELECT program,status FROM teams WHERE num=${teamNum}`; if(!team||team.status!=='AKTİF')throw new Error('Takım aktif değil.'); const expected:any={engage:'ENG',achieve:'ACH',inspire:'INS',adc:'ADC','adc-pro':'PRO'}; const code=String(e.code||'').toUpperCase(); if(code!=='TÜMÜ'&&expected[team.program]&&!code.startsWith(expected[team.program]))throw new Error('Bu etkinlik takım programınız için değil.'); const [c]=await tx`SELECT COUNT(*)::int c FROM event_registrations WHERE event_id=${eventId} AND status IN ('BEKLİYOR','ONAYLI')`; if(c.c>=e.capacity) throw new Error('Etkinlik kontenjanı dolu.'); const [r]=await tx`INSERT INTO event_registrations(event_id,team_num,status) VALUES(${eventId},${teamNum},'BEKLİYOR') ON CONFLICT(event_id,team_num) DO UPDATE SET status='BEKLİYOR',updated_at=now() RETURNING *`; return r; }); }
+export async function cancelEventRegistration(teamNum:string,eventId:number){ const sql=await db(); await sql`DELETE FROM event_registrations WHERE team_num=${teamNum} AND event_id=${eventId}`; }
+export async function updateEventRegistration(id:number,b:any){ const sql=await db(); const [r]=await sql`UPDATE event_registrations SET status=${b.status},pit=${b.pit??''},notes=${b.notes??''},updated_at=now() WHERE id=${id} RETURNING *`; return r??null; }
 
-export async function getNews(slug: string): Promise<any | null> {
-  if (PG_URL) {
-    const sql = await pg();
-    const [row] = await sql`SELECT * FROM news WHERE slug=${slug} AND published=true`;
-    return row ?? null;
-  }
-  return sqlite().prepare(`SELECT * FROM news WHERE slug=? AND published=1`).get(slug) ?? null;
-}
+export async function listDocuments(all=false){ const sql=await db(); return all ? sql`SELECT * FROM documents ORDER BY cat,name` : sql`SELECT * FROM documents WHERE published=true ORDER BY cat,name`; }
+export async function getDocument(id:number){ const sql=await db(); const [r]=await sql`SELECT * FROM documents WHERE id=${id}`; return r??null; }
+export async function addDocument(d:any){ const sql=await db(); const [r]=await sql`INSERT INTO documents(name,cat,size_label,url,file_path,mime_type,published,updated_label) VALUES(${d.name},${d.cat},${d.size_label??''},${d.url??''},${d.file_path??''},${d.mime_type??''},${d.published!==false},${d.updated_label??''}) RETURNING *`; return r; }
+export async function updateDocument(id:number,d:any){ const sql=await db(); const [r]=await sql`UPDATE documents SET name=${d.name},cat=${d.cat},size_label=${d.size_label??''},url=${d.url??''},file_path=${d.file_path??''},mime_type=${d.mime_type??''},published=${d.published!==false},updated_label=${d.updated_label??''},updated_at=now() WHERE id=${id} RETURNING *`; return r??null; }
+export async function deleteDocument(id:number){ const sql=await db(); const [r]=await sql`DELETE FROM documents WHERE id=${id} RETURNING *`; return r??null; }
+export async function incrementDocumentDownload(id:number){ const sql=await db(); await sql`UPDATE documents SET downloads=downloads+1 WHERE id=${id}`; }
 
-/* ═══════════════ v2: CMS içerik tabloları ═══════════════ */
-let _extraOk = false;
-function ensureExtraSqlite(d: any) {
-  if (_extraOk) return; _extraOk = true;
-  d.exec(`
-  CREATE TABLE IF NOT EXISTS events (
-    id INTEGER PRIMARY KEY AUTOINCREMENT, slug TEXT NOT NULL UNIQUE,
-    code TEXT NOT NULL, title TEXT NOT NULL, city TEXT NOT NULL, venue TEXT NOT NULL DEFAULT '',
-    date_label TEXT NOT NULL, capacity INTEGER NOT NULL DEFAULT 64, registered INTEGER NOT NULL DEFAULT 0,
-    status TEXT NOT NULL DEFAULT 'KAYIT AÇIK', excerpt TEXT NOT NULL DEFAULT '', published INTEGER NOT NULL DEFAULT 1
-  );
-  CREATE TABLE IF NOT EXISTS documents (
-    id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL, cat TEXT NOT NULL,
-    size_label TEXT NOT NULL DEFAULT '', url TEXT NOT NULL DEFAULT '#',
-    downloads INTEGER NOT NULL DEFAULT 0, updated_label TEXT NOT NULL DEFAULT ''
-  );
-  CREATE TABLE IF NOT EXISTS pages (
-    slug TEXT PRIMARY KEY, title TEXT NOT NULL, body TEXT NOT NULL DEFAULT '',
-    updated TEXT NOT NULL DEFAULT (datetime('now'))
-  );
-  CREATE TABLE IF NOT EXISTS settings ( key TEXT PRIMARY KEY, value TEXT NOT NULL );
-  CREATE TABLE IF NOT EXISTS team_docs (
-    id INTEGER PRIMARY KEY AUTOINCREMENT, team_num TEXT NOT NULL, name TEXT NOT NULL,
-    descr TEXT NOT NULL DEFAULT '', required INTEGER NOT NULL DEFAULT 1,
-    status TEXT NOT NULL DEFAULT 'EKSİK', date_label TEXT NOT NULL DEFAULT ''
-  );
-  CREATE TABLE IF NOT EXISTS payments (
-    id INTEGER PRIMARY KEY AUTOINCREMENT, team_num TEXT NOT NULL, ref TEXT NOT NULL,
-    item TEXT NOT NULL, date_label TEXT NOT NULL DEFAULT '', amount_label TEXT NOT NULL, status TEXT NOT NULL
-  );`);
-  const empty = (t: string) => (d.prepare(`SELECT COUNT(*) c FROM ${t}`).get() as any).c === 0;
-  if (empty("events")) {
-    const i = d.prepare(`INSERT INTO events (slug,code,title,city,venue,date_label,capacity,registered,status,excerpt,published) VALUES (?,?,?,?,?,?,?,?,?,?,1)`);
-    i.run("istanbul-bolge","ACH","İstanbul Bölge Turnuvası","İstanbul","Teknopark İstanbul","14 Ekim 2026",64,54,"SON KONTENJANLAR","Sezonun açılış bölge turnuvası — Pinnacle sahada.");
-    i.run("adc-ankara","ADC","ADC Ankara Uçuş Günü","Ankara","ODTÜ Spor Salonu","28 Ekim 2026",32,18,"KAYIT AÇIK","Fast Track görev uçuşları ve pilot brifingi.");
-    i.run("bursa-drone","ADC","Bursa Drone Ligi","Bursa","BTÜ Kampüsü","9 Kasım 2026",32,9,"KAYIT AÇIK","Drone futbolu lig etabı.");
-    i.run("izmir-lig","ENG","İzmir ENG Lig Günü","İzmir","Fuar İzmir","16 Kasım 2026",48,21,"KAYIT AÇIK","Tier Takeover lig maçları.");
-    i.run("ege-scrimmage","INS","Ege Scrimmage","İzmir","EÜ Spor Salonu","30 Kasım 2026",24,6,"KAYIT AÇIK","Üniversite takımları hazırlık maçları.");
-    i.run("kis-kupasi","ACH","Kış Kupası","İstanbul","Açıklanacak","Aralık 2026",64,0,"YAKINDA","Kapalı salon klasiği — ön kayıt 1 Ekim'de.");
-    i.run("turkiye-sampiyonasi","TÜMÜ","Türkiye Şampiyonası","Ankara","Açıklanacak","Nisan 2027",128,0,"YAKINDA","Sezonun finali — dünya şampiyonası kotaları.");
-  }
-  if (empty("documents")) {
-    const i = d.prepare(`INSERT INTO documents (name,cat,size_label,url,downloads,updated_label) VALUES (?,?,?,?,?,?)`);
-    i.run("ACH Pinnacle — Oyun Kılavuzu v1.2 (TR)","Oyun Kılavuzları","4.2 MB","#",1240,"14 Ağu 2026");
-    i.run("ENG Tier Takeover — Kural Kitabı v1.0","Oyun Kılavuzları","3.1 MB","#",890,"10 Ağu 2026");
-    i.run("ADC Fast Track — Görev Rehberi (TR)","Oyun Kılavuzları","2.7 MB","#",512,"08 Ağu 2026");
-    i.run("Robot Denetim Formu 2026-27","Formlar","180 KB","#",2100,"01 Ağu 2026");
-    i.run("Veli İzin Belgesi Şablonu","Formlar","120 KB","#",3400,"01 Ağu 2026");
-    i.run("Mühendislik Defteri Rubriği","Jüri Belgeleri","640 KB","#",760,"05 Ağu 2026");
-    i.run("Marka Kullanım Kılavuzu","Marka","8.9 MB","#",210,"12 Ağu 2026");
-  }
-  if (empty("pages")) {
-    const i = d.prepare(`INSERT INTO pages (slug,title,body) VALUES (?,?,?)`);
-    i.run("kvkk","KVKK Aydınlatma Metni","RECF Türkiye (Intechne Teknoloji A.Ş.) olarak 6698 sayılı Kişisel Verilerin Korunması Kanunu kapsamında; takım kayıtları, etkinlik başvuruları ve iletişim süreçlerinde paylaştığınız kişisel veriler yalnızca yarışma operasyonu, güvenlik ve yasal yükümlülükler için işlenir.\n\nİşlenen veriler: ad-soyad, e-posta, telefon, okul/kurum bilgisi ve 18 yaş altı katılımcılar için veli onay kayıtları.\n\nVerileriniz açık rızanız olmadan üçüncü taraflarla paylaşılmaz; sponsorlara aktarılmaz. Saklama süresi sezon bitimini takip eden 2 yıldır.\n\nKVKK 11. madde kapsamındaki haklarınız (bilgi talebi, düzeltme, silme) için kvkk@recfturkiye.org adresine başvurabilirsiniz.");
-    i.run("gizlilik","Gizlilik Politikası","Bu web sitesi, deneyiminizi iyileştirmek için yalnızca zorunlu oturum çerezleri kullanır; reklam veya izleme çerezi barındırmaz.\n\nTakım Portalı ve CMS oturumları httpOnly güvenli çerezlerle yönetilir. Şifreler hiçbir zaman düz metin olarak saklanmaz.\n\nEtkinliklerde çekilen fotoğraf ve videolar, kayıt sırasında alınan görsel kullanım onayı kapsamında yayınlanır; onay vermeyen katılımcılar yayın akışında bulanıklaştırılır.\n\nSorularınız için: gizlilik@recfturkiye.org");
-  }
-  if (empty("settings")) {
-    const i = d.prepare(`INSERT INTO settings (key,value) VALUES (?,?)`);
-    i.run("ticker", JSON.stringify(["2026–27 sezon kayıtları açıldı","İstanbul Bölge: son kontenjanlar","Coach Academy Eylül dönemi başvuruları sürüyor","Founding 100 programı aktif"]));
-    i.run("contact_team","takim@recfturkiye.org");
-    i.run("contact_info","info@recfturkiye.org");
-    i.run("maintenance","0");
-  }
-  if (empty("team_docs")) {
-    const i = d.prepare(`INSERT INTO team_docs (team_num,name,descr,required,status,date_label) VALUES ('905A',?,?,?,?,?)`);
-    i.run("Robot Denetim Formu","İstanbul Bölge öncesi zorunlu — imzalı PDF",1,"ONAYLI","12 Ağu 2026");
-    i.run("Veli İzin Belgeleri","18 yaş altı tüm üyeler için",1,"İNCELEMEDE","18 Ağu 2026");
-    i.run("Mühendislik Defteri (PDF)","Jüri ön değerlendirmesi",1,"EKSİK","");
-    i.run("Okul Resmî Yazısı","Kurum onaylı katılım yazısı",1,"ONAYLI","02 Ağu 2026");
-    i.run("Takım Logosu","Yayın grafikleri için SVG/PNG",0,"EKSİK","");
-  }
-  if (empty("payments")) {
-    const i = d.prepare(`INSERT INTO payments (team_num,ref,item,date_label,amount_label,status) VALUES ('905A',?,?,?,?,?)`);
-    i.run("FT-2026-0912","ACH Sezon Lisansı","28 Tem 2026","₺4.500","ÖDENDİ");
-    i.run("FT-2026-0913","Pinnacle Saha Kiti","28 Tem 2026","₺2.800","ÖDENDİ");
-    i.run("İND-ERKEN26","Erken Kayıt İndirimi","28 Tem 2026","−₺900","UYGULANDI");
-    i.run("FT-2026-1044","İstanbul Bölge katılımı","16 Ağu 2026","₺750","ÖDENDİ");
-  }
-}
-function sq() { const d = sqlite(); ensureExtraSqlite(d); return d; }
+export async function listPages(all=false){ const sql=await db(); return all ? sql`SELECT * FROM pages ORDER BY title` : sql`SELECT * FROM pages WHERE published=true ORDER BY title`; }
+export async function getPage(slug:string,includeDraft=false){ const sql=await db(); const [r]=includeDraft ? await sql`SELECT * FROM pages WHERE slug=${slug}` : await sql`SELECT * FROM pages WHERE slug=${slug} AND published=true`; return r??null; }
+export async function savePage(slug:string,title:string,body:string,published=true){ const sql=await db(); const [r]=await sql`INSERT INTO pages(slug,title,body,published) VALUES(${slug},${title},${body},${published}) ON CONFLICT(slug) DO UPDATE SET title=EXCLUDED.title,body=EXCLUDED.body,published=EXCLUDED.published,updated=now() RETURNING *`; return r; }
+export async function deletePage(slug:string){ const sql=await db(); await sql`DELETE FROM pages WHERE slug=${slug}`; }
 
-/* Events */
-export async function listEvents(onlyPublished = true): Promise<any[]> {
-  if (PG_URL) { const s = await pg(); return onlyPublished ? await s`SELECT * FROM events WHERE published=true ORDER BY id` : await s`SELECT * FROM events ORDER BY id`; }
-  return sq().prepare(`SELECT * FROM events ${onlyPublished ? "WHERE published=1" : ""} ORDER BY id`).all();
-}
-export async function getEvent(slug: string): Promise<any | null> {
-  if (PG_URL) { const s = await pg(); const [r] = await s`SELECT * FROM events WHERE slug=${slug} AND published=true`; return r ?? null; }
-  return sq().prepare(`SELECT * FROM events WHERE slug=? AND published=1`).get(slug) ?? null;
-}
-export async function upsertEvent(e: any): Promise<void> {
-  if (PG_URL) { const s = await pg();
-    await s`INSERT INTO events (slug,code,title,city,venue,date_label,capacity,registered,status,excerpt,published)
-      VALUES (${e.slug},${e.code},${e.title},${e.city},${e.venue ?? ""},${e.date_label},${e.capacity ?? 64},${e.registered ?? 0},${e.status ?? "KAYIT AÇIK"},${e.excerpt ?? ""},${!!e.published})
-      ON CONFLICT (slug) DO UPDATE SET code=EXCLUDED.code,title=EXCLUDED.title,city=EXCLUDED.city,venue=EXCLUDED.venue,date_label=EXCLUDED.date_label,capacity=EXCLUDED.capacity,registered=EXCLUDED.registered,status=EXCLUDED.status,excerpt=EXCLUDED.excerpt,published=EXCLUDED.published`;
-    return; }
-  sq().prepare(`INSERT INTO events (slug,code,title,city,venue,date_label,capacity,registered,status,excerpt,published)
-    VALUES (@slug,@code,@title,@city,@venue,@date_label,@capacity,@registered,@status,@excerpt,@published)
-    ON CONFLICT(slug) DO UPDATE SET code=@code,title=@title,city=@city,venue=@venue,date_label=@date_label,capacity=@capacity,registered=@registered,status=@status,excerpt=@excerpt,published=@published`)
-    .run({ venue: "", capacity: 64, registered: 0, status: "KAYIT AÇIK", excerpt: "", ...e, published: e.published ? 1 : 0 });
-}
-export async function deleteEvent(slug: string): Promise<void> {
-  if (PG_URL) { const s = await pg(); await s`DELETE FROM events WHERE slug=${slug}`; return; }
-  sq().prepare(`DELETE FROM events WHERE slug=?`).run(slug);
-}
+export async function getSettings(keys?:string[]){ const sql=await db(); const rows = keys?.length ? await sql`SELECT key,value FROM settings WHERE key IN ${sql(keys)}` : await sql`SELECT key,value FROM settings`; return Object.fromEntries(rows.map((r:any)=>[r.key,r.value])); }
+export async function setSetting(key:string,value:string){ const sql=await db(); await sql`INSERT INTO settings(key,value) VALUES(${key},${value}) ON CONFLICT(key) DO UPDATE SET value=EXCLUDED.value`; }
 
-/* Documents */
-export async function listDocuments(): Promise<any[]> {
-  if (PG_URL) { const s = await pg(); return await s`SELECT * FROM documents ORDER BY cat, id`; }
-  return sq().prepare(`SELECT * FROM documents ORDER BY cat, id`).all();
-}
-export async function addDocument(d: any): Promise<void> {
-  if (PG_URL) { const s = await pg(); await s`INSERT INTO documents (name,cat,size_label,url,updated_label) VALUES (${d.name},${d.cat},${d.size_label ?? ""},${d.url ?? "#"},${d.updated_label ?? ""})`; return; }
-  sq().prepare(`INSERT INTO documents (name,cat,size_label,url,updated_label) VALUES (@name,@cat,@size_label,@url,@updated_label)`)
-    .run({ size_label: "", url: "#", updated_label: "", ...d });
-}
-export async function deleteDocument(id: number): Promise<void> {
-  if (PG_URL) { const s = await pg(); await s`DELETE FROM documents WHERE id=${id}`; return; }
-  sq().prepare(`DELETE FROM documents WHERE id=?`).run(id);
-}
+export async function listDocumentRequirements(all=false){ const sql=await db(); return all ? sql`SELECT * FROM document_requirements ORDER BY sort_order,id` : sql`SELECT * FROM document_requirements WHERE active=true ORDER BY sort_order,id`; }
+export async function saveDocumentRequirement(b:any){ const sql=await db(); if(b.id){const [r]=await sql`UPDATE document_requirements SET name=${b.name},descr=${b.descr??''},program=${b.program??'ALL'},required=${b.required!==false},active=${b.active!==false},sort_order=${Number(b.sort_order)||0},updated_at=now() WHERE id=${Number(b.id)} RETURNING *`;return r;} const [r]=await sql`INSERT INTO document_requirements(name,descr,program,required,active,sort_order) VALUES(${b.name},${b.descr??''},${b.program??'ALL'},${b.required!==false},${b.active!==false},${Number(b.sort_order)||0}) RETURNING *`;return r; }
+export async function deleteDocumentRequirement(id:number){ const sql=await db(); await sql`DELETE FROM document_requirements WHERE id=${id}`; }
+export async function syncTeamDocRequirements(teamNum:string){ const sql=await db(); const [team]=await sql`SELECT program FROM teams WHERE num=${teamNum}`; if(!team)return; await sql`INSERT INTO team_docs(team_num,name,descr,required,status,requirement_id) SELECT ${teamNum},r.name,r.descr,r.required,'EKSİK',r.id FROM document_requirements r WHERE r.active=true AND (r.program='ALL' OR lower(r.program)=lower(${team.program})) ON CONFLICT(team_num,requirement_id) WHERE requirement_id IS NOT NULL DO UPDATE SET name=EXCLUDED.name,descr=EXCLUDED.descr,required=EXCLUDED.required`; }
+export async function listTeamDocs(teamNum?:string){ const sql=await db(); if(teamNum)await syncTeamDocRequirements(teamNum); return teamNum ? sql`SELECT * FROM team_docs WHERE team_num=${teamNum} ORDER BY required DESC,id` : sql`SELECT * FROM team_docs ORDER BY uploaded_at DESC NULLS LAST,id DESC`; }
+export async function getTeamDoc(id:number,teamNum:string){ const sql=await db(); const [r]=await sql`SELECT * FROM team_docs WHERE id=${id} AND team_num=${teamNum}`; return r??null; }
+export async function createTeamDoc(teamNum:string,b:any){ const sql=await db(); const [r]=await sql`INSERT INTO team_docs(team_num,name,descr,required,status,file_path,mime_type,date_label) VALUES(${teamNum},${b.name},${b.descr??''},${b.required!==false},${b.status??'EKSİK'},${b.file_path??''},${b.mime_type??''},${b.date_label??''}) RETURNING *`; return r; }
+export async function updateTeamDoc(id:number,teamNum:string,b:any){ const sql=await db(); const [r]=await sql`UPDATE team_docs SET name=COALESCE(${b.name??null},name),descr=COALESCE(${b.descr??null},descr),required=COALESCE(${typeof b.required==='boolean'?b.required:null},required),status=COALESCE(${b.status??null},status),file_path=COALESCE(${b.file_path??null},file_path),mime_type=COALESCE(${b.mime_type??null},mime_type),date_label=COALESCE(${b.date_label??null},date_label),review_note=COALESCE(${b.review_note??null},review_note),uploaded_at=CASE WHEN ${b.file_path??null} IS NOT NULL THEN now() ELSE uploaded_at END,updated_at=now() WHERE id=${id} AND team_num=${teamNum} RETURNING *`; return r??null; }
+export async function deleteTeamDoc(id:number,teamNum:string){ const sql=await db(); const [r]=await sql`DELETE FROM team_docs WHERE id=${id} AND team_num=${teamNum} RETURNING *`; return r??null; }
 
-/* Pages */
-export async function getPage(slug: string): Promise<any | null> {
-  if (PG_URL) { const s = await pg(); const [r] = await s`SELECT * FROM pages WHERE slug=${slug}`; return r ?? null; }
-  return sq().prepare(`SELECT * FROM pages WHERE slug=?`).get(slug) ?? null;
-}
-export async function listPages(): Promise<any[]> {
-  if (PG_URL) { const s = await pg(); return await s`SELECT slug,title,updated FROM pages ORDER BY slug`; }
-  return sq().prepare(`SELECT slug,title,updated FROM pages ORDER BY slug`).all();
-}
-export async function savePage(slug: string, title: string, body: string): Promise<void> {
-  if (PG_URL) { const s = await pg(); await s`INSERT INTO pages (slug,title,body,updated) VALUES (${slug},${title},${body},now()) ON CONFLICT (slug) DO UPDATE SET title=EXCLUDED.title, body=EXCLUDED.body, updated=now()`; return; }
-  sq().prepare(`INSERT INTO pages (slug,title,body,updated) VALUES (?,?,?,datetime('now')) ON CONFLICT(slug) DO UPDATE SET title=excluded.title, body=excluded.body, updated=datetime('now')`).run(slug, title, body);
-}
+export async function listPayments(teamNum?:string){ const sql=await db(); return teamNum ? sql`SELECT * FROM payments WHERE team_num=${teamNum} ORDER BY id DESC` : sql`SELECT * FROM payments ORDER BY id DESC`; }
+export async function savePayment(b:any){ const sql=await db(); if(b.id){const [r]=await sql`UPDATE payments SET team_num=${b.team_num},ref=${b.ref},item=${b.item},date_label=${b.date_label??''},amount_label=${b.amount_label},status=${b.status} WHERE id=${Number(b.id)} RETURNING *`;return r;} const [r]=await sql`INSERT INTO payments(team_num,ref,item,date_label,amount_label,status) VALUES(${b.team_num},${b.ref},${b.item},${b.date_label??''},${b.amount_label},${b.status}) RETURNING *`; return r; }
+export async function deletePayment(id:number){ const sql=await db(); await sql`DELETE FROM payments WHERE id=${id}`; }
 
-/* Settings */
-export async function getSettings(keys?: string[]): Promise<Record<string, string>> {
-  let rows: any[];
-  if (PG_URL) { const s = await pg(); rows = keys ? await s`SELECT * FROM settings WHERE key IN ${s(keys)}` : await s`SELECT * FROM settings`; }
-  else rows = keys
-    ? sq().prepare(`SELECT * FROM settings WHERE key IN (${keys.map(() => "?").join(",")})`).all(...keys)
-    : sq().prepare(`SELECT * FROM settings`).all();
-  return Object.fromEntries(rows.map((r: any) => [r.key, r.value]));
-}
-export async function setSetting(key: string, value: string): Promise<void> {
-  if (PG_URL) { const s = await pg(); await s`INSERT INTO settings (key,value) VALUES (${key},${value}) ON CONFLICT (key) DO UPDATE SET value=EXCLUDED.value`; return; }
-  sq().prepare(`INSERT INTO settings (key,value) VALUES (?,?) ON CONFLICT(key) DO UPDATE SET value=excluded.value`).run(key, value);
-}
+export async function listMedia(all=false){ const sql=await db(); return all ? sql`SELECT * FROM media ORDER BY created_at DESC` : sql`SELECT * FROM media WHERE published=true ORDER BY created_at DESC`; }
+export async function addMedia(b:any){ const sql=await db(); const [r]=await sql`INSERT INTO media(title,type,event_slug,path,url,mime_type,size_bytes,alt_text,caption,published) VALUES(${b.title},${b.type},${b.event_slug??''},${b.path},${b.url},${b.mime_type??''},${Number(b.size_bytes)||0},${b.alt_text??''},${b.caption??''},${b.published!==false}) RETURNING *`; return r; }
+export async function updateMedia(id:number,b:any){ const sql=await db(); const [r]=await sql`UPDATE media SET title=${b.title},type=${b.type},event_slug=${b.event_slug??''},alt_text=${b.alt_text??''},caption=${b.caption??''},published=${b.published!==false},updated_at=now() WHERE id=${id} RETURNING *`; return r??null; }
+export async function deleteMedia(id:number){ const sql=await db(); const [r]=await sql`DELETE FROM media WHERE id=${id} RETURNING *`; return r??null; }
 
-/* Team docs & payments (portal) */
-export async function listTeamDocs(teamNum: string): Promise<any[]> {
-  if (PG_URL) { const s = await pg(); return await s`SELECT * FROM team_docs WHERE team_num=${teamNum} ORDER BY id`; }
-  return sq().prepare(`SELECT * FROM team_docs WHERE team_num=? ORDER BY id`).all(teamNum);
-}
-export async function setTeamDocStatus(id: number, teamNum: string, status: string, dateLabel: string): Promise<void> {
-  if (PG_URL) { const s = await pg(); await s`UPDATE team_docs SET status=${status}, date_label=${dateLabel} WHERE id=${id} AND team_num=${teamNum}`; return; }
-  sq().prepare(`UPDATE team_docs SET status=?, date_label=? WHERE id=? AND team_num=?`).run(status, dateLabel, id, teamNum);
-}
-export async function listPayments(teamNum: string): Promise<any[]> {
-  if (PG_URL) { const s = await pg(); return await s`SELECT * FROM payments WHERE team_num=${teamNum} ORDER BY id`; }
-  return sq().prepare(`SELECT * FROM payments WHERE team_num=? ORDER BY id`).all(teamNum);
-}
+export async function listUsers(){ const sql=await db(); return sql`SELECT id,email,name,role,team_num,active,public_profile,public_title,public_bio,public_photo_url,sort_order,created_at,updated_at FROM cms_users ORDER BY role,email`; }
+export async function listPublicStaff(){ const sql=await db(); return sql`SELECT id,name,public_title,public_bio,public_photo_url,sort_order FROM cms_users WHERE active=true AND public_profile=true ORDER BY sort_order,name`; }
+export async function findUserByEmail(email:string){ const sql=await db(); const [r]=await sql`SELECT * FROM cms_users WHERE lower(email)=lower(${email}) LIMIT 1`; return r??null; }
+export async function saveUser(b:any){ const sql=await db(); const passHash=b.password?hashPassword(b.password):null; const pp=b.public_profile===true; const pt=b.public_title??''; const pb=b.public_bio??''; const photo=b.public_photo_url??''; const order=Number(b.sort_order)||0; if(b.id){const [r]=await sql`UPDATE cms_users SET email=${b.email.toLowerCase()},name=${b.name},role=${b.role},team_num=${b.team_num||null},active=${b.active!==false},public_profile=${pp},public_title=${pt},public_bio=${pb},public_photo_url=${photo},sort_order=${order},password_hash=COALESCE(${passHash},password_hash),updated_at=now() WHERE id=${Number(b.id)} RETURNING id,email,name,role,team_num,active,public_profile,public_title,public_bio,public_photo_url,sort_order`; return r;} const [r]=await sql`INSERT INTO cms_users(email,name,role,team_num,active,password_hash,public_profile,public_title,public_bio,public_photo_url,sort_order) VALUES(${b.email.toLowerCase()},${b.name},${b.role},${b.team_num||null},${b.active!==false},${passHash??hashPassword(tempPassword())},${pp},${pt},${pb},${photo},${order}) RETURNING id,email,name,role,team_num,active,public_profile,public_title,public_bio,public_photo_url,sort_order`;return r; }
+export async function deleteUser(id:number){ const sql=await db(); await sql`DELETE FROM cms_users WHERE id=${id}`; }
+export async function changeOwnPassword(email:string,current:string,next:string){ const u=await findUserByEmail(email); if(!u||!verifyPassword(current,u.password_hash)) return false; const sql=await db(); await sql`UPDATE cms_users SET password_hash=${hashPassword(next)},updated_at=now() WHERE id=${u.id}`; return true; }
 
-/* Stats (CMS panosu) */
-export async function getStats(): Promise<{ teams: number; pending: number; events: number; news: number }> {
-  if (PG_URL) { const s = await pg();
-    const [[a],[b],[c],[d]] = await Promise.all([
-      s`SELECT COUNT(*)::int c FROM teams`, s`SELECT COUNT(*)::int c FROM applications`,
-      s`SELECT COUNT(*)::int c FROM events WHERE published=true`, s`SELECT COUNT(*)::int c FROM news WHERE published=true`]);
-    return { teams: a.c, pending: b.c, events: c.c, news: d.c }; }
-  const d = sq(); const q = (t: string, w = "") => (d.prepare(`SELECT COUNT(*) c FROM ${t} ${w}`).get() as any).c;
-  return { teams: q("teams"), pending: q("applications"), events: q("events", "WHERE published=1"), news: q("news", "WHERE published=1") };
-}
+export async function createContact(b:any){ const sql=await db(); const [r]=await sql`INSERT INTO contacts(name,email,phone,subject,message,status) VALUES(${b.name},${b.email},${b.phone??''},${b.subject??''},${b.message},'YENİ') RETURNING id`; return r; }
+export async function listContacts(){ const sql=await db(); return sql`SELECT * FROM contacts ORDER BY created_at DESC`; }
+export async function updateContact(id:number,status:string){ const sql=await db(); await sql`UPDATE contacts SET status=${status},updated_at=now() WHERE id=${id}`; }
+
+export async function audit(actor:string,action:string,entity:string,entityId:string,details:any={}){ try{const sql=await db(); await sql`INSERT INTO audit_logs(actor,action,entity,entity_id,details) VALUES(${actor},${action},${entity},${entityId},${JSON.stringify(details)}::jsonb)`;}catch{} }
+export async function listAudit(limit=100){ const sql=await db(); return sql`SELECT * FROM audit_logs ORDER BY created_at DESC LIMIT ${limit}`; }
+export async function getStats(){ const sql=await db(); const [[t],[a],[e],[n],[m],[u],[c]]=await Promise.all([sql`SELECT COUNT(*)::int c FROM teams WHERE status='AKTİF'`,sql`SELECT COUNT(*)::int c FROM applications WHERE status='BAŞVURU ALINDI'`,sql`SELECT COUNT(*)::int c FROM events WHERE published=true`,sql`SELECT COUNT(*)::int c FROM news WHERE published=true`,sql`SELECT COUNT(*)::int c FROM media`,sql`SELECT COUNT(*)::int c FROM cms_users WHERE active=true`,sql`SELECT COUNT(*)::int c FROM contacts WHERE status='YENİ'`]); return {teams:t.c,pending:a.c,events:e.c,news:n.c,media:m.c,users:u.c,contacts:c.c}; }

@@ -1,0 +1,1 @@
+import {NextResponse} from "next/server";import {getNews} from "@/lib/db";export const dynamic="force-dynamic";export async function GET(_:Request,{params}:{params:Promise<{slug:string}>}){const {slug}=await params;const n=await getNews(slug);return n?NextResponse.json(n):NextResponse.json({error:'İçerik yok'},{status:404});}
