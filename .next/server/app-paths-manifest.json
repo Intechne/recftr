@@ -1,5 +1,0 @@
-{
-  "/api/applications/route": "app/api/applications/route.js",
-  "/(site)/page": "app/(site)/page.js",
-  "/(site)/kayit/page": "app/(site)/kayit/page.js"
-}
