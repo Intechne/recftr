@@ -188,8 +188,8 @@ FOR EACH ROW EXECUTE FUNCTION recf_sync_event_registered();
 
 -- Storage buckets. Public media/documents live in recf-public; team files are private.
 INSERT INTO storage.buckets (id,name,public,file_size_limit,allowed_mime_types)
-VALUES ('recf-public','recf-public',true,104857600,NULL)
-ON CONFLICT (id) DO UPDATE SET public=true, file_size_limit=104857600;
+VALUES ('recf-public','recf-public',true,52428800,NULL)
+ON CONFLICT (id) DO UPDATE SET public=true, file_size_limit=52428800;
 INSERT INTO storage.buckets (id,name,public,file_size_limit,allowed_mime_types)
 VALUES ('team-private','team-private',false,52428800,NULL)
 ON CONFLICT (id) DO UPDATE SET public=false, file_size_limit=52428800;

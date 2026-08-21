@@ -1,3 +1,7 @@
+# RECF Türkiye V3.0.2
+
+> CMS save + Supabase Storage repair build. Sistem sağlık kontrolü: `/admin/sistem`.
+
 # RECF Türkiye V3 — Complete CMS + Team Portal
 
 Next.js 15 + TypeScript + Supabase PostgreSQL/Storage + Vercel için hazırlanmış production sürümü.

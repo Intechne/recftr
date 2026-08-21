@@ -153,3 +153,17 @@ export async function updateContact(id:number,status:string){ const sql=await db
 export async function audit(actor:string,action:string,entity:string,entityId:string,details:any={}){ try{const sql=await db(); await sql`INSERT INTO audit_logs(actor,action,entity,entity_id,details) VALUES(${actor},${action},${entity},${entityId},${JSON.stringify(details)}::jsonb)`;}catch{} }
 export async function listAudit(limit=100){ const sql=await db(); return sql`SELECT * FROM audit_logs ORDER BY created_at DESC LIMIT ${limit}`; }
 export async function getStats(){ const sql=await db(); const [[t],[a],[e],[n],[m],[u],[c]]=await Promise.all([sql`SELECT COUNT(*)::int c FROM teams WHERE status='AKTİF'`,sql`SELECT COUNT(*)::int c FROM applications WHERE status='BAŞVURU ALINDI'`,sql`SELECT COUNT(*)::int c FROM events WHERE published=true`,sql`SELECT COUNT(*)::int c FROM news WHERE published=true`,sql`SELECT COUNT(*)::int c FROM media`,sql`SELECT COUNT(*)::int c FROM cms_users WHERE active=true`,sql`SELECT COUNT(*)::int c FROM contacts WHERE status='YENİ'`]); return {teams:t.c,pending:a.c,events:e.c,news:n.c,media:m.c,users:u.c,contacts:c.c}; }
+
+export async function dbDiagnostics(){
+  const hasUrl=!!(process.env.DATABASE_URL||process.env.POSTGRES_URL);
+  if(!hasUrl)return {ok:false,env:{databaseUrl:false},database:null,tables:[],missingTables:["DATABASE_URL"],error:"DATABASE_URL / POSTGRES_URL eksik."};
+  try{
+    const sql=await db();
+    const [who]=await sql`SELECT current_database() database,current_user db_user,now() time`;
+    const expected=["applications","teams","members","news","program_content","events","documents","pages","settings","team_docs","document_requirements","payments","cms_users","event_registrations","media","contacts","audit_logs"];
+    const rows=await sql`SELECT table_name FROM information_schema.tables WHERE table_schema='public' AND table_name IN ${sql(expected)}`;
+    const tables=rows.map((r:any)=>r.table_name);
+    const missingTables=expected.filter(x=>!tables.includes(x));
+    return {ok:missingTables.length===0,env:{databaseUrl:true},database:who,tables,missingTables,error:missingTables.length?`Eksik tablolar: ${missingTables.join(", ")}`:null};
+  }catch(e:any){return {ok:false,env:{databaseUrl:true},database:null,tables:[],missingTables:[],error:e?.message||"Veritabanı bağlantısı kurulamadı."};}
+}

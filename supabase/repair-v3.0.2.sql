@@ -1,3 +1,6 @@
+-- RECF Türkiye V3.0.2 CMS/Storage repair migration
+-- Idempotent: existing data is preserved. Run in Supabase SQL Editor.
+
 -- RECF Türkiye V3 — Complete CMS + Portal migration
 -- Existing V1/V2 Supabase project: SQL Editor -> New query -> paste/run once.
 
