@@ -9,7 +9,7 @@ export async function middleware(req: NextRequest) {
   const ok = need === "admin" ? role === "admin" : role === "mentor" || role === "admin";
   if (ok) return NextResponse.next();
   const url = req.nextUrl.clone();
-  url.pathname = "/giris";
+  url.pathname = need === "admin" ? "/cms-giris" : "/giris";
   url.searchParams.set("next", pathname);
   return NextResponse.redirect(url);
 }

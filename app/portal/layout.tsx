@@ -2,6 +2,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import Logout from "@/components/Logout";
+import { useEffect, useState } from "react";
 
 const menu = [
   { href: "/portal", label: "🏠  Panel" },
@@ -14,6 +15,12 @@ const menu = [
 
 export default function PortalLayout({ children }: { children: React.ReactNode }) {
   const path = usePathname();
+  const [team, setTeam] = useState<{ num: string; name: string }>({ num: "", name: "" });
+  useEffect(() => {
+    fetch("/api/team").then(r => r.ok ? r.json() : null).then(d => {
+      if (d) setTeam({ num: d.num, name: d.profile?.name || "" });
+    }).catch(() => {});
+  }, []);
   return (
     <div className="min-h-screen bg-paper lg:grid lg:grid-cols-[248px_1fr]">
       <aside className="bg-ink lg:min-h-screen">
@@ -34,14 +41,14 @@ export default function PortalLayout({ children }: { children: React.ReactNode }
           })}
         </nav>
         <div className="mx-4 mt-8 hidden rounded-xl border-[1.5px] border-cyan-brand bg-white/5 p-4 lg:block">
-          <p className="font-display text-[26px] font-bold tracking-[2px] text-white">905A</p>
-          <p className="mt-1 font-display text-[10px] font-medium tracking-[0.5px] text-cyan-brand">VOLTRAN ROBOTICS · ACH</p>
+          <p className="font-display text-[26px] font-bold tracking-[2px] text-white">{team.num || "—"}</p>
+          <p className="mt-1 font-display text-[10px] font-medium tracking-[0.5px] text-cyan-brand">{(team.name || "TAKIMIN").toUpperCase()}</p>
         </div>
       </aside>
       <div>
         <header className="flex items-center justify-between border-b border-ink/10 bg-white px-7 py-4">
           <span className="font-display text-[14px] font-semibold tracking-[1px] text-ink">TAKIM YÖNETİM SİSTEMİ</span>
-          <span className="flex items-center gap-4 text-[13.5px] font-semibold text-ink/55">🔔 <span>Mentor: A. Yılmaz</span> <Logout /></span>
+          <span className="flex items-center gap-4 text-[13.5px] font-semibold text-ink/55"><span>Mentor Hesabı</span> <Logout /></span>
         </header>
         <main className="p-6 lg:p-8">{children}</main>
       </div>

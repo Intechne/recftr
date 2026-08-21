@@ -3,7 +3,9 @@ import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import { events, eventBySlug, programs } from "@/lib/data";
 import EventTabs from "./EventTabs";
+import { getEvent } from "@/lib/db";
 
+export const dynamicParams = true;
 export function generateStaticParams() {
   return events.map((e) => ({ slug: e.slug }));
 }
@@ -16,7 +18,27 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
 export default async function EventPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
   const e = eventBySlug(slug);
-  if (!e) notFound();
+  if (!e) {
+    const d = await getEvent(slug);
+    if (!d) notFound();
+    return (
+      <div className="mx-auto max-w-3xl px-5 py-16">
+        <p className="font-display text-[13px] font-semibold tracking-[2px] text-cyan-deep">⬡ {d.code} · {d.status}</p>
+        <h1 className="mt-2 font-display text-[36px] font-bold text-ink">{String(d.title).toUpperCase()}</h1>
+        <p className="mt-3 text-[15.5px] text-ink/65">{d.excerpt}</p>
+        <div className="mt-7 grid gap-4 sm:grid-cols-2">
+          {[["TARİH", d.date_label], ["ŞEHİR", d.city], ["MEKAN", d.venue || "Açıklanacak"], ["KONTENJAN", `${d.registered}/${d.capacity} takım`]].map(([t, v]) => (
+            <div key={t as string} className="rounded-xl border-2 border-ink bg-white p-4 shadow-plateSm shadow-cyan-brand">
+              <p className="font-display text-[10.5px] font-semibold tracking-[1.5px] text-ink/50">{t}</p>
+              <p className="mt-1 font-display text-[16px] font-bold text-ink">{v}</p>
+            </div>
+          ))}
+        </div>
+        <Link href="/kayit" className="plate-hover mt-8 inline-block rounded-md bg-ink px-6 py-3.5 font-display text-[14px] font-bold text-white shadow-plateSm shadow-cyan-brand">TAKIMINI KAYDET →</Link>
+        <p className="mt-6 text-[13px] text-ink/50">Detaylı ajanda ve saha planı etkinlik tarihinden 2 hafta önce yayınlanır.</p>
+      </div>
+    );
+  }
   const p = programs.find((x) => x.slug === e.program)!;
   const cta = e.status === "open" ? "TAKIMINI KAYDET" : e.status === "full" ? "YEDEK LİSTEYE YAZIL" : "HABERDAR OL";
 

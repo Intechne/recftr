@@ -16,11 +16,13 @@ function users(): Record<string, { pass: string; role: SessionRole }> {
 }
 
 export async function POST(req: NextRequest) {
-  const { email, pass } = await req.json();
+  const { email, pass, scope } = await req.json();
   const normalizedEmail = typeof email === "string" ? email.toLowerCase().trim() : "";
   const u = users()[normalizedEmail];
   if (!u || u.pass !== pass)
     return NextResponse.json({ error: "E-posta veya şifre hatalı." }, { status: 401 });
+  if (scope === "cms" && u.role !== "admin")
+    return NextResponse.json({ error: "Bu giriş yalnızca yönetim ekibi içindir. Takım girişi için /giris adresini kullanın." }, { status: 403 });
 
   try {
     const token = await createSessionToken(u.role);

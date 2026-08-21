@@ -1,14 +1,21 @@
 "use client";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { tickerItems } from "@/lib/data";
 
 /* ── Duyuru şeridi (marquee) ───────────────────────────── */
 export function Ticker() {
+  const [items, setItems] = useState<string[]>(tickerItems);
+  useEffect(() => {
+    fetch("/api/settings").then(r => r.ok ? r.json() : null).then(d => {
+      if (d?.ticker) { try { const t = JSON.parse(d.ticker); if (Array.isArray(t) && t.length) setItems(t); } catch {} }
+    }).catch(() => {});
+  }, []);
+
   const row = (
     <div className="flex items-center gap-9 pr-9">
-      {tickerItems.map((m, i) => (
+      {items.map((m, i) => (
         <span key={i} className="flex items-center gap-9 whitespace-nowrap">
           <span className="font-display text-[12.5px] font-medium text-white">{m}</span>
           <span className="text-cyan-brand">•</span>
@@ -140,6 +147,7 @@ export function Footer() {
       </div>
       <div className="mx-auto flex max-w-7xl flex-col gap-2 border-t border-ink/10 px-5 py-6 text-[12px] text-ink/50 sm:flex-row sm:items-center sm:justify-between lg:px-10">
         <p>© 2026 RECF Türkiye | Intechne Teknoloji · RECF ve VEX Robotics ayrı kuruluşlardır.</p>
+          <span className="mt-2 block space-x-4 text-[12px]"><a href="/kvkk" className="underline decoration-white/30 hover:text-cyan-brand">KVKK</a><a href="/gizlilik" className="underline decoration-white/30 hover:text-cyan-brand">Gizlilik</a><a href="/cms-giris" className="opacity-40 hover:opacity-100">Yönetim</a></span>
         <p className="font-display font-medium tracking-wide">MAÇ GÜNÜ. HER GÜN. ⬡</p>
       </div>
     </footer>

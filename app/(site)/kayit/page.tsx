@@ -46,7 +46,7 @@ export default function KayitPage() {
                 <p className="text-5xl" aria-hidden>✅</p>
                 <h2 className="mt-4 font-display text-[24px] font-bold text-ink">BAŞVURUN ALINDI!</h2>
                 <p className="mx-auto mt-3 max-w-md text-[15px] leading-relaxed text-ink/60">
-                  {form.num} plakası için ön kaydın oluşturuldu{appId ? ` (Başvuru No: #${String(appId).padStart(4, "0")})` : ""}. Onay e-postası 24 saat içinde <strong>{form.email || "e-posta adresine"}</strong> gönderilecek.
+                  {form.num || "— — —"} plakası için ön kaydın oluşturuldu{appId ? ` (Başvuru No: #${String(appId).padStart(4, "0")})` : ""}. Onay e-postası 24 saat içinde <strong>{form.email || "e-posta adresine"}</strong> gönderilecek.
                   Resmi kayıt recfevents.org üzerinde tamamlanır.
                 </p>
                 <Link href="/portal" className="mt-6 inline-block rounded-md bg-ink px-6 py-3.5 font-display text-[14px] font-bold text-white">TAKIM PORTALINA GİT →</Link>
@@ -81,7 +81,7 @@ export default function KayitPage() {
                       </div>
                     </div>
                     <div><span className={label}>Tercih Edilen Takım No</span>
-                      <input className={input} value={form.num} onChange={(e) => set("num", e.target.value.toUpperCase())} placeholder="905A (müsaitlik kontrol edilecek)" maxLength={7} />
+                      <input className={input} value={form.num || "— — —"} onChange={(e) => set("num", e.target.value.toUpperCase())} placeholder="905A (müsaitlik kontrol edilecek)" maxLength={7} />
                     </div>
                   </div>
                 )}

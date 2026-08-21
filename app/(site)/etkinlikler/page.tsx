@@ -1,7 +1,7 @@
 "use client";
 import Link from "next/link";
-import { useState } from "react";
-import { events, programs } from "@/lib/data";
+import { useEffect, useState } from "react";
+import { events as staticEvents, programs } from "@/lib/data";
 import { PageHead, CodeBadge, StatusPill } from "@/components/Ui";
 
 const monthOf = (iso: string) => {
@@ -11,6 +11,29 @@ const monthOf = (iso: string) => {
 };
 
 export default function EtkinliklerPage() {
+  const [dbEvents, setDbEvents] = useState<any[]>([]);
+  useEffect(() => { fetch("/api/events").then(r => r.ok ? r.json() : []).then(setDbEvents).catch(() => {}); }, []);
+  // DB otoritedir: mevcut slug'larda doluluk/durum güncellenir, yeni CMS etkinlikleri listeye eklenir.
+  const stMap = (t: string) => t === "DOLU" ? "full" : (t === "YAKINDA" || t === "TAMAMLANDI") ? "soon" : "open";
+  const isoOf = (label: string) => {
+    const ay: Record<string, string> = { "ocak":"01","şubat":"02","mart":"03","nisan":"04","mayıs":"05","haziran":"06","temmuz":"07","ağustos":"08","eylül":"09","ekim":"10","kasım":"11","aralık":"12" };
+    const m = label.toLowerCase().match(/(\d{1,2})?\s*(ocak|şubat|mart|nisan|mayıs|haziran|temmuz|ağustos|eylül|ekim|kasım|aralık)\s*(\d{4})/);
+    return m ? `${m[3]}-${ay[m[2]]}-${(m[1] ?? "1").padStart(2, "0")}` : "2027-06-01";
+  };
+  const events = (() => {
+    const merged = staticEvents.map(se => {
+      const d = dbEvents.find(x => x.slug === se.slug);
+      return d ? { ...se, registered: d.registered, capacity: d.capacity, status: stMap(d.status), date: d.date_label, city: d.city, venue: d.venue || se.venue } : se;
+    }).filter(se => !dbEvents.length || dbEvents.some(x => x.slug === se.slug));
+    const extras = dbEvents.filter(x => !staticEvents.some(se => se.slug === x.slug)).map(x => ({
+      slug: x.slug, title: x.title, city: x.city, venue: x.venue || "Açıklanacak",
+      date: x.date_label, dateISO: isoOf(x.date_label),
+      program: (programs.find(pp => pp.code === x.code)?.slug ?? "achieve"),
+      status: stMap(x.status), capacity: x.capacity, registered: x.registered, desc: x.excerpt || "",
+    })) as any[];
+    return [...merged, ...extras];
+  })();
+
   const [prog, setProg] = useState<string>("TÜMÜ");
   const [status, setStatus] = useState<string>("TÜMÜ");
   const filtered = events.filter((e) => {

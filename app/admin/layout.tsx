@@ -9,6 +9,7 @@ const menu = [
   { href: "/admin/haberler", label: "📰  Haberler & Duyurular" },
   { href: "/admin/onaylar", label: "👥  Takım Onayları" },
   { href: "/admin/dokumanlar", label: "📄  Dokümanlar" },
+  { href: "/admin/sayfalar", label: "📃  Sayfalar (KVKK vb.)" },
   { href: "/admin/medya", label: "🖼  Medya Kütüphanesi" },
   { href: "/admin/ekip", label: "🧑‍🤝‍🧑  Ekip & Yetkiler" },
   { href: "/admin/ayarlar", label: "⚙️  Site Ayarları" },
@@ -40,7 +41,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         <header className="flex items-center justify-between border-b border-ink/10 bg-white px-7 py-4">
           <span className="font-display text-[13px] font-semibold tracking-[1px] text-ink">YÖNETİM PANELİ</span>
           <span className="flex items-center gap-4 text-[13px] font-semibold text-ink/55">
-            <Link href="/" className="hover:text-cyan-deep">🌐 Siteyi Gör</Link> <span>Admin: Ömer A.</span> <Logout />
+            <Link href="/" className="hover:text-cyan-deep">🌐 Siteyi Gör</Link> <span>Yönetici</span> <Logout />
           </span>
         </header>
         <main className="p-6 lg:p-8">{children}</main>

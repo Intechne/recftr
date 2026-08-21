@@ -1,16 +1,18 @@
+"use client";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 
 const stats = [
-  { label: "BEKLEYEN TAKIM ONAYI", big: "12", sub: "3'ü ödeme doğrulaması", hex: "#E5303E" },
-  { label: "YAYINDAKİ ETKİNLİK", big: "7", sub: "2 taslak", hex: "#29B9E5" },
-  { label: "BU AY YAYINLANAN HABER", big: "9", sub: "1 zamanlanmış", hex: "#1E8CD9" },
-  { label: "DOKÜMAN İNDİRME (30G)", big: "4.212", sub: "En çok: Pinnacle Kılavuzu", hex: "#8DC63F" },
+  { label: "BEKLEYEN TAKIM ONAYI", big: "12", sub: "canlı sayaç", hex: "#E5303E" },
+  { label: "YAYINDAKİ ETKİNLİK", big: "7", sub: "canlı sayaç", hex: "#29B9E5" },
+  { label: "BU AY YAYINLANAN HABER", big: "9", sub: "canlı sayaç", hex: "#1E8CD9" },
+  { label: "ONAYLI TAKIM", big: "—", sub: "canlı veritabanı sayacı", hex: "#8DC63F" },
 ];
 const quick = [
   { t: "+ YENİ ETKİNLİK", href: "/admin/etkinlikler", primary: true },
   { t: "+ YENİ HABER", href: "/admin/haberler" },
-  { t: "+ DOKÜMAN YÜKLE", href: "#" },
-  { t: "+ DUYURU ŞERİDİ DÜZENLE", href: "#" },
+  { t: "+ DOKÜMAN YÜKLE", href: "/admin/dokumanlar" },
+  { t: "+ DUYURU ŞERİDİ DÜZENLE", href: "/admin/ayarlar" },
 ];
 const acts = [
   { who: "İpek", what: "905B takım başvurusunu onayladı", when: "5 dk önce" },
@@ -20,16 +22,22 @@ const acts = [
 ];
 
 export default function AdminHome() {
+  const [st, setSt] = useState<{ teams: number; pending: number; events: number; news: number } | null>(null);
+  useEffect(() => { fetch("/api/stats").then(r => r.ok ? r.json() : null).then(setSt).catch(() => {}); }, []);
+
   return (
     <div>
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        {stats.map((s) => (
+        {stats.map((s, si) => {
+          const live = st ? [st.pending, st.events, st.news, st.teams][si] : null;
+          return (
           <div key={s.label} className="rounded-xl border-[1.5px] border-ink bg-white p-5 shadow-plateSm" style={{ ["--tw-shadow-color" as string]: s.hex }}>
             <p className="font-display text-[10px] font-medium tracking-[1px] text-ink/50">{s.label}</p>
-            <p className="mt-1 font-display text-[30px] font-bold text-ink">{s.big}</p>
+            <p className="mt-1 font-display text-[30px] font-bold text-ink">{live ?? s.big}</p>
             <p className="text-[12.5px] text-ink/55">{s.sub}</p>
           </div>
-        ))}
+        );
+        })}
       </div>
       <div className="mt-6 grid gap-5 xl:grid-cols-2">
         <section className="rounded-xl border-[1.5px] border-ink bg-white p-6">

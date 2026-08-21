@@ -1,10 +1,13 @@
 "use client";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { docCategories } from "@/lib/data";
 import { PageHead } from "@/components/Ui";
 
 export default function DokumanlarPage() {
   const [active, setActive] = useState(0);
+  const [db, setDb] = useState<{ id: number; name: string; cat: string; size_label: string; url: string; updated_label: string }[]>([]);
+  useEffect(() => { fetch("/api/documents").then(r => r.ok ? r.json() : []).then(setDb).catch(() => {}); }, []);
+  const catMap: Record<string, string> = { "Oyun Kılavuzları": "Oyun Kılavuzları", "Formlar": "Formlar", "Jüri Belgeleri": "Jüri Belgeleri", "Marka": "Marka" };
   const cat = docCategories[active];
   return (
     <div className="pb-20">
