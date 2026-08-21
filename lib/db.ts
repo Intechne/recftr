@@ -89,8 +89,29 @@ export async function upsertNews(n:any){ const sql=await db(); const [r]=await s
   cover_url=EXCLUDED.cover_url,featured=EXCLUDED.featured,author=EXCLUDED.author,date=EXCLUDED.date,updated_at=now() RETURNING *`; return r; }
 export async function deleteNews(slug:string){ const sql=await db(); await sql`DELETE FROM news WHERE slug=${slug}`; }
 
-export async function listPrograms(all=false){ const sql=await db(); return all ? sql`SELECT * FROM program_content ORDER BY sort_order,slug` : sql`SELECT * FROM program_content WHERE active=true ORDER BY sort_order,slug`; }
-export async function getProgram(slug:string,includeInactive=false){ const sql=await db(); const [r]=includeInactive ? await sql`SELECT * FROM program_content WHERE slug=${slug}` : await sql`SELECT * FROM program_content WHERE slug=${slug} AND active=true`; return r??null; }
+function jsonArray(value:any){
+  if(Array.isArray(value)) return value;
+  if(typeof value==='string'){
+    try{const parsed=JSON.parse(value);return Array.isArray(parsed)?parsed:[];}catch{return [];}
+  }
+  return [];
+}
+function safeText(value:any){return typeof value==='string'?value:(value==null?'':String(value));}
+function normalizeProgramRow(row:any){
+  if(!row||typeof row!=='object') return null;
+  return {
+    ...row,
+    slug:safeText(row.slug),code:safeText(row.code),name:safeText(row.name),game:safeText(row.game),
+    age:safeText(row.age),age_detail:safeText(row.age_detail),color_hex:safeText(row.color_hex)||'#29B9E5',
+    short:safeText(row.short),long:safeText(row.long),source:safeText(row.source),cover_url:safeText(row.cover_url),
+    chips:jsonArray(row.chips).map(safeText).filter(Boolean),
+    match_types:jsonArray(row.match_types).filter(x=>x&&typeof x==='object'),
+    facts:jsonArray(row.facts).filter(x=>x&&typeof x==='object'),
+    active:row.active!==false,sort_order:Number(row.sort_order)||0,
+  };
+}
+export async function listPrograms(all=false){ const sql=await db(); const rows=all ? await sql`SELECT * FROM program_content ORDER BY sort_order,slug` : await sql`SELECT * FROM program_content WHERE active=true ORDER BY sort_order,slug`; return rows.map(normalizeProgramRow).filter(Boolean); }
+export async function getProgram(slug:string,includeInactive=false){ const sql=await db(); const [r]=includeInactive ? await sql`SELECT * FROM program_content WHERE slug=${slug}` : await sql`SELECT * FROM program_content WHERE slug=${slug} AND active=true`; return normalizeProgramRow(r); }
 export async function saveProgram(b:any){ const sql=await db(); const slug=slugify(b.slug||b.name||''); const chips=JSON.stringify(Array.isArray(b.chips)?b.chips:[]); const match=JSON.stringify(Array.isArray(b.match_types)?b.match_types:[]); const facts=JSON.stringify(Array.isArray(b.facts)?b.facts:[]); const [r]=await sql`INSERT INTO program_content(slug,code,name,game,age,age_detail,color_hex,short,long,chips,match_types,facts,source,cover_url,active,sort_order) VALUES(${slug},${b.code},${b.name},${b.game??''},${b.age??''},${b.age_detail??''},${b.color_hex??'#29B9E5'},${b.short??''},${b.long??''},${chips}::jsonb,${match}::jsonb,${facts}::jsonb,${b.source??''},${b.cover_url??''},${b.active!==false},${Number(b.sort_order)||0}) ON CONFLICT(slug) DO UPDATE SET code=EXCLUDED.code,name=EXCLUDED.name,game=EXCLUDED.game,age=EXCLUDED.age,age_detail=EXCLUDED.age_detail,color_hex=EXCLUDED.color_hex,short=EXCLUDED.short,long=EXCLUDED.long,chips=EXCLUDED.chips,match_types=EXCLUDED.match_types,facts=EXCLUDED.facts,source=EXCLUDED.source,cover_url=EXCLUDED.cover_url,active=EXCLUDED.active,sort_order=EXCLUDED.sort_order,updated_at=now() RETURNING *`; return r; }
 export async function deleteProgram(slug:string){ const sql=await db(); await sql`UPDATE program_content SET active=false,updated_at=now() WHERE slug=${slug}`; }
 
