@@ -1,7 +1,14 @@
-import type {Metadata} from "next";
+import type {Metadata, Viewport} from "next";
 import "./globals.css";
 import BrandHead from "@/components/BrandHead";
 import {getSettings} from "@/lib/db";
+
+export const viewport:Viewport={
+  width:"device-width",
+  initialScale:1,
+  viewportFit:"cover",
+  themeColor:"#10192F",
+};
 
 export async function generateMetadata():Promise<Metadata>{
   let s:Record<string,string>={};

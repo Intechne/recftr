@@ -31,7 +31,7 @@ export default function Rehber() {
     <div className="pb-20">
       <PageHead kicker="REHBER" title="TAKIM KAYDI NASIL YAPILIR?"
         sub="Sıfırdan sahaya: bir RECF takımı kurmanın ve ilk etkinliğe kaydolmanın eksiksiz yolu. Ortalama süre: 30 dakika başvuru + 24 saat onay." />
-      <div className="mx-auto max-w-5xl space-y-4 px-5 lg:px-10">
+      <div className="safe-x mx-auto max-w-5xl space-y-4 lg:px-10">
         {steps.map((s, i) => (
           <Reveal key={s.title} delay={i * 50}>
             <div className="flex gap-5 rounded-xl border-2 border-ink bg-white p-6 shadow-plateSm shadow-cyan-brand">
@@ -46,7 +46,7 @@ export default function Rehber() {
         ))}
       </div>
 
-      <div className="mx-auto mt-16 max-w-5xl px-5 lg:px-10">
+      <div className="safe-x mx-auto mt-12 max-w-5xl sm:mt-16 lg:px-10">
         <h2 className="font-display text-[26px] font-bold text-ink">SIK SORULAN SORULAR</h2>
         <div className="mt-5 space-y-3">
           {registrationFaqs.map((f, i) => (

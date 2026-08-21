@@ -4,10 +4,10 @@ import {FigmaIcon} from "@/components/FigmaIcon";
 /* Sayfa başlığı bandı */
 export function PageHead({ kicker, title, sub }: { kicker: string; title: string; sub?: string }) {
   return (
-    <div className="mx-auto max-w-7xl px-5 pb-8 pt-12 lg:px-10">
+    <div className="safe-x mx-auto max-w-7xl pb-7 pt-9 sm:pb-8 sm:pt-12 lg:px-10 2xl:pt-14">
       <p className="flex items-center gap-1.5 font-display text-[12px] font-semibold tracking-[2px] text-cyan-deep"><FigmaIcon name="robot" className="h-4 w-4"/> {kicker}</p>
-      <h1 className="mt-2.5 font-display text-4xl font-bold text-ink lg:text-[52px] lg:leading-none">{title}</h1>
-      {sub && <p className="mt-3.5 max-w-2xl text-[16px] text-ink/60">{sub}</p>}
+      <h1 className="mt-2.5 font-display text-[clamp(2rem,8vw,3.25rem)] font-bold leading-[1.02] text-ink lg:text-[52px] 2xl:text-[58px]">{title}</h1>
+      {sub && <p className="mt-3.5 max-w-2xl text-[15px] leading-relaxed text-ink/60 sm:text-[16px] 2xl:text-[17px]">{sub}</p>}
     </div>
   );
 }
@@ -45,7 +45,7 @@ export function StatusPill({ status }: { status: "open" | "full" | "soon" | "ona
 export function BtnPrimary({ href, children, dark = false }: { href: string; children: React.ReactNode; dark?: boolean }) {
   return (
     <Link href={href}
-      className={`plate-hover inline-block rounded-md px-6 py-3.5 font-display text-[15px] font-bold ${
+      className={`plate-hover inline-flex min-h-11 items-center justify-center rounded-md px-5 py-3 font-display text-[14px] font-bold sm:px-6 sm:py-3.5 sm:text-[15px] ${
         dark ? "bg-ink text-white shadow-plateSm shadow-cyan-brand" : "bg-cyan-brand text-ink shadow-plateSm shadow-ink/20"}`}>
       {children}
     </Link>
@@ -54,7 +54,7 @@ export function BtnPrimary({ href, children, dark = false }: { href: string; chi
 export function BtnGhost({ href, children, light = false }: { href: string; children: React.ReactNode; light?: boolean }) {
   return (
     <Link href={href}
-      className={`inline-block rounded-md border-2 px-6 py-3.5 font-display text-[15px] font-bold transition-colors ${
+      className={`inline-flex min-h-11 items-center justify-center rounded-md border-2 px-5 py-3 font-display text-[14px] font-bold transition-colors sm:px-6 sm:py-3.5 sm:text-[15px] ${
         light ? "border-white/40 text-white hover:border-white" : "border-ink bg-white text-ink hover:bg-ink hover:text-white"}`}>
       {children}
     </Link>
@@ -65,7 +65,7 @@ export function BtnGhost({ href, children, light = false }: { href: string; chil
 export function SectionHead({ title, action, actionHref }: { title: string; action?: string; actionHref?: string }) {
   return (
     <div className="mb-7 flex flex-wrap items-end justify-between gap-4">
-      <h2 className="font-display text-[26px] font-bold text-ink lg:text-[34px]">{title}</h2>
+      <h2 className="font-display text-[24px] font-bold leading-tight text-ink sm:text-[26px] lg:text-[34px] 2xl:text-[38px]">{title}</h2>
       {action && actionHref && (
         <Link href={actionHref} className="font-display text-[14px] font-semibold text-cyan-deep hover:underline">{action} →</Link>
       )}

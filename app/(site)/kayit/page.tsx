@@ -66,7 +66,7 @@ export default function KayitPage() {
   return (
     <div className="pb-20">
       <PageHead kicker="SEZON 2026–27 BAŞVURUSU" title="TAKIM KAYDI" />
-      <div className="mx-auto max-w-7xl px-5 lg:px-10">
+      <div className="safe-x mx-auto max-w-7xl lg:px-10">
         <ol className="flex flex-wrap items-center gap-3">
           {steps.map((s, i) => (
             <li key={s} className="flex items-center gap-3">
@@ -135,7 +135,7 @@ export default function KayitPage() {
           </div>
 
           <div className="space-y-5 lg:sticky lg:top-24">
-            <div className="overflow-hidden rounded-xl border-[3px] border-cyan-brand bg-white shadow-plate shadow-cyan-brand/45"><div className="flex items-center justify-between bg-ink px-4 py-2.5"><span className="font-display text-[12px] font-bold text-cyan-brand">PLAKA ÖNİZLEME</span><span className="font-display text-[11px] font-medium text-white/60">{p.code} · 26–27</span></div><p className={`py-5 text-center font-display font-bold text-ink ${form.num?"text-[58px] tracking-[5px]":"text-[24px] tracking-[2px] text-ink/30"}`}>{form.num || "TAKIM NO"}</p><p className="pb-4 text-center font-display text-[10.5px] font-medium tracking-[1px] text-ink/45">{(form.team || "TAKIMIN").toUpperCase()} · {[form.district,form.city].filter(Boolean).join(" / ").toUpperCase()}</p></div>
+            <div className="overflow-hidden rounded-xl border-[3px] border-cyan-brand bg-white shadow-plate shadow-cyan-brand/45"><div className="flex items-center justify-between bg-ink px-4 py-2.5"><span className="font-display text-[12px] font-bold text-cyan-brand">PLAKA ÖNİZLEME</span><span className="font-display text-[11px] font-medium text-white/60">{p.code} · 26–27</span></div><p className={`py-5 text-center font-display font-bold text-ink ${form.num?"text-[clamp(2.2rem,14vw,3.625rem)] tracking-[clamp(2px,1.2vw,5px)]":"text-[22px] tracking-[2px] text-ink/30"}`}>{form.num || "TAKIM NO"}</p><p className="pb-4 text-center font-display text-[10.5px] font-medium tracking-[1px] text-ink/45">{(form.team || "TAKIMIN").toUpperCase()} · {[form.district,form.city].filter(Boolean).join(" / ").toUpperCase()}</p></div>
             <div className="rounded-xl bg-ink p-5"><h3 className="font-display text-[14px] font-bold text-cyan-brand">KAYIT ÖZETİ</h3><dl className="mt-3 space-y-2.5 text-[13.5px]"><div className="flex justify-between"><dt className="text-white/70">Sezon lisansı ({p.code})</dt><dd className="font-display font-semibold text-white">₺{Number(pricing.fees?.[prog]||0).toLocaleString("tr-TR")}</dd></div>{form.kit && <div className="flex justify-between"><dt className="text-white/70">Saha kiti (opsiyonel)</dt><dd className="font-display font-semibold text-white">₺{Number(pricing.fieldKitFee||0).toLocaleString("tr-TR")}</dd></div>}<div className="flex justify-between"><dt className="text-white/70">Erken kayıt indirimi</dt><dd className="font-display font-semibold text-white">−₺{Number(pricing.discount||0).toLocaleString("tr-TR")}</dd></div></dl><div className="mt-3.5 flex items-center justify-between border-t border-white/20 pt-3"><span className="font-display text-[15px] font-bold text-white">TOPLAM</span><span className="font-display text-[20px] font-bold text-cyan-brand">₺{total.toLocaleString("tr-TR")}</span></div></div>
             <p className="text-[12.5px] leading-relaxed text-ink/50">Nasıl ilerleyeceğinden emin değil misin? <Link href="/rehber/takim-kaydi" className="font-semibold text-cyan-deep underline">Takım Kaydı Rehberi</Link>ni incele.</p>
           </div>

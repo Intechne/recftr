@@ -22,9 +22,9 @@ export default function MentorPage() {
     <div className="pb-20">
       <section className="field-grid-dark relative overflow-hidden bg-ink">
         <div aria-hidden className="absolute -top-20 right-[-5rem] h-44 w-44 rotate-45 bg-adc" />
-        <div className="mx-auto max-w-7xl px-5 py-14 lg:px-10">
+        <div className="safe-x mx-auto max-w-7xl py-10 sm:py-14 lg:px-10">
           <p className="font-display text-[12px] font-semibold tracking-[2px] text-cyan-brand">KATILIM / MENTORLUK</p>
-          <h1 className="mt-3.5 font-display text-4xl font-bold text-white lg:text-[50px]">MENTOR NASIL OLUNUR?</h1>
+          <h1 className="mt-3.5 font-display text-[clamp(2rem,8vw,3.125rem)] font-bold leading-tight text-white lg:text-[50px]">MENTOR NASIL OLUNUR?</h1>
           <p className="mt-4 max-w-xl text-[16px] leading-relaxed text-white/70">
             Öğretmen, veli, mühendis veya üniversite öğrencisi — bir takımın arkasındaki
             yetişkin sen olabilirsin. Teknik uzmanlık şart değil; rehberlik yeterli.
@@ -35,7 +35,7 @@ export default function MentorPage() {
         </div>
       </section>
 
-      <div className="mx-auto max-w-7xl px-5 pt-12 lg:px-10">
+      <div className="safe-x mx-auto max-w-7xl pt-10 sm:pt-12 lg:px-10">
         <div className="grid gap-5 lg:grid-cols-3">
           {cols.map((c, i) => (
             <Reveal key={c.title} delay={i * 70}>

@@ -90,7 +90,7 @@ export default function Page() {
     </div>
 
     {msg && <p className="mt-4 rounded-lg bg-cyan-deep/10 p-3 text-[13px] font-semibold text-cyan-deep">{msg}</p>}
-    <div className="mt-5 grid gap-3 rounded-xl border-2 border-ink bg-white p-5 md:grid-cols-3">
+    <div className="mt-5 grid gap-3 rounded-xl border-2 border-ink bg-white p-4 sm:p-5 md:grid-cols-3">
       <input className={i} placeholder="Başlık" value={title} onChange={e => setTitle(e.target.value)} />
       <input className={i} placeholder="Etkinlik slug (opsiyonel)" value={event} onChange={e => setEvent(e.target.value)} />
       <label className="text-[12px] font-semibold text-ink/70">Dosya

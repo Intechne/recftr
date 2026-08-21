@@ -1,6 +1,6 @@
-# RECF Türkiye V3.0.5
+# RECF Türkiye V3.0.7
 
-> CMS + takım portalı production paketi. V3.0.5: takım kayıt formu il/ilçe seçimi, zorunlu KVKK ve CMS görsel ölçü rehberi. Sistem sağlık kontrolü: `/admin/sistem`.
+> CMS + takım portalı production paketi. V3.0.7: V3.0.6 marka/Figma altyapısına telefon, tablet, desktop, geniş ekran ve Smart TV responsive desteği eklendi. Sistem sağlık kontrolü: `/admin/sistem`.
 
 # RECF Türkiye V3 — Complete CMS + Team Portal
 

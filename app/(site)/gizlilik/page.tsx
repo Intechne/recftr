@@ -6,7 +6,7 @@ export default async function GizlilikPage() {
   const p = await getPage("gizlilik");
   if (!p) notFound();
   return (
-    <div className="mx-auto max-w-3xl px-5 py-14">
+    <div className="safe-x mx-auto max-w-3xl py-14">
       <p className="font-display text-[13px] font-semibold tracking-[2px] text-cyan-deep">⬡ YASAL</p>
       <h1 className="mt-2 font-display text-[34px] font-bold text-ink">{p.title.toUpperCase()}</h1>
       <div className="mt-8 space-y-5">

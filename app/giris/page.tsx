@@ -2,6 +2,7 @@
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useState } from "react";
+import {FigmaIcon} from "@/components/FigmaIcon";
 
 function GirisForm() {
   const router = useRouter();
@@ -26,8 +27,8 @@ function GirisForm() {
 
   return (
     <div className="w-full max-w-md">
-      <Link href="/" className="font-display text-[22px] font-bold text-cyan-brand">⬡ RECF TÜRKİYE</Link>
-      <h1 className="mt-6 font-display text-[34px] font-bold text-white">TAKIM PORTALI</h1>
+      <Link href="/" className="inline-flex items-center gap-2 font-display text-[19px] font-bold text-cyan-brand sm:text-[22px]"><FigmaIcon name="robot" className="h-6 w-6"/> RECF TÜRKİYE</Link>
+      <h1 className="mt-6 font-display text-[30px] font-bold text-white sm:text-[34px] 2xl:text-[40px]">TAKIM PORTALI</h1>
       <p className="mt-2 text-[14.5px] text-white/60">Mentor hesabınla giriş yap — üyeler, belgeler, etkinlik kayıtları ve ödemeler.</p>
       <form onSubmit={login} className="mt-8">
         <label className="block font-display text-[12px] font-semibold tracking-[1px] text-white/70">MENTOR E-POSTA
@@ -50,7 +51,7 @@ function GirisForm() {
 }
 export default function GirisPage() {
   return (
-    <div className="field-grid-dark relative flex min-h-screen items-center justify-center overflow-hidden bg-ink px-5 py-12">
+    <div className="field-grid-dark safe-x relative flex min-h-screen min-h-[100dvh] items-center justify-center overflow-hidden bg-ink py-10 sm:py-12">
       <div aria-hidden className="absolute -left-24 -top-24 h-56 w-56 rotate-45 bg-alliance-red/80" />
       <div aria-hidden className="absolute -bottom-24 -right-24 h-56 w-56 rotate-45 bg-alliance-blue/80" />
       <Suspense><GirisForm /></Suspense>

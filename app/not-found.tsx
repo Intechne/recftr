@@ -8,10 +8,10 @@ export default function NotFound() {
           <span className="font-display text-[13px] font-bold text-cyan-brand">TR · RECF</span>
           <span className="font-display text-[11px] text-white/50">SAHA DIŞI</span>
         </div>
-        <p className="px-10 py-4 font-display text-[96px] font-bold tracking-[6px] text-ink">404</p>
+        <p className="px-6 py-4 font-display text-[clamp(4rem,25vw,6rem)] font-bold tracking-[clamp(2px,1.5vw,6px)] text-ink sm:px-10">404</p>
       </div>
-      <h1 className="mt-8 font-display text-[28px] font-bold text-white">BU PLAKA KAYITLI DEĞİL.</h1>
-      <p className="mt-2 max-w-md text-[15px] text-white/60">Aradığın sayfa taşınmış ya da hiç var olmamış olabilir. Seni sahaya geri götürelim.</p>
+      <h1 className="mt-8 text-center font-display text-[24px] font-bold text-white sm:text-[28px]">BU PLAKA KAYITLI DEĞİL.</h1>
+      <p className="mt-2 max-w-md text-center text-[15px] text-white/60">Aradığın sayfa taşınmış ya da hiç var olmamış olabilir. Seni sahaya geri götürelim.</p>
       <div className="mt-7 flex gap-3">
         <Link href="/" className="rounded-md bg-cyan-brand px-5 py-3 font-display text-[14px] font-bold text-ink">ANA SAYFA</Link>
         <Link href="/etkinlikler" className="rounded-md border-2 border-white/40 px-5 py-3 font-display text-[14px] font-bold text-white">ETKİNLİKLER</Link>

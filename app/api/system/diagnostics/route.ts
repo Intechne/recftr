@@ -10,6 +10,6 @@ export async function GET(req:NextRequest){
     ok:db.ok&&storage.ok&&!!process.env.SESSION_SECRET,
     env:{sessionSecret:!!process.env.SESSION_SECRET,adminEmail:!!process.env.ADMIN_EMAIL,adminPassword:!!process.env.ADMIN_PASSWORD},
     db,storage,
-    version:"3.0.3"
+    version:"3.0.7"
   });
 }

@@ -24,9 +24,9 @@ function CmsForm() {
   const input = "mt-1.5 w-full rounded-md border-[1.5px] border-white/20 bg-white/[.06] px-4 py-3.5 text-[15px] text-white placeholder:text-white/30 outline-none focus:border-cyan-brand";
 
   return (
-    <div className="w-full max-w-sm">
+    <div className="w-full max-w-sm 2xl:max-w-md">
       <p className="flex items-center gap-2 font-display text-[15px] font-bold tracking-[2px] text-cyan-brand"><FigmaIcon name="ayarlar" className="h-5 w-5"/> RECF TÜRKİYE</p>
-      <h1 className="mt-3 font-display text-[28px] font-bold text-white">İÇERİK YÖNETİM SİSTEMİ</h1>
+      <h1 className="mt-3 font-display text-[26px] font-bold text-white sm:text-[28px] 2xl:text-[34px]">İÇERİK YÖNETİM SİSTEMİ</h1>
       <p className="mt-2 text-[13.5px] text-white/50">Yalnızca yetkili ekip üyeleri. Tüm oturumlar kayıt altındadır.</p>
       <form onSubmit={login} className="mt-7">
         <label className="block font-display text-[11.5px] font-semibold tracking-[1px] text-white/60">KURUMSAL E-POSTA
@@ -46,7 +46,7 @@ function CmsForm() {
 }
 export default function CmsGiris() {
   return (
-    <div className="flex min-h-screen items-center justify-center bg-[#0a0f1e] px-5">
+    <div className="safe-x flex min-h-screen min-h-[100dvh] items-center justify-center bg-[#0a0f1e] py-10">
       <Suspense><CmsForm /></Suspense>
     </div>
   );
