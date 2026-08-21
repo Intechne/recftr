@@ -1,10 +1,11 @@
 import Link from "next/link";
+import {FigmaIcon} from "@/components/FigmaIcon";
 
 /* Sayfa başlığı bandı */
 export function PageHead({ kicker, title, sub }: { kicker: string; title: string; sub?: string }) {
   return (
     <div className="mx-auto max-w-7xl px-5 pb-8 pt-12 lg:px-10">
-      <p className="font-display text-[12px] font-semibold tracking-[2px] text-cyan-deep">⬡ {kicker}</p>
+      <p className="flex items-center gap-1.5 font-display text-[12px] font-semibold tracking-[2px] text-cyan-deep"><FigmaIcon name="robot" className="h-4 w-4"/> {kicker}</p>
       <h1 className="mt-2.5 font-display text-4xl font-bold text-ink lg:text-[52px] lg:leading-none">{title}</h1>
       {sub && <p className="mt-3.5 max-w-2xl text-[16px] text-ink/60">{sub}</p>}
     </div>
@@ -80,7 +81,7 @@ export function Photo({ label, tone, className = "", accent }: { label: string; 
       style={accent ? { borderBottom: `4px solid ${accent}` } : undefined}
       role="img" aria-label={label}
     >
-      <span className="absolute bottom-3.5 left-4 text-[11.5px] text-white/70">📸 {label}</span>
+      <span className="absolute bottom-3.5 left-4 flex items-center gap-1.5 text-[11.5px] text-white/70"><FigmaIcon name="yayin" className="h-4 w-4"/> {label}</span>
     </div>
   );
 }

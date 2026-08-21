@@ -31,7 +31,7 @@ export default function Page() {
       setList(Array.isArray(j) ? j : []);
     } catch (e: any) {
       setList([]);
-      setMsg("⚠ " + (e.message || "Medya alınamadı."));
+      setMsg("Hata: " + (e.message || "Medya alınamadı."));
     }
   };
 
@@ -59,11 +59,11 @@ export default function Page() {
         }),
       });
       if (!r.ok) throw new Error((await r.json()).error || "Kaydedilemedi");
-      setMsg("✓ Medya yüklendi.");
+      setMsg("Başarılı: Medya yüklendi.");
       setFile(null); setTitle(""); setEvent(""); setAlt(""); setCaption("");
       void load();
     } catch (e: any) {
-      setMsg("⚠ " + e.message);
+      setMsg("Hata: " + e.message);
     } finally {
       setBusy(false);
     }

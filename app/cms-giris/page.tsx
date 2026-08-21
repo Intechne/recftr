@@ -1,6 +1,7 @@
 "use client";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useState } from "react";
+import {FigmaIcon} from "@/components/FigmaIcon";
 
 function CmsForm() {
   const router = useRouter();
@@ -24,7 +25,7 @@ function CmsForm() {
 
   return (
     <div className="w-full max-w-sm">
-      <p className="font-display text-[15px] font-bold tracking-[2px] text-cyan-brand">⚙ RECF TÜRKİYE</p>
+      <p className="flex items-center gap-2 font-display text-[15px] font-bold tracking-[2px] text-cyan-brand"><FigmaIcon name="ayarlar" className="h-5 w-5"/> RECF TÜRKİYE</p>
       <h1 className="mt-3 font-display text-[28px] font-bold text-white">İÇERİK YÖNETİM SİSTEMİ</h1>
       <p className="mt-2 text-[13.5px] text-white/50">Yalnızca yetkili ekip üyeleri. Tüm oturumlar kayıt altındadır.</p>
       <form onSubmit={login} className="mt-7">

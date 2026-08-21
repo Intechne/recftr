@@ -1,13 +1,14 @@
 import Link from "next/link";
 import type { Metadata } from "next";
 import { Reveal } from "@/components/Motion";
+import {FigmaIcon,type FigmaIconName} from "@/components/FigmaIcon";
 
 export const metadata: Metadata = { title: "Mentor Nasıl Olunur?" };
 
-const cols = [
-  { title: "👤 KİM OLABİLİR?", hex: "#29B9E5", items: ["18 yaşını doldurmuş herkes", "Öğretmenler ve okul personeli", "Veliler", "Mühendisler & sektör gönüllüleri", "Üniversite öğrencileri"] },
-  { title: "📋 SORUMLULUKLAR", hex: "#10192F", items: ["Takımın resmi kaydını yönetmek", "Etkinlik günü takımın başında olmak", "Güvenlik ve davranış kurallarını gözetmek", "Öğrenci odaklı çalışmayı korumak (robotu öğrenciler yapar)", "İletişim: veli ↔ RECF Türkiye"] },
-  { title: "🎁 SANA SUNDUKLARIMIZ", hex: "#8DC63F", items: ["Ücretsiz mentor eğitim programı (Eylül)", "Hazır müfredat ve ders planları", "Mentor topluluğu (özel iletişim kanalı)", "Etkinliklerde mentor yaka kartı & alanı", "Sezon sonu mentor sertifikası"] },
+const cols:{title:string;icon:FigmaIconName;hex:string;items:string[]}[] = [
+  { title: "KİM OLABİLİR?", icon:"mentor", hex: "#29B9E5", items: ["18 yaşını doldurmuş herkes", "Öğretmenler ve okul personeli", "Veliler", "Mühendisler & sektör gönüllüleri", "Üniversite öğrencileri"] },
+  { title: "SORUMLULUKLAR", icon:"defter", hex: "#10192F", items: ["Takımın resmi kaydını yönetmek", "Etkinlik günü takımın başında olmak", "Güvenlik ve davranış kurallarını gözetmek", "Öğrenci odaklı çalışmayı korumak (robotu öğrenciler yapar)", "İletişim: veli ↔ RECF Türkiye"] },
+  { title: "SANA SUNDUKLARIMIZ", icon:"rozet", hex: "#8DC63F", items: ["Ücretsiz mentor eğitim programı (Eylül)", "Hazır müfredat ve ders planları", "Mentor topluluğu (özel iletişim kanalı)", "Etkinliklerde mentor yaka kartı & alanı", "Sezon sonu mentor sertifikası"] },
 ];
 const proc = [
   { t: "Başvuru formu", d: "Online form · 10 dk" },
@@ -39,7 +40,7 @@ export default function MentorPage() {
           {cols.map((c, i) => (
             <Reveal key={c.title} delay={i * 70}>
               <div className="h-full rounded-xl border-2 border-ink bg-white p-6 shadow-plateSm" style={{ ["--tw-shadow-color" as string]: c.hex }}>
-                <h2 className="font-display text-[16px] font-bold text-ink">{c.title}</h2>
+                <h2 className="flex items-center gap-2 font-display text-[16px] font-bold text-ink"><FigmaIcon name={c.icon} className="h-5 w-5"/>{c.title}</h2>
                 <ul className="mt-3.5 space-y-2.5">
                   {c.items.map((it) => (
                     <li key={it} className="flex gap-2.5 text-[13.5px] leading-relaxed text-ink/60">

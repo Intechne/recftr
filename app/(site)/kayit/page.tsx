@@ -1,5 +1,6 @@
 "use client";
 import Link from "next/link";
+import {FigmaIcon} from "@/components/FigmaIcon";
 import { useEffect, useMemo, useState } from "react";
 import { PageHead } from "@/components/Ui";
 
@@ -80,7 +81,7 @@ export default function KayitPage() {
           <div className="rounded-xl border-2 border-ink bg-white p-7">
             {form.done ? (
               <div className="py-8 text-center">
-                <p className="text-5xl" aria-hidden>✅</p>
+                <FigmaIcon name="rozet" className="mx-auto h-14 w-14 text-ink"/>
                 <h2 className="mt-4 font-display text-[24px] font-bold text-ink">BAŞVURUN ALINDI!</h2>
                 <p className="mx-auto mt-3 max-w-md text-[15px] leading-relaxed text-ink/60">{form.num || "TAKIM NO"} için ön kaydın oluşturuldu{appId ? ` (Başvuru No: #${String(appId).padStart(4, "0")})` : ""}. Onay e-postası 24 saat içinde <strong>{form.email || "e-posta adresine"}</strong> gönderilecek. Resmi kayıt recfevents.org üzerinde tamamlanır.</p>
                 <Link href="/portal" className="mt-6 inline-block rounded-md bg-ink px-6 py-3.5 font-display text-[14px] font-bold text-white">TAKIM PORTALINA GİT →</Link>
@@ -104,13 +105,13 @@ export default function KayitPage() {
               {step === 2 && <div className="mt-5 space-y-4">
                 <div><span className={label}>Mentor Ad Soyad* (18+)</span><input className={input} value={form.mentor} onChange={(e) => set("mentor", e.target.value)} placeholder="İsim Soyisim" autoComplete="name" /></div>
                 <div className="grid gap-4 sm:grid-cols-2"><div><span className={label}>E-posta*</span><input type="email" className={input} value={form.email} onChange={(e) => set("email", e.target.value)} placeholder="mentor@okul.k12.tr" autoComplete="email" /></div><div><span className={label}>GSM*</span><input className={input} value={form.phone} onChange={(e) => set("phone", e.target.value)} placeholder="05xx xxx xx xx" autoComplete="tel" /></div></div>
-                <p className="rounded-lg bg-paper px-4 py-3 text-[13px] text-ink/60">ℹ️ Öğrenci üyeler kayıt sonrası Takım Portalı üzerinden davet edilir; 18 yaş altı üyeler için gerekli veli izinleri portal sürecinde toplanır.</p>
+                <p className="rounded-lg bg-paper px-4 py-3 text-[13px] text-ink/60"><span className="inline-flex items-start gap-1.5"><FigmaIcon name="mentor" className="mt-0.5 h-4 w-4 shrink-0"/> Öğrenci üyeler kayıt sonrası Takım Portalı üzerinden davet edilir; 18 yaş altı üyeler için gerekli veli izinleri portal sürecinde toplanır.</span></p>
               </div>}
 
               {step === 3 && <div className="mt-5 space-y-4">
                 <label className="flex items-start gap-3 rounded-lg border-[1.5px] border-ink/20 p-4"><input type="checkbox" checked={form.kit} onChange={(e) => set("kit", e.target.checked)} className="mt-1 h-4 w-4 accent-cyan-deep" /><span><span className="font-semibold text-ink">Saha kiti eklensin (₺{Number(pricing.fieldKitFee||0).toLocaleString("tr-TR")})</span><span className="block text-[13px] text-ink/55">Antrenman için resmi oyun elemanları seti — opsiyonel.</span></span></label>
                 <label className={`flex items-start gap-3 rounded-lg border-[1.5px] p-4 text-[13.5px] ${form.kvkk?"border-cyan-deep bg-cyan-deep/5":"border-ink/20"}`}><input type="checkbox" checked={form.kvkk} onChange={e=>set("kvkk",e.target.checked)} className="mt-0.5 h-4 w-4 accent-cyan-deep" /><span><Link href="/kvkk" target="_blank" className="font-semibold text-cyan-deep underline">KVKK Aydınlatma Metni</Link>'ni okudum; başvuru kapsamında kişisel verilerimin işlenmesini kabul ediyorum.*<span className="mt-1 block text-[11.5px] text-ink/45">Bu onay zorunludur. Onay vermeden başvuru gönderilemez.</span></span></label>
-                <p className="rounded-lg bg-paper px-4 py-3 text-[13px] text-ink/60">💳 Ödeme, başvuru onayı sonrası e-postana gelen güvenli bağlantı üzerinden alınır. Erken kayıt indirimi (−₺{Number(pricing.discount||0).toLocaleString("tr-TR")}) otomatik uygulanmıştır.</p>
+                <p className="rounded-lg bg-paper px-4 py-3 text-[13px] text-ink/60"><span className="inline-flex items-center gap-1.5"><FigmaIcon name="plaka" className="h-4 w-4"/> Ödeme, başvuru onayı sonrası e-postana gelen güvenli bağlantı üzerinden alınır. Erken kayıt indirimi (−₺{Number(pricing.discount||0).toLocaleString("tr-TR")}) otomatik uygulanmıştır.</span></p>
               </div>}
 
               {err && <p className="mt-5 rounded-lg border-2 border-red-500 bg-red-50 px-4 py-3 text-[13.5px] font-semibold text-red-700">{err}</p>}
