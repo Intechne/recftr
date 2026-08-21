@@ -32,10 +32,10 @@ export function tempPassword() {
   return `RECF-${randomBytes(5).toString("base64url").replace(/[-_]/g,"A")}!`;
 }
 
-export type NewApplication = { num:string; team:string; org:string; city:string; type:string; program:string; mentor:string; email:string; phone:string; kit:boolean; total:number };
+export type NewApplication = { num:string; team:string; org:string; city:string; district:string; type:string; program:string; mentor:string; email:string; phone:string; kit:boolean; kvkkAccepted:boolean; total:number };
 export async function createApplication(a: NewApplication) {
   const sql = await db();
-  return sql.begin(async(tx:any)=>{const [used]=await tx`SELECT 1 FROM teams WHERE num=${a.num} UNION ALL SELECT 1 FROM applications WHERE num=${a.num} AND status IN ('BAŞVURU ALINDI','ONAYLANDI') LIMIT 1`; if(used)throw new Error('TEAM_NUM_USED'); const [row] = await tx`INSERT INTO applications (num,team,org,city,type,program,mentor,email,phone,kit,total,status) VALUES (${a.num},${a.team},${a.org},${a.city},${a.type},${a.program},${a.mentor},${a.email},${a.phone},${a.kit},${a.total},'BAŞVURU ALINDI') RETURNING id`; return {id:Number(row.id)};});
+  return sql.begin(async(tx:any)=>{const [used]=await tx`SELECT 1 FROM teams WHERE num=${a.num} UNION ALL SELECT 1 FROM applications WHERE num=${a.num} AND status IN ('BAŞVURU ALINDI','ONAYLANDI') LIMIT 1`; if(used)throw new Error('TEAM_NUM_USED'); const [row] = await tx`INSERT INTO applications (num,team,org,city,district,type,program,mentor,email,phone,kit,kvkk_accepted,kvkk_accepted_at,total,status) VALUES (${a.num},${a.team},${a.org},${a.city},${a.district},${a.type},${a.program},${a.mentor},${a.email},${a.phone},${a.kit},${a.kvkkAccepted},CASE WHEN ${a.kvkkAccepted} THEN now() ELSE NULL END,${a.total},'BAŞVURU ALINDI') RETURNING id`; return {id:Number(row.id)};});
 }
 export async function listApplications() { const sql=await db(); return sql`SELECT * FROM applications ORDER BY created_at DESC`; }
 export async function resolveApplication(id:number, action:"approve"|"reject") {
@@ -44,9 +44,9 @@ export async function resolveApplication(id:number, action:"approve"|"reject") {
     const [app] = await tx`SELECT * FROM applications WHERE id=${id} FOR UPDATE`;
     if (!app) return null;
     if (action === "reject") { await tx`UPDATE applications SET status='REDDEDİLDİ', reviewed_at=now() WHERE id=${id}`; return { app, action }; }
-    await tx`INSERT INTO teams (num,name,school,city,program,status,visible,mentor_name,mentor_email,phone)
-      VALUES (${app.num},${app.team},${app.org},${app.city},${app.program},'AKTİF',true,${app.mentor},${app.email},${app.phone})
-      ON CONFLICT (num) DO UPDATE SET name=EXCLUDED.name,school=EXCLUDED.school,city=EXCLUDED.city,program=EXCLUDED.program,
+    await tx`INSERT INTO teams (num,name,school,city,district,program,status,visible,mentor_name,mentor_email,phone)
+      VALUES (${app.num},${app.team},${app.org},${app.city},${app.district??''},${app.program},'AKTİF',true,${app.mentor},${app.email},${app.phone})
+      ON CONFLICT (num) DO UPDATE SET name=EXCLUDED.name,school=EXCLUDED.school,city=EXCLUDED.city,district=EXCLUDED.district,program=EXCLUDED.program,
       mentor_name=EXCLUDED.mentor_name,mentor_email=EXCLUDED.mentor_email,phone=EXCLUDED.phone,updated_at=now()`;
     const [existing] = await tx`SELECT id FROM cms_users WHERE lower(email)=lower(${app.email})`;
     let password:string|undefined;
@@ -71,7 +71,7 @@ export async function listTeams(all=true) {
 export async function getTeam(num:string) { const sql=await db(); const [r]=await sql`SELECT * FROM teams WHERE num=${num}`; return r??null; }
 export async function updateTeam(num:string,b:any) {
   const sql=await db();
-  const [r]=await sql`INSERT INTO teams(num,name,school,city,program,status,visible,mentor_name,mentor_email,phone,slogan,logo_url) VALUES(${num},${b.name},${b.school},${b.city},${b.program},${b.status??'AKTİF'},${b.visible!==false},${b.mentor_name??''},${b.mentor_email??''},${b.phone??''},${b.slogan??''},${b.logo_url??''}) ON CONFLICT(num) DO UPDATE SET name=EXCLUDED.name,school=EXCLUDED.school,city=EXCLUDED.city,program=EXCLUDED.program,status=EXCLUDED.status,visible=EXCLUDED.visible,mentor_name=EXCLUDED.mentor_name,mentor_email=EXCLUDED.mentor_email,phone=EXCLUDED.phone,slogan=EXCLUDED.slogan,logo_url=EXCLUDED.logo_url,updated_at=now() RETURNING *`;
+  const [r]=await sql`INSERT INTO teams(num,name,school,city,district,program,status,visible,mentor_name,mentor_email,phone,slogan,logo_url) VALUES(${num},${b.name},${b.school},${b.city},${b.district??''},${b.program},${b.status??'AKTİF'},${b.visible!==false},${b.mentor_name??''},${b.mentor_email??''},${b.phone??''},${b.slogan??''},${b.logo_url??''}) ON CONFLICT(num) DO UPDATE SET name=EXCLUDED.name,school=EXCLUDED.school,city=EXCLUDED.city,district=EXCLUDED.district,program=EXCLUDED.program,status=EXCLUDED.status,visible=EXCLUDED.visible,mentor_name=EXCLUDED.mentor_name,mentor_email=EXCLUDED.mentor_email,phone=EXCLUDED.phone,slogan=EXCLUDED.slogan,logo_url=EXCLUDED.logo_url,updated_at=now() RETURNING *`;
   return r??null;
 }
 export async function deleteTeam(num:string) { const sql=await db(); await sql.begin(async(tx:any)=>{await tx`DELETE FROM event_registrations WHERE team_num=${num}`;await tx`DELETE FROM members WHERE team_num=${num}`;await tx`DELETE FROM team_docs WHERE team_num=${num}`;await tx`DELETE FROM payments WHERE team_num=${num}`;await tx`UPDATE cms_users SET active=false,team_num=NULL,updated_at=now() WHERE team_num=${num} AND role='mentor'`;await tx`DELETE FROM teams WHERE num=${num}`;}); }

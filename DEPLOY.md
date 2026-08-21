@@ -1,3 +1,9 @@
+# V3.0.5 Production Update
+
+Mevcut V3.0.4 production kurulumunda önce Supabase SQL Editor üzerinden `supabase/repair-v3.0.5-registration.sql` dosyasını bir kez çalıştırın. Bu migration `applications` tablosuna `district`, `kvkk_accepted`, `kvkk_accepted_at`; `teams` tablosuna `district` ekler ve mevcut satırları silmez.
+
+V3.0.5 yeni bir il/ilçe veri dependency'si içerdiği için dosyaları repo üzerine aldıktan sonra `npm install` çalıştırılması zorunludur.
+
 # V2 → V3 Production Upgrade
 
 Bu akış mevcut GitHub/Vercel/Supabase kurulumunu koruyarak V3'e yükseltir.

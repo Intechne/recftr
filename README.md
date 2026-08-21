@@ -1,6 +1,6 @@
-# RECF Türkiye V3.0.2
+# RECF Türkiye V3.0.5
 
-> CMS save + Supabase Storage repair build. Sistem sağlık kontrolü: `/admin/sistem`.
+> CMS + takım portalı production paketi. V3.0.5: takım kayıt formu il/ilçe seçimi, zorunlu KVKK ve CMS görsel ölçü rehberi. Sistem sağlık kontrolü: `/admin/sistem`.
 
 # RECF Türkiye V3 — Complete CMS + Team Portal
 
@@ -52,6 +52,33 @@ Next.js 15 + TypeScript + Supabase PostgreSQL/Storage + Vercel için hazırlanm�
 - `approvals`: başvurular, takımlar, etkinlik kayıtları, belgeler, ödemeler
 - `technical`: takım belgeleri ve belge gereksinimleri
 - `mentor`: yalnızca kendisine bağlı takım portalı
+
+
+## V3.0.5 görsel ölçü rehberi
+
+CMS yükleme alanlarında kullanım yerine göre önerilen ölçü doğrudan dosya alanının altında gösterilir:
+
+| Görsel | Önerilen ölçü | Oran |
+|---|---:|---:|
+| Program kapağı | 1600 × 1200 px | 4:3 |
+| Etkinlik kapağı | 1600 × 900 px | 16:9 |
+| Haber / duyuru kapağı | 1600 × 900 px | 16:9 |
+| Ana sayfa hero | 1600 × 1200 px | 4:3 |
+| Galeri fotoğrafı | 1600 × 900 px | 16:9 |
+| Galeri videosu | 1920 × 1080 px | 16:9 |
+| Ekip profil fotoğrafı | 800 × 800 px | 1:1 |
+| Takım logosu | 800 × 800 px | 1:1 |
+
+## V3.0.5 takım kayıt formu
+
+- İl ve ilçe ayrı, bağlı seçim alanlarıdır.
+- İlçe listesi seçilen ile göre server-side veri setinden gelir.
+- API il/ilçe eşleşmesini ayrıca doğrular.
+- KVKK Aydınlatma Metni onayı olmadan başvuru gönderilemez; onay ve zaman damgası DB'ye kaydedilir.
+- Mentor örnek adı kaldırıldı; placeholder `İsim Soyisim` olarak kullanılır.
+- Takım numarası alanındaki kayan çizgi/tire yapısı kaldırıldı.
+
+Mevcut V3 production DB için `supabase/repair-v3.0.5-registration.sql` dosyasını bir kez çalıştırın.
 
 ## Zorunlu environment variables
 
