@@ -3,6 +3,7 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useState } from "react";
 import {FigmaIcon} from "@/components/FigmaIcon";
+import {safeInternalPath} from "@/lib/safe-path";
 
 function GirisForm() {
   const router = useRouter();
@@ -18,9 +19,9 @@ function GirisForm() {
     const r = await fetch("/api/auth", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ email, pass, scope: "portal" }) });
     setBusy(false);
     if (!r.ok) { setErr((await r.json()).error ?? "Giriş başarısız."); return; }
-    const { role } = await r.json();
+    const { role, mustChangePassword } = await r.json();
     const next = params.get("next");
-    router.push(next && next.startsWith("/") ? next : role === "admin" ? "/admin" : "/portal");
+    router.push(mustChangePassword ? "/portal/ayarlar" : safeInternalPath(next, role === "admin" ? "/admin" : "/portal"));
     router.refresh();
   };
   const input = "mt-1.5 w-full rounded-md border-[1.5px] border-white/25 bg-white/[.07] px-4 py-3.5 text-[15px] text-white placeholder:text-white/35 outline-none focus:border-cyan-brand";

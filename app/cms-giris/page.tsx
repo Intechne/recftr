@@ -2,23 +2,25 @@
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useState } from "react";
 import {FigmaIcon} from "@/components/FigmaIcon";
+import {safeInternalPath} from "@/lib/safe-path";
 
 function CmsForm() {
   const router = useRouter();
   const params = useSearchParams();
   const [email, setEmail] = useState("");
   const [pass, setPass] = useState("");
+  const [otp, setOtp] = useState("");
   const [err, setErr] = useState("");
   const [busy, setBusy] = useState(false);
 
   const login = async (e: React.FormEvent) => {
     e.preventDefault();
     setErr(""); setBusy(true);
-    const r = await fetch("/api/auth", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ email, pass, scope: "cms" }) });
+    const r = await fetch("/api/auth", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ email, pass, otp, scope: "cms" }) });
     setBusy(false);
     if (!r.ok) { setErr((await r.json()).error ?? "Giriş başarısız."); return; }
     const next = params.get("next");
-    router.push(next && next.startsWith("/") ? next : "/admin");
+    router.push(safeInternalPath(next, "/admin"));
     router.refresh();
   };
   const input = "mt-1.5 w-full rounded-md border-[1.5px] border-white/20 bg-white/[.06] px-4 py-3.5 text-[15px] text-white placeholder:text-white/30 outline-none focus:border-cyan-brand";
@@ -33,7 +35,10 @@ function CmsForm() {
           <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="ad@recfturkiye.org" className={input} required />
         </label>
         <label className="mt-4 block font-display text-[11.5px] font-semibold tracking-[1px] text-white/60">ŞİFRE
-          <input type="password" value={pass} onChange={(e) => setPass(e.target.value)} className={input} required />
+          <input type="password" value={pass} onChange={(e) => setPass(e.target.value)} className={input} required autoComplete="current-password" />
+        </label>
+        <label className="mt-4 block font-display text-[11.5px] font-semibold tracking-[1px] text-white/60">AUTHENTICATOR KODU <span className="font-normal text-white/35">(MFA açıksa)</span>
+          <input inputMode="numeric" autoComplete="one-time-code" maxLength={6} value={otp} onChange={(e) => setOtp(e.target.value.replace(/\D/g, "").slice(0,6))} placeholder="000000" className={input} />
         </label>
         {err && <p className="mt-3 rounded-md border border-red-400 bg-red-400/10 px-3.5 py-2.5 text-[13px] font-semibold text-red-300">{err}</p>}
         <button type="submit" disabled={busy}

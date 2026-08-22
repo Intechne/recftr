@@ -19,7 +19,7 @@ export default function KayitPage() {
   const [err, setErr] = useState("");
   const [busy, setBusy] = useState(false);
   const [prog, setProg] = useState("achieve");
-  const [form, setForm] = useState({ team: "", org: "", city: "", district: "", type: "Okul Takımı", num: "", mentor: "", email: "", phone: "", kit: false, kvkk: false, done: false });
+  const [form, setForm] = useState({ team: "", org: "", city: "", district: "", type: "Okul Takımı", num: "", mentor: "", email: "", phone: "", website: "", kit: false, kvkk: false, done: false });
 
   useEffect(() => {
     fetch("/api/programs").then(r => r.ok ? r.json() : []).then((rows:any[]) => { if(Array.isArray(rows)&&rows.length) setPrograms(rows.map(x=>({...x, ageDetail:x.age_detail||x.ageDetail}))); }).catch(()=>{});
@@ -92,8 +92,9 @@ export default function KayitPage() {
               {step === 0 && <div className="mt-5 grid gap-3 sm:grid-cols-2">{programs.map((x) => <button key={x.slug} onClick={() => setProg(x.slug)} className={`rounded-lg border-2 p-4 text-left transition-colors ${prog === x.slug ? "border-ink bg-cyan-brand/10" : "border-ink/15 hover:border-ink/40"}`} aria-pressed={prog === x.slug}><span className="font-display text-[15px] font-bold text-ink">{x.code} — {String(x.name||'').replace("RECF ", "")}</span><span className="mt-1 block text-[12.5px] text-ink/55">{x.ageDetail}</span></button>)}</div>}
 
               {step === 1 && <div className="mt-5 space-y-4">
-                <div><span className={label}>Takım Adı*</span><input className={input} value={form.team} onChange={(e) => set("team", e.target.value)} placeholder="Takım adı" /></div>
-                <div><span className={label}>Okul / Kurum*</span><input className={input} value={form.org} onChange={(e) => set("org", e.target.value)} placeholder="Okul veya kurum adı" /></div>
+                <input type="text" tabIndex={-1} autoComplete="off" aria-hidden="true" className="absolute left-[-9999px] h-px w-px opacity-0" value={form.website} onChange={(e)=>set("website",e.target.value)} name="website" />
+                <div><span className={label}>Takım Adı*</span><input maxLength={120} className={input} value={form.team} onChange={(e) => set("team", e.target.value)} placeholder="Takım adı" /></div>
+                <div><span className={label}>Okul / Kurum*</span><input maxLength={160} className={input} value={form.org} onChange={(e) => set("org", e.target.value)} placeholder="Okul veya kurum adı" /></div>
                 <div className="grid gap-4 sm:grid-cols-2">
                   <div><span className={label}>İl*</span><select className={input} value={form.city} onChange={e=>setForm(f=>({...f,city:e.target.value,district:""}))}><option value="">İl seçin</option>{provinces.map(city=><option key={city} value={city}>{city}</option>)}</select></div>
                   <div><span className={label}>İlçe*</span><select className={input} value={form.district} disabled={!form.city||districtLoading} onChange={e=>set("district",e.target.value)}><option value="">{!form.city?"Önce il seçin":districtLoading?"İlçeler yükleniyor…":"İlçe seçin"}</option>{districts.map(d=><option key={d} value={d}>{d}</option>)}</select></div>
@@ -103,8 +104,8 @@ export default function KayitPage() {
               </div>}
 
               {step === 2 && <div className="mt-5 space-y-4">
-                <div><span className={label}>Mentor Ad Soyad* (18+)</span><input className={input} value={form.mentor} onChange={(e) => set("mentor", e.target.value)} placeholder="İsim Soyisim" autoComplete="name" /></div>
-                <div className="grid gap-4 sm:grid-cols-2"><div><span className={label}>E-posta*</span><input type="email" className={input} value={form.email} onChange={(e) => set("email", e.target.value)} placeholder="mentor@okul.k12.tr" autoComplete="email" /></div><div><span className={label}>GSM*</span><input className={input} value={form.phone} onChange={(e) => set("phone", e.target.value)} placeholder="05xx xxx xx xx" autoComplete="tel" /></div></div>
+                <div><span className={label}>Mentor Ad Soyad* (18+)</span><input maxLength={120} className={input} value={form.mentor} onChange={(e) => set("mentor", e.target.value)} placeholder="İsim Soyisim" autoComplete="name" /></div>
+                <div className="grid gap-4 sm:grid-cols-2"><div><span className={label}>E-posta*</span><input type="email" maxLength={254} className={input} value={form.email} onChange={(e) => set("email", e.target.value)} placeholder="mentor@okul.k12.tr" autoComplete="email" /></div><div><span className={label}>GSM*</span><input maxLength={40} className={input} value={form.phone} onChange={(e) => set("phone", e.target.value)} placeholder="05xx xxx xx xx" autoComplete="tel" /></div></div>
                 <p className="rounded-lg bg-paper px-4 py-3 text-[13px] text-ink/60"><span className="inline-flex items-start gap-1.5"><FigmaIcon name="mentor" className="mt-0.5 h-4 w-4 shrink-0"/> Öğrenci üyeler kayıt sonrası Takım Portalı üzerinden davet edilir; 18 yaş altı üyeler için gerekli veli izinleri portal sürecinde toplanır.</span></p>
               </div>}
 
@@ -123,7 +124,7 @@ export default function KayitPage() {
                   if(!form.kvkk){setErr("Başvuruyu göndermek için KVKK Aydınlatma Metni onayını vermelisiniz.");return;}
                   setBusy(true);
                   try {
-                    const r = await fetch("/api/applications", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ num: form.num, team: form.team, org: form.org, city: form.city, district: form.district, type: form.type, program: prog, mentor: form.mentor, email: form.email, phone: form.phone, kit: form.kit, kvkk: form.kvkk, total }) });
+                    const r = await fetch("/api/applications", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ num: form.num, team: form.team, org: form.org, city: form.city, district: form.district, type: form.type, program: prog, mentor: form.mentor, email: form.email, phone: form.phone, website: form.website, kit: form.kit, kvkk: form.kvkk, total }) });
                     const j = await r.json();
                     if (!r.ok) { setErr(j.error ?? "Başvuru gönderilemedi."); setBusy(false); return; }
                     setAppId(j.id); set("done", true);

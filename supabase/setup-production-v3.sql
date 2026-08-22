@@ -133,6 +133,9 @@ ALTER TABLE cms_users ADD COLUMN IF NOT EXISTS public_title TEXT NOT NULL DEFAUL
 ALTER TABLE cms_users ADD COLUMN IF NOT EXISTS public_bio TEXT NOT NULL DEFAULT '';
 ALTER TABLE cms_users ADD COLUMN IF NOT EXISTS public_photo_url TEXT NOT NULL DEFAULT '';
 ALTER TABLE cms_users ADD COLUMN IF NOT EXISTS sort_order INTEGER NOT NULL DEFAULT 0;
+ALTER TABLE cms_users ADD COLUMN IF NOT EXISTS session_version INTEGER NOT NULL DEFAULT 1;
+ALTER TABLE cms_users ADD COLUMN IF NOT EXISTS must_change_password BOOLEAN NOT NULL DEFAULT FALSE;
+ALTER TABLE cms_users ADD COLUMN IF NOT EXISTS mfa_secret TEXT NOT NULL DEFAULT '';
 CREATE UNIQUE INDEX IF NOT EXISTS cms_users_lower_email_idx ON cms_users(lower(email));
 CREATE INDEX IF NOT EXISTS cms_users_team_idx ON cms_users(team_num);
 
@@ -178,6 +181,12 @@ CREATE TABLE IF NOT EXISTS audit_logs (
   details JSONB NOT NULL DEFAULT '{}'::jsonb, created_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
+CREATE TABLE IF NOT EXISTS security_rate_limits (
+  key TEXT NOT NULL, window_start TIMESTAMPTZ NOT NULL, count INTEGER NOT NULL DEFAULT 1,
+  expires_at TIMESTAMPTZ NOT NULL, PRIMARY KEY(key,window_start)
+);
+CREATE INDEX IF NOT EXISTS security_rate_limits_expires_idx ON security_rate_limits(expires_at);
+
 -- Keep event.registered synchronized with active registrations.
 CREATE OR REPLACE FUNCTION recf_sync_event_registered() RETURNS trigger LANGUAGE plpgsql AS $$
 DECLARE target_id INTEGER;
@@ -192,11 +201,11 @@ FOR EACH ROW EXECUTE FUNCTION recf_sync_event_registered();
 
 -- Storage buckets. Public media/documents live in recf-public; team files are private.
 INSERT INTO storage.buckets (id,name,public,file_size_limit,allowed_mime_types)
-VALUES ('recf-public','recf-public',true,52428800,NULL)
-ON CONFLICT (id) DO UPDATE SET public=true, file_size_limit=52428800;
+VALUES ('recf-public','recf-public',true,52428800,ARRAY['image/jpeg','image/png','image/webp','image/gif','image/avif','image/x-icon','image/vnd.microsoft.icon','video/mp4','video/webm','video/quicktime','application/pdf','application/msword','application/vnd.openxmlformats-officedocument.wordprocessingml.document','application/vnd.ms-excel','application/vnd.openxmlformats-officedocument.spreadsheetml.sheet','text/plain'])
+ON CONFLICT (id) DO UPDATE SET public=true, file_size_limit=52428800, allowed_mime_types=EXCLUDED.allowed_mime_types;
 INSERT INTO storage.buckets (id,name,public,file_size_limit,allowed_mime_types)
-VALUES ('team-private','team-private',false,52428800,NULL)
-ON CONFLICT (id) DO UPDATE SET public=false, file_size_limit=52428800;
+VALUES ('team-private','team-private',false,20971520,ARRAY['application/pdf','application/msword','application/vnd.openxmlformats-officedocument.wordprocessingml.document','application/vnd.ms-excel','application/vnd.openxmlformats-officedocument.spreadsheetml.sheet','text/plain','image/jpeg','image/png','image/webp'])
+ON CONFLICT (id) DO UPDATE SET public=false, file_size_limit=20971520, allowed_mime_types=EXCLUDED.allowed_mime_types;
 
 -- Default editable site settings; existing values are preserved.
 INSERT INTO settings(key,value) VALUES
@@ -239,3 +248,4 @@ ALTER TABLE event_registrations ENABLE ROW LEVEL SECURITY;
 ALTER TABLE media ENABLE ROW LEVEL SECURITY;
 ALTER TABLE contacts ENABLE ROW LEVEL SECURITY;
 ALTER TABLE audit_logs ENABLE ROW LEVEL SECURITY;
+ALTER TABLE security_rate_limits ENABLE ROW LEVEL SECURITY;

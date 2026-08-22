@@ -1,19 +1,23 @@
 {
   "name": "recf-turkiye",
-  "version": "3.0.9",
+  "version": "3.1.0",
   "private": true,
   "scripts": {
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "security:static": "node scripts/security-static-check.mjs",
+    "security:smoke": "node scripts/security-smoke.mjs",
+    "security:edge": "bash scripts/security-edge.sh",
+    "security:postdeploy": "bash scripts/security-postdeploy.sh"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.57.4",
     "next": "15.5.21",
     "postgres": "^3.4.9",
-    "react": "19.2.0",
-    "react-dom": "19.2.0",
+    "react": "19.2.8",
+    "react-dom": "19.2.8",
     "@halilertekin/turkey_province_image": "^3.3.3"
   },
   "devDependencies": {

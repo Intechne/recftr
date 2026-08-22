@@ -32,7 +32,8 @@ export default function Page(){
   const [newTicker,setNewTicker]=useState("");
   const [msg,setMsg]=useState("");
   const [saving,setSaving]=useState(false);
-  useEffect(()=>{fetch("/api/settings").then(r=>r.json()).then(x=>setS({...x,ticker:parseList(x.ticker),season_route:parseRoute(x.season_route)})).catch(()=>setMsg("Hata: Site ayarları alınamadı."))},[]);
+  const [role,setRole]=useState("");
+  useEffect(()=>{fetch("/api/session",{cache:"no-store"}).then(r=>r.ok?r.json():null).then(x=>setRole(x?.role||""));fetch("/api/settings",{cache:"no-store"}).then(r=>r.json()).then(x=>setS({...x,ticker:parseList(x.ticker),season_route:parseRoute(x.season_route)})).catch(()=>setMsg("Hata: Site ayarları alınamadı."))},[]);
   const set=(k:string,v:any)=>setS((x:any)=>({...x,[k]:v}));
   const i="mt-1 w-full rounded-md border-[1.5px] border-ink/20 bg-white px-3 py-2.5 text-[13px]";
   const checkbox=(key:string)=>s[key]!=="false";
@@ -46,7 +47,7 @@ export default function Page(){
     setSaving(true); setMsg("");
     try{
       const body:any={ticker:JSON.stringify(s.ticker||[]),season_route:JSON.stringify(s.season_route||DEFAULT_ROUTE)};
-      for(const k of KEYS)body[k]=String(s[k]??"");
+      for(const k of KEYS){if(role!=="admin" && ["registration_fee_engage","registration_fee_achieve","registration_fee_inspire","registration_fee_adc","registration_fee_adc-pro","field_kit_fee","registration_discount"].includes(k))continue;body[k]=String(s[k]??"");}
       const r=await fetch("/api/settings",{method:"PUT",headers:{"Content-Type":"application/json"},body:JSON.stringify(body)});
       const t=await r.text(); let j:any={}; try{j=t?JSON.parse(t):{}}catch{}
       if(!r.ok)throw new Error(j.error||t||`HTTP ${r.status}`);
@@ -89,7 +90,7 @@ export default function Page(){
     <section className="mt-5 rounded-xl border-2 border-ink bg-white p-4 sm:p-5"><p className="flex items-center gap-2 font-display text-[13px] font-bold"><FigmaIcon name="anons" className="h-5 w-5"/> DUYURU ŞERİDİ</p><div className="mt-3 space-y-2">{(s.ticker||[]).map((t:string,idx:number)=><div key={idx} className="flex gap-2"><input className={i+" mt-0 flex-1"} value={t} onChange={e=>set("ticker",s.ticker.map((x:string,i:number)=>i===idx?e.target.value:x))}/><button onClick={()=>set("ticker",s.ticker.filter((_:string,i:number)=>i!==idx))} className="px-3 text-red-600">SİL</button></div>)}</div><div className="mt-3 flex flex-col gap-2 sm:flex-row"><input className={i+" mt-0 flex-1"} value={newTicker} onChange={e=>setNewTicker(e.target.value)} placeholder="Yeni duyuru"/><button onClick={()=>{if(newTicker.trim()){set("ticker",[...(s.ticker||[]),newTicker.trim()]);setNewTicker("")}}} className="rounded bg-cyan-brand px-4 py-2 font-bold">EKLE</button></div></section>
 
     <section className="mt-5 grid gap-4 rounded-xl border-2 border-ink bg-white p-4 sm:p-5 md:grid-cols-2">{[["contact_team","Takım e-posta"],["contact_info","Genel e-posta"],["contact_phone","Telefon"],["instagram","Instagram"],["youtube","YouTube"],["linkedin","LinkedIn"]].map(([k,l])=><label key={k}>{l}<input className={i} value={s[k]||""} onChange={e=>set(k,e.target.value)}/></label>)}</section>
-    <section className="mt-5 grid gap-4 rounded-xl border-2 border-ink bg-white p-4 sm:p-5 md:grid-cols-4"><p className="md:col-span-4 font-display text-[13px] font-bold">KAYIT ÜCRETLERİ (TL)</p>{[["registration_fee_engage","ENG"],["registration_fee_achieve","ACH"],["registration_fee_inspire","INS"],["registration_fee_adc","ADC"],["registration_fee_adc-pro","PRO"],["field_kit_fee","Saha Kiti"],["registration_discount","İndirim"]].map(([k,l])=><label key={k}>{l}<input type="number" className={i} value={s[k]||"0"} onChange={e=>set(k,e.target.value)}/></label>)}</section>
+    {role==="admin"?<section className="mt-5 grid gap-4 rounded-xl border-2 border-ink bg-white p-4 sm:p-5 md:grid-cols-4"><p className="md:col-span-4 font-display text-[13px] font-bold">KAYIT ÜCRETLERİ (TL) · ADMIN ONLY</p>{[["registration_fee_engage","ENG"],["registration_fee_achieve","ACH"],["registration_fee_inspire","INS"],["registration_fee_adc","ADC"],["registration_fee_adc-pro","PRO"],["field_kit_fee","Saha Kiti"],["registration_discount","İndirim"]].map(([k,l])=><label key={k}>{l}<input type="number" className={i} value={s[k]||"0"} onChange={e=>set(k,e.target.value)}/></label>)}</section>:<section className="mt-5 rounded-xl border border-ink/15 bg-white p-4 text-[12px] text-ink/55">Kayıt ücretleri ve finansal ayarlar yalnız <b>admin</b> rolü tarafından değiştirilebilir.</section>}
     <button disabled={saving} onClick={save} className="mt-5 min-h-12 rounded-md bg-ink px-6 py-3 font-display text-[13px] font-bold text-white disabled:opacity-50">{saving?"KAYDEDİLİYOR…":"TÜM AYARLARI KAYDET"}</button>
   </div>
 }

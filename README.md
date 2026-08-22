@@ -1,6 +1,29 @@
-# RECF Türkiye V3.0.9
+# RECF Türkiye V3.1.0 — Security Hardening
 
-> CMS + takım portalı production paketi. V3.0.9: V3.0.8 ana sayfa deneyimi korunarak Figma `Icon System v3.1 — Refined` web, CMS ve mentor/takım portalına entegre edildi. Sistem sağlık kontrolü: `/admin/sistem`.
+> V3.0.9 tasarım/CMS/portal özellikleri korunarak güvenlik hardening uygulanmıştır. Zorunlu migration: `supabase/security-v3.1.0.sql`. Sistem sağlık kontrolü: `/admin/sistem`.
+
+## V3.1.0 Güvenlik
+
+- Public takım API PII whitelist
+- Backend RBAC + private belge ownership
+- Session revocation (`session_version`)
+- DB-backed rate limiting
+- TOTP MFA desteği
+- Upload MIME/extension/path doğrulaması
+- CSP ve security headers
+- CSRF/origin mutation guard
+- Production generic API errors
+- Least-privilege `recf_app` DB rolü için SQL
+
+Doğrulama:
+
+```bash
+npm run security:static
+npm run security:smoke -- https://www.recfturkiye.com
+npm run security:edge -- https://www.recfturkiye.com
+```
+
+Tam kurulum sırası için `DEPLOY-3.1.0.md` dosyasını izleyin.
 
 # RECF Türkiye V3 — Complete CMS + Team Portal
 

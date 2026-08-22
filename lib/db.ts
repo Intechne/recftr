@@ -29,13 +29,25 @@ export function verifyPassword(password: string, stored: string) {
   } catch { return false; }
 }
 export function tempPassword() {
-  return `RECF-${randomBytes(5).toString("base64url").replace(/[-_]/g,"A")}!`;
+  return `RECF-${randomBytes(12).toString("base64url").replace(/[-_]/g,"A")}!`;
 }
 
 export type NewApplication = { num:string; team:string; org:string; city:string; district:string; type:string; program:string; mentor:string; email:string; phone:string; kit:boolean; kvkkAccepted:boolean; total:number };
 export async function createApplication(a: NewApplication) {
   const sql = await db();
-  return sql.begin(async(tx:any)=>{const [used]=await tx`SELECT 1 FROM teams WHERE num=${a.num} UNION ALL SELECT 1 FROM applications WHERE num=${a.num} AND status IN ('BAŞVURU ALINDI','ONAYLANDI') LIMIT 1`; if(used)throw new Error('TEAM_NUM_USED'); const [row] = await tx`INSERT INTO applications (num,team,org,city,district,type,program,mentor,email,phone,kit,kvkk_accepted,kvkk_accepted_at,total,status) VALUES (${a.num},${a.team},${a.org},${a.city},${a.district},${a.type},${a.program},${a.mentor},${a.email},${a.phone},${a.kit},${a.kvkkAccepted},CASE WHEN ${a.kvkkAccepted} THEN now() ELSE NULL END,${a.total},'BAŞVURU ALINDI') RETURNING id`; return {id:Number(row.id)};});
+  return sql.begin(async(tx:any)=>{
+    const [used]=await tx`SELECT 1 FROM teams WHERE num=${a.num} LIMIT 1`;
+    if(used) throw new Error('TEAM_NUM_USED');
+    // A pending application is intentionally NOT a hard reservation anymore. This prevents
+    // anonymous team-number squatting. Re-submitting the same number+email refreshes the draft.
+    const [recent]=await tx`SELECT id FROM applications WHERE num=${a.num} AND lower(email)=lower(${a.email}) AND status='BAŞVURU ALINDI' AND created_at > now() - interval '24 hours' ORDER BY id DESC LIMIT 1`;
+    if(recent){
+      const [row]=await tx`UPDATE applications SET team=${a.team},org=${a.org},city=${a.city},district=${a.district},type=${a.type},program=${a.program},mentor=${a.mentor},phone=${a.phone},kit=${a.kit},kvkk_accepted=${a.kvkkAccepted},kvkk_accepted_at=CASE WHEN ${a.kvkkAccepted} THEN now() ELSE kvkk_accepted_at END,total=${a.total} WHERE id=${recent.id} RETURNING id`;
+      return {id:Number(row.id),updated:true};
+    }
+    const [row] = await tx`INSERT INTO applications (num,team,org,city,district,type,program,mentor,email,phone,kit,kvkk_accepted,kvkk_accepted_at,total,status) VALUES (${a.num},${a.team},${a.org},${a.city},${a.district},${a.type},${a.program},${a.mentor},${a.email},${a.phone},${a.kit},${a.kvkkAccepted},CASE WHEN ${a.kvkkAccepted} THEN now() ELSE NULL END,${a.total},'BAŞVURU ALINDI') RETURNING id`;
+    return {id:Number(row.id),updated:false};
+  });
 }
 export async function listApplications() { const sql=await db(); return sql`SELECT * FROM applications ORDER BY created_at DESC`; }
 export async function resolveApplication(id:number, action:"approve"|"reject") {
@@ -44,18 +56,19 @@ export async function resolveApplication(id:number, action:"approve"|"reject") {
     const [app] = await tx`SELECT * FROM applications WHERE id=${id} FOR UPDATE`;
     if (!app) return null;
     if (action === "reject") { await tx`UPDATE applications SET status='REDDEDİLDİ', reviewed_at=now() WHERE id=${id}`; return { app, action }; }
+    const [numberUsed] = await tx`SELECT 1 FROM teams WHERE num=${app.num} LIMIT 1`;
+    if (numberUsed) throw new Error('TEAM_NUM_USED');
+    const [existing] = await tx`SELECT id,role FROM cms_users WHERE lower(email)=lower(${app.email})`;
+    if (existing && existing.role !== 'mentor') throw new Error('EMAIL_ROLE_CONFLICT');
     await tx`INSERT INTO teams (num,name,school,city,district,program,status,visible,mentor_name,mentor_email,phone)
-      VALUES (${app.num},${app.team},${app.org},${app.city},${app.district??''},${app.program},'AKTİF',true,${app.mentor},${app.email},${app.phone})
-      ON CONFLICT (num) DO UPDATE SET name=EXCLUDED.name,school=EXCLUDED.school,city=EXCLUDED.city,district=EXCLUDED.district,program=EXCLUDED.program,
-      mentor_name=EXCLUDED.mentor_name,mentor_email=EXCLUDED.mentor_email,phone=EXCLUDED.phone,updated_at=now()`;
-    const [existing] = await tx`SELECT id FROM cms_users WHERE lower(email)=lower(${app.email})`;
+      VALUES (${app.num},${app.team},${app.org},${app.city},${app.district??''},${app.program},'AKTİF',true,${app.mentor},${app.email},${app.phone})`;
     let password:string|undefined;
     if (!existing) {
       password = tempPassword();
-      await tx`INSERT INTO cms_users (email,name,role,password_hash,team_num,active)
-        VALUES (${app.email.toLowerCase()},${app.mentor},'mentor',${hashPassword(password)},${app.num},true)`;
+      await tx`INSERT INTO cms_users (email,name,role,password_hash,team_num,active,session_version,must_change_password)
+        VALUES (${app.email.toLowerCase()},${app.mentor},'mentor',${hashPassword(password)},${app.num},true,1,true)`;
     } else {
-      await tx`UPDATE cms_users SET team_num=${app.num}, active=true, updated_at=now() WHERE id=${existing.id} AND role='mentor'`;
+      await tx`UPDATE cms_users SET team_num=${app.num}, active=true, session_version=session_version+1, updated_at=now() WHERE id=${existing.id} AND role='mentor'`;
     }
     const [mentorMember] = await tx`SELECT id FROM members WHERE team_num=${app.num} AND lower(coalesce(email,''))=lower(${app.email}) LIMIT 1`;
     if (!mentorMember) await tx`INSERT INTO members (team_num,name,email,role,cat,consent,status) VALUES (${app.num},${app.mentor},${app.email},'MENTOR','—','—','AKTİF')`;
@@ -66,7 +79,7 @@ export async function resolveApplication(id:number, action:"approve"|"reject") {
 
 export async function listTeams(all=true) {
   const sql=await db();
-  return all ? sql`SELECT * FROM teams ORDER BY created_at DESC` : sql`SELECT * FROM teams WHERE visible=true AND status='AKTİF' ORDER BY num`;
+  return all ? sql`SELECT * FROM teams ORDER BY created_at DESC` : sql`SELECT num,name,school,city,district,program,status,slogan,logo_url FROM teams WHERE visible=true AND status='AKTİF' ORDER BY num`;
 }
 export async function getTeam(num:string) { const sql=await db(); const [r]=await sql`SELECT * FROM teams WHERE num=${num}`; return r??null; }
 export async function updateTeam(num:string,b:any) {
@@ -74,7 +87,7 @@ export async function updateTeam(num:string,b:any) {
   const [r]=await sql`INSERT INTO teams(num,name,school,city,district,program,status,visible,mentor_name,mentor_email,phone,slogan,logo_url) VALUES(${num},${b.name},${b.school},${b.city},${b.district??''},${b.program},${b.status??'AKTİF'},${b.visible!==false},${b.mentor_name??''},${b.mentor_email??''},${b.phone??''},${b.slogan??''},${b.logo_url??''}) ON CONFLICT(num) DO UPDATE SET name=EXCLUDED.name,school=EXCLUDED.school,city=EXCLUDED.city,district=EXCLUDED.district,program=EXCLUDED.program,status=EXCLUDED.status,visible=EXCLUDED.visible,mentor_name=EXCLUDED.mentor_name,mentor_email=EXCLUDED.mentor_email,phone=EXCLUDED.phone,slogan=EXCLUDED.slogan,logo_url=EXCLUDED.logo_url,updated_at=now() RETURNING *`;
   return r??null;
 }
-export async function deleteTeam(num:string) { const sql=await db(); await sql.begin(async(tx:any)=>{await tx`DELETE FROM event_registrations WHERE team_num=${num}`;await tx`DELETE FROM members WHERE team_num=${num}`;await tx`DELETE FROM team_docs WHERE team_num=${num}`;await tx`DELETE FROM payments WHERE team_num=${num}`;await tx`UPDATE cms_users SET active=false,team_num=NULL,updated_at=now() WHERE team_num=${num} AND role='mentor'`;await tx`DELETE FROM teams WHERE num=${num}`;}); }
+export async function deleteTeam(num:string) { const sql=await db(); await sql.begin(async(tx:any)=>{await tx`DELETE FROM event_registrations WHERE team_num=${num}`;await tx`DELETE FROM members WHERE team_num=${num}`;await tx`DELETE FROM team_docs WHERE team_num=${num}`;await tx`DELETE FROM payments WHERE team_num=${num}`;await tx`UPDATE cms_users SET active=false,team_num=NULL,session_version=session_version+1,updated_at=now() WHERE team_num=${num} AND role='mentor'`;await tx`DELETE FROM teams WHERE num=${num}`;}); }
 
 export async function listMembers(teamNum:string){ const sql=await db(); return sql`SELECT * FROM members WHERE team_num=${teamNum} ORDER BY id`; }
 export async function createMember(teamNum:string,b:any){ const sql=await db(); const [r]=await sql`INSERT INTO members(team_num,name,email,role,cat,consent,status) VALUES(${teamNum},${b.name},${b.email??''},${b.role??'ÜYE'},${b.cat??'—'},${b.consent??'—'},${b.status??'AKTİF'}) RETURNING *`; return r; }
@@ -160,16 +173,42 @@ export async function addMedia(b:any){ const sql=await db(); const [r]=await sql
 export async function updateMedia(id:number,b:any){ const sql=await db(); const [r]=await sql`UPDATE media SET title=${b.title},type=${b.type},event_slug=${b.event_slug??''},alt_text=${b.alt_text??''},caption=${b.caption??''},published=${b.published!==false},updated_at=now() WHERE id=${id} RETURNING *`; return r??null; }
 export async function deleteMedia(id:number){ const sql=await db(); const [r]=await sql`DELETE FROM media WHERE id=${id} RETURNING *`; return r??null; }
 
-export async function listUsers(){ const sql=await db(); return sql`SELECT id,email,name,role,team_num,active,public_profile,public_title,public_bio,public_photo_url,sort_order,created_at,updated_at FROM cms_users ORDER BY role,email`; }
+export async function listUsers(){ const sql=await db(); return sql`SELECT id,email,name,role,team_num,active,public_profile,public_title,public_bio,public_photo_url,sort_order,created_at,updated_at,must_change_password,(coalesce(mfa_secret,'')<>'') mfa_enabled,session_version FROM cms_users ORDER BY role,email`; }
 export async function listPublicStaff(){ const sql=await db(); return sql`SELECT id,name,public_title,public_bio,public_photo_url,sort_order FROM cms_users WHERE active=true AND public_profile=true ORDER BY sort_order,name`; }
 export async function findUserByEmail(email:string){ const sql=await db(); const [r]=await sql`SELECT * FROM cms_users WHERE lower(email)=lower(${email}) LIMIT 1`; return r??null; }
-export async function saveUser(b:any){ const sql=await db(); const passHash=b.password?hashPassword(b.password):null; const pp=b.public_profile===true; const pt=b.public_title??''; const pb=b.public_bio??''; const photo=b.public_photo_url??''; const order=Number(b.sort_order)||0; if(b.id){const [r]=await sql`UPDATE cms_users SET email=${b.email.toLowerCase()},name=${b.name},role=${b.role},team_num=${b.team_num||null},active=${b.active!==false},public_profile=${pp},public_title=${pt},public_bio=${pb},public_photo_url=${photo},sort_order=${order},password_hash=COALESCE(${passHash},password_hash),updated_at=now() WHERE id=${Number(b.id)} RETURNING id,email,name,role,team_num,active,public_profile,public_title,public_bio,public_photo_url,sort_order`; return r;} const [r]=await sql`INSERT INTO cms_users(email,name,role,team_num,active,password_hash,public_profile,public_title,public_bio,public_photo_url,sort_order) VALUES(${b.email.toLowerCase()},${b.name},${b.role},${b.team_num||null},${b.active!==false},${passHash??hashPassword(tempPassword())},${pp},${pt},${pb},${photo},${order}) RETURNING id,email,name,role,team_num,active,public_profile,public_title,public_bio,public_photo_url,sort_order`;return r; }
+export async function saveUser(b:any){
+  const sql=await db();
+  const passHash=b.password?hashPassword(b.password):null;
+  const pp=b.public_profile===true, pt=b.public_title??'', pb=b.public_bio??'', photo=b.public_photo_url??'', order=Number(b.sort_order)||0;
+  const generatedMfa=typeof b._mfaSecret==='string'?b._mfaSecret:null;
+  if(b.id){
+    const mustChange=passHash?true:null;
+    const [r]=await sql`UPDATE cms_users SET email=${b.email.toLowerCase()},name=${b.name},role=${b.role},team_num=${b.team_num||null},active=${b.active!==false},public_profile=${pp},public_title=${pt},public_bio=${pb},public_photo_url=${photo},sort_order=${order},password_hash=COALESCE(${passHash},password_hash),must_change_password=COALESCE(${mustChange},must_change_password),mfa_secret=CASE WHEN ${b.clear_mfa===true} THEN '' WHEN ${generatedMfa} IS NOT NULL THEN ${generatedMfa} ELSE mfa_secret END,session_version=session_version+1,updated_at=now() WHERE id=${Number(b.id)} RETURNING id,email,name,role,team_num,active,public_profile,public_title,public_bio,public_photo_url,sort_order,must_change_password,(coalesce(mfa_secret,'')<>'') mfa_enabled,session_version`;
+    return r;
+  }
+  const initialHash=passHash??hashPassword(tempPassword());
+  const [r]=await sql`INSERT INTO cms_users(email,name,role,team_num,active,password_hash,public_profile,public_title,public_bio,public_photo_url,sort_order,must_change_password,mfa_secret,session_version) VALUES(${b.email.toLowerCase()},${b.name},${b.role},${b.team_num||null},${b.active!==false},${initialHash},${pp},${pt},${pb},${photo},${order},true,${generatedMfa??''},1) RETURNING id,email,name,role,team_num,active,public_profile,public_title,public_bio,public_photo_url,sort_order,must_change_password,(coalesce(mfa_secret,'')<>'') mfa_enabled,session_version`;
+  return r;
+}
 export async function deleteUser(id:number){ const sql=await db(); await sql`DELETE FROM cms_users WHERE id=${id}`; }
-export async function changeOwnPassword(email:string,current:string,next:string){ const u=await findUserByEmail(email); if(!u||!verifyPassword(current,u.password_hash)) return false; const sql=await db(); await sql`UPDATE cms_users SET password_hash=${hashPassword(next)},updated_at=now() WHERE id=${u.id}`; return true; }
+export async function changeOwnPassword(email:string,current:string,next:string){ const u=await findUserByEmail(email); if(!u||!verifyPassword(current,u.password_hash)) return false; const sql=await db(); await sql`UPDATE cms_users SET password_hash=${hashPassword(next)},must_change_password=false,session_version=session_version+1,updated_at=now() WHERE id=${u.id}`; return true; }
 
 export async function createContact(b:any){ const sql=await db(); const [r]=await sql`INSERT INTO contacts(name,email,phone,subject,message,status) VALUES(${b.name},${b.email},${b.phone??''},${b.subject??''},${b.message},'YENİ') RETURNING id`; return r; }
 export async function listContacts(){ const sql=await db(); return sql`SELECT * FROM contacts ORDER BY created_at DESC`; }
 export async function updateContact(id:number,status:string){ const sql=await db(); await sql`UPDATE contacts SET status=${status},updated_at=now() WHERE id=${id}`; }
+
+export async function consumeRateLimit(key:string,limit:number,windowSeconds:number){
+  const sql=await db();
+  const windowMs=Math.max(1,windowSeconds)*1000;
+  const startMs=Math.floor(Date.now()/windowMs)*windowMs;
+  const start=new Date(startMs).toISOString();
+  const expires=new Date(startMs+windowMs*2).toISOString();
+  const [row]=await sql`INSERT INTO security_rate_limits(key,window_start,count,expires_at) VALUES(${key},${start},1,${expires}) ON CONFLICT(key,window_start) DO UPDATE SET count=security_rate_limits.count+1,expires_at=EXCLUDED.expires_at RETURNING count`;
+  if(Math.random()<0.02){ void sql`DELETE FROM security_rate_limits WHERE expires_at < now()`.catch(()=>{}); }
+  const count=Number(row?.count)||1;
+  const retryAfter=Math.max(1,Math.ceil((startMs+windowMs-Date.now())/1000));
+  return {ok:count<=limit,count,remaining:Math.max(0,limit-count),retryAfter};
+}
 
 export async function audit(actor:string,action:string,entity:string,entityId:string,details:any={}){ try{const sql=await db(); await sql`INSERT INTO audit_logs(actor,action,entity,entity_id,details) VALUES(${actor},${action},${entity},${entityId},${JSON.stringify(details)}::jsonb)`;}catch{} }
 export async function listAudit(limit=100){ const sql=await db(); return sql`SELECT * FROM audit_logs ORDER BY created_at DESC LIMIT ${limit}`; }
@@ -182,10 +221,10 @@ export async function dbDiagnostics(){
   try{
     const sql=await db();
     const [who]=await sql`SELECT current_database() database,current_user db_user,now() time`;
-    const expected=["applications","teams","members","news","program_content","events","documents","pages","settings","team_docs","document_requirements","payments","cms_users","event_registrations","media","contacts","audit_logs"];
+    const expected=["applications","teams","members","news","program_content","events","documents","pages","settings","team_docs","document_requirements","payments","cms_users","event_registrations","media","contacts","audit_logs","security_rate_limits"];
     const rows=await sql`SELECT table_name FROM information_schema.tables WHERE table_schema='public' AND table_name IN ${sql(expected)}`;
     const tables=rows.map((r:any)=>r.table_name);
     const missingTables=expected.filter(x=>!tables.includes(x));
-    return {ok:missingTables.length===0,env:{databaseUrl:true},database:who,tables,missingTables,error:missingTables.length?`Eksik tablolar: ${missingTables.join(", ")}`:null};
+    return {ok:missingTables.length===0,env:{databaseUrl:true},database:who,tables,missingTables,leastPrivilege:String(who?.db_user||'').toLowerCase()!=='postgres',warning:String(who?.db_user||'').toLowerCase()==='postgres'?'DATABASE_URL hâlâ postgres süper-yetkili rolünü kullanıyor. recf_app rolüne geçin.':null,error:missingTables.length?`Eksik tablolar: ${missingTables.join(", ")}`:null};
   }catch(e:any){return {ok:false,env:{databaseUrl:true},database:null,tables:[],missingTables:[],error:e?.message||"Veritabanı bağlantısı kurulamadı."};}
 }
