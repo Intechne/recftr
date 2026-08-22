@@ -115,3 +115,36 @@ input, select, textarea { max-width: 100%; }
   .route-draw { stroke-dashoffset: 0; }
   html { scroll-behavior: auto; }
 }
+
+/* V3.0.8 — CMS bağlı ana sayfa hareket katmanı */
+@keyframes homeOrbit {
+  0%,100% { transform: translate3d(0,0,0) rotate(45deg); }
+  50% { transform: translate3d(10px,-10px,0) rotate(52deg); }
+}
+@keyframes routeFly {
+  0%,100% { transform: translate3d(0,0,0) rotate(-12deg); }
+  50% { transform: translate3d(14px,-6px,0) rotate(-5deg); }
+}
+@keyframes plateFloat {
+  0%,100% { transform: translateY(0) rotate(-3deg); }
+  50% { transform: translateY(-8px) rotate(-2deg); }
+}
+.home-orbit { animation: homeOrbit 7s ease-in-out infinite; will-change: transform; }
+.home-orbit-blue { animation-delay: -2.6s; animation-duration: 9s; }
+.route-fly { animation: routeFly 3.8s ease-in-out infinite; will-change: transform; }
+.home-plate { animation: plateFloat 5.5s ease-in-out infinite; will-change: transform; }
+
+/* Mobilde hareketi daha sakin ve kompozisyonu daha sıkı tut */
+@media (max-width: 639px) {
+  .home-orbit { opacity: .5; animation-duration: 10s; }
+  .home-plate { animation-duration: 7s; }
+}
+
+/* TV / geniş ekranlarda ana sayfa blokları daha rahat okunur */
+@media (min-width: 1920px) {
+  .home-plate { max-width: 34rem; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .home-orbit, .route-fly, .home-plate { animation: none !important; }
+}

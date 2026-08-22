@@ -1,10 +1,21 @@
-# RECF Türkiye V3.0.7
+# RECF Türkiye V3.0.8
 
-> CMS + takım portalı production paketi. V3.0.7: V3.0.6 marka/Figma altyapısına telefon, tablet, desktop, geniş ekran ve Smart TV responsive desteği eklendi. Sistem sağlık kontrolü: `/admin/sistem`.
+> CMS + takım portalı production paketi. V3.0.8: V3.0.7 responsive altyapısına full CMS öncesindeki hareketli ana sayfa kompozisyonları CMS/Supabase bağlı şekilde geri eklendi. Sistem sağlık kontrolü: `/admin/sistem`.
 
 # RECF Türkiye V3 — Complete CMS + Team Portal
 
 Next.js 15 + TypeScript + Supabase PostgreSQL/Storage + Vercel için hazırlanmış production sürümü.
+
+## V3.0.8 Ana Sayfa Deneyimi
+- CMS bağlı hareketli hero ve Sezon Oyunları paneli
+- Program plaka kartları ve scroll reveal
+- CMS yönetilebilir Sezon Rotası
+- Supabase gerçek verilerinden CountUp istatistik bandı
+- Responsive scoreboard etkinlik alanı
+- Hareketli haber/galeri kompozisyonu
+- CMS yönetilebilir takım plakası CTA
+- Mobil, tablet, desktop, ultra-wide ve Smart TV uyumlu
+
 
 ## Mimari
 
