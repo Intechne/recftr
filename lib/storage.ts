@@ -98,7 +98,7 @@ export function publicUrlMatchesPath(url: string, path: string) {
   try { return pathFromPublicUrl(url) === path; } catch { return false; }
 }
 
-export async function verifyStoredObject(bucket: string, path: string, allowedMimeTypes: string[], maxBytes: number) {
+export async function verifyStoredObject(bucket: string, path: string, allowedMimeTypes: string[], maxBytes: number): Promise<{ ok: true; size: number; mime: string } | { ok: false; error: string }> {
   if (!path || path.includes("..") || path.includes("\\")) return { ok:false, error:"Geçersiz dosya yolu." };
   const slash = path.lastIndexOf("/");
   const folder = slash >= 0 ? path.slice(0, slash) : "";

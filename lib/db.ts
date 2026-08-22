@@ -226,5 +226,5 @@ export async function dbDiagnostics(){
     const tables=rows.map((r:any)=>r.table_name);
     const missingTables=expected.filter(x=>!tables.includes(x));
     return {ok:missingTables.length===0,env:{databaseUrl:true},database:who,tables,missingTables,leastPrivilege:String(who?.db_user||'').toLowerCase()!=='postgres',warning:String(who?.db_user||'').toLowerCase()==='postgres'?'DATABASE_URL hâlâ postgres süper-yetkili rolünü kullanıyor. recf_app rolüne geçin.':null,error:missingTables.length?`Eksik tablolar: ${missingTables.join(", ")}`:null};
-  }catch(e:any){return {ok:false,env:{databaseUrl:true},database:null,tables:[],missingTables:[],error:e?.message||"Veritabanı bağlantısı kurulamadı."};}
+  }catch(e:any){return {ok:false,env:{databaseUrl:true},database:null,tables:[],missingTables:[] as string[],error:e?.message||"Veritabanı bağlantısı kurulamadı."};}
 }
