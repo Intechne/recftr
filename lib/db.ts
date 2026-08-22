@@ -183,7 +183,13 @@ export async function saveUser(b:any){
   const generatedMfa=typeof b._mfaSecret==='string'?b._mfaSecret:null;
   if(b.id){
     const mustChange=passHash?true:null;
-    const [r]=await sql`UPDATE cms_users SET email=${b.email.toLowerCase()},name=${b.name},role=${b.role},team_num=${b.team_num||null},active=${b.active!==false},public_profile=${pp},public_title=${pt},public_bio=${pb},public_photo_url=${photo},sort_order=${order},password_hash=COALESCE(${passHash},password_hash),must_change_password=COALESCE(${mustChange},must_change_password),mfa_secret=CASE WHEN ${b.clear_mfa===true} THEN '' WHEN ${generatedMfa} IS NOT NULL THEN ${generatedMfa} ELSE mfa_secret END,session_version=session_version+1,updated_at=now() WHERE id=${Number(b.id)} RETURNING id,email,name,role,team_num,active,public_profile,public_title,public_bio,public_photo_url,sort_order,must_change_password,(coalesce(mfa_secret,'')<>'') mfa_enabled,session_version`;
+    // Never send an untyped NULL parameter into `IS NOT NULL`. PostgreSQL cannot
+    // infer the type of that standalone parameter (42P18). Keep the decision in
+    // JavaScript and bind typed/contextual boolean/text values instead.
+    const clearMfa=b.clear_mfa===true;
+    const hasGeneratedMfa=generatedMfa!==null;
+    const mfaValue=generatedMfa??'';
+    const [r]=await sql`UPDATE cms_users SET email=${b.email.toLowerCase()},name=${b.name},role=${b.role},team_num=${b.team_num||null},active=${b.active!==false},public_profile=${pp},public_title=${pt},public_bio=${pb},public_photo_url=${photo},sort_order=${order},password_hash=COALESCE(${passHash}::text,password_hash),must_change_password=COALESCE(${mustChange}::boolean,must_change_password),mfa_secret=CASE WHEN ${clearMfa}::boolean THEN '' WHEN ${hasGeneratedMfa}::boolean THEN ${mfaValue}::text ELSE mfa_secret END,session_version=session_version+1,updated_at=now() WHERE id=${Number(b.id)} RETURNING id,email,name,role,team_num,active,public_profile,public_title,public_bio,public_photo_url,sort_order,must_change_password,(coalesce(mfa_secret,'')<>'') mfa_enabled,session_version`;
     return r;
   }
   const initialHash=passHash??hashPassword(tempPassword());

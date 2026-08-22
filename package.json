@@ -1,6 +1,6 @@
 {
   "name": "recf-turkiye",
-  "version": "3.1.1",
+  "version": "3.1.2",
   "private": true,
   "scripts": {
     "dev": "next dev",
@@ -10,7 +10,8 @@
     "security:static": "node scripts/security-static-check.mjs",
     "security:smoke": "node scripts/security-smoke.mjs",
     "security:edge": "bash scripts/security-edge.sh",
-    "security:postdeploy": "bash scripts/security-postdeploy.sh"
+    "security:postdeploy": "bash scripts/security-postdeploy.sh",
+    "security:advanced": "node scripts/security-advanced.mjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.57.4",

@@ -12,6 +12,6 @@ export async function GET(req:NextRequest){
     env:{sessionSecret:sessionSecret.length>=32,adminEmail:!!process.env.ADMIN_EMAIL,adminPassword:!!process.env.ADMIN_PASSWORD,adminTotp:!!process.env.ADMIN_TOTP_SECRET,rateLimitSalt:!!process.env.RATE_LIMIT_SALT},
     db,storage,
     security:{sessionRevocation:true,apiNoStore:true,csrfOriginGuard:true,rateLimitTable:!db.missingTables?.includes?.('security_rate_limits'),leastPrivilegeDb:db.leastPrivilege===true},
-    version:"3.1.0"
+    version:"3.1.2"
   },{headers:{'Cache-Control':'no-store'}});
 }

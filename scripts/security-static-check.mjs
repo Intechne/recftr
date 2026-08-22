@@ -25,6 +25,7 @@ const checks=[
   ['Open redirect helper rejects // and backslash', read('lib/safe-path.ts').includes('path.startsWith("//")') && read('lib/safe-path.ts').includes('path.includes("\\\\")')],
   ['Temporary passwords require change', read('lib/db.ts').includes('must_change_password') && read('middleware.ts').includes('mustChangePassword')],
   ['TOTP MFA support present', read('lib/totp.ts').includes('verifyTotp') && read('app/api/auth/route.ts').includes('mfa_secret')],
+  ['User update avoids untyped NULL MFA parameter', read('lib/db.ts').includes('hasGeneratedMfa=generatedMfa!==null') && !read('lib/db.ts').includes('${generatedMfa} IS NOT NULL')],
   ['Security migration enables RLS for limiter', read('supabase/security-v3.1.0.sql').includes('ALTER TABLE security_rate_limits ENABLE ROW LEVEL SECURITY')],
   ['React patched version pinned', JSON.parse(read('package.json')).dependencies.react === '19.2.8'],
   ['Security edge smoke script exists', exists('scripts/security-edge.sh')],
