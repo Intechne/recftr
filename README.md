@@ -1,6 +1,6 @@
-# RECF Türkiye V3.0.8
+# RECF Türkiye V3.0.9
 
-> CMS + takım portalı production paketi. V3.0.8: V3.0.7 responsive altyapısına full CMS öncesindeki hareketli ana sayfa kompozisyonları CMS/Supabase bağlı şekilde geri eklendi. Sistem sağlık kontrolü: `/admin/sistem`.
+> CMS + takım portalı production paketi. V3.0.9: V3.0.8 ana sayfa deneyimi korunarak Figma `Icon System v3.1 — Refined` web, CMS ve mentor/takım portalına entegre edildi. Sistem sağlık kontrolü: `/admin/sistem`.
 
 # RECF Türkiye V3 — Complete CMS + Team Portal
 
