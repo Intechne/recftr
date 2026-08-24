@@ -1,6 +1,6 @@
 import Link from "next/link";
 import {PageHead} from "@/components/Ui";
-import {listPrograms} from "@/lib/db";
+import {getCachedPrograms} from "@/lib/public-cache";
 
 export const dynamic="force-dynamic";
 export const revalidate=0;
@@ -9,7 +9,7 @@ function arr(v:any){return Array.isArray(v)?v:[]}
 function txt(v:any){return typeof v==="string"?v:(v==null?"":String(v))}
 
 export default async function ProgramlarPage(){
-  const items:any[]=await listPrograms(false);
+  const items:any[]=await getCachedPrograms();
   return <div className="pb-20">
     <PageHead kicker="PROGRAMLAR" title="RECF PROGRAMLARI" sub="Yaşa ve seviyeye göre doğru arenayı seç — robotikten drone yarışmalarına."/>
     <div className="safe-x mx-auto max-w-7xl space-y-5 lg:px-10">

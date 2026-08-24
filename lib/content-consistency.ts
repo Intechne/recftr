@@ -1,4 +1,4 @@
-import { revalidatePath } from "next/cache";
+import { revalidatePath, revalidateTag } from "next/cache";
 import { getContentRevision, touchContentRevision } from "@/lib/db";
 
 export const PUBLIC_SETTING_KEYS = [
@@ -14,6 +14,7 @@ export async function publishContentChange(paths: string[] = [], existingRevisio
   const revision = existingRevision || await touchContentRevision();
   // Root layout holds the public shell (brand/ticker/nav/footer). Revalidate it every time
   // public CMS content changes so server-rendered content cannot drift behind the database.
+  revalidateTag("public-content");
   revalidatePath("/", "layout");
   for (const path of new Set(paths.filter(Boolean))) revalidatePath(path);
   return revision;

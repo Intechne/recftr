@@ -1,11 +1,11 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
-import { getNews, listNews } from "@/lib/db";
+import { getCachedNewsItem, getCachedNews } from "@/lib/public-cache";
 import { Photo } from "@/components/Ui";
 export const dynamic="force-dynamic";
-export async function generateMetadata({params}:{params:Promise<{slug:string}>}):Promise<Metadata>{const {slug}=await params;const n=await getNews(slug);return {title:n?.title??"Haber",description:n?.excerpt??undefined};}
-export default async function NewsPage({params}:{params:Promise<{slug:string}>}){const {slug}=await params;const n:any=await getNews(slug);if(!n)notFound();const related:any[]=(await listNews(false)).filter((x:any)=>x.slug!==slug).slice(0,3);const date=new Date(n.date).toLocaleDateString("tr-TR",{day:"numeric",month:"long",year:"numeric"});const pars=String(n.body||n.excerpt||"").split(/\n\n+/).filter(Boolean);
+export async function generateMetadata({params}:{params:Promise<{slug:string}>}):Promise<Metadata>{const {slug}=await params;const n=await getCachedNewsItem(slug);return {title:n?.title??"Haber",description:n?.excerpt??undefined};}
+export default async function NewsPage({params}:{params:Promise<{slug:string}>}){const {slug}=await params;const n:any=await getCachedNewsItem(slug);if(!n)notFound();const related:any[]=(await getCachedNews()).filter((x:any)=>x.slug!==slug).slice(0,3);const date=new Date(n.date).toLocaleDateString("tr-TR",{day:"numeric",month:"long",year:"numeric"});const pars=String(n.body||n.excerpt||"").split(/\n\n+/).filter(Boolean);
 return <article className="pb-20"><div className="safe-x mx-auto max-w-3xl pt-12"><p className="font-display text-[12px] font-semibold tracking-[2px] text-cyan-deep"><Link href="/duyurular" className="hover:underline">DUYURULAR</Link> / {n.tag}</p><h1 className="mt-4 font-display text-3xl font-bold leading-tight text-ink lg:text-[40px]">{n.title}</h1><div className="mt-4 flex flex-wrap items-center gap-4"><span className="rounded bg-cyan-brand px-2.5 py-1 font-display text-[11px] font-bold text-ink">{n.tag}</span><span className="text-[14px] text-ink/50">{date} · {n.author||"RECF Türkiye"}</span></div></div>
 {n.cover_url?<img src={n.cover_url} alt={n.title} className="mx-auto mt-8 h-64 w-full max-w-5xl rounded-xl object-cover lg:h-80"/>:<Photo label="Haber kapak görseli" tone="from-[#2e4780] to-ink" className="mx-auto mt-8 h-64 max-w-5xl rounded-xl lg:h-80"/>}
 <div className="safe-x mx-auto mt-10 max-w-3xl space-y-6">{pars.map((p:string,i:number)=><p key={i} className={`${i===0?"text-[18px] font-semibold text-ink":"text-[16px] text-ink/70"} whitespace-pre-line leading-[1.75]`}>{p}</p>)}</div>

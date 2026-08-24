@@ -1,59 +1,49 @@
 "use client";
 
-import { useCallback, useEffect, useRef } from "react";
+import { useEffect, useRef } from "react";
 
 /**
- * Keeps already-open public tabs in sync with CMS writes.
- * The page is hard-reloaded only when the server-side content revision changes.
- * This intentionally remounts legacy client pages too, so every /api/* GET is re-fetched.
+ * Keeps a public tab in sync with CMS writes made in another tab of the same browser
+ * without polling the database. Server-side cache invalidation is still handled by
+ * revalidateTag/revalidatePath; this bridge only provides immediate editor preview UX.
  */
-export default function ContentRefreshBridge({ initialRevision }: { initialRevision: string }) {
-  const revisionRef = useRef(initialRevision || "0");
-  const checkingRef = useRef(false);
+export default function ContentRefreshBridge() {
+  const seenRef = useRef(0);
   const reloadingRef = useRef(false);
 
-  const check = useCallback(async () => {
-    if (checkingRef.current || reloadingRef.current || document.visibilityState === "hidden") return;
-    checkingRef.current = true;
-    try {
-      const response = await fetch("/api/content-revision", {
-        cache: "no-store",
-        credentials: "same-origin",
-        headers: { "Cache-Control": "no-cache" },
-      });
-      if (!response.ok) return;
-      const data = await response.json().catch(() => null) as { revision?: string } | null;
-      const next = String(data?.revision || "0");
-      if (next !== "0" && next !== revisionRef.current) {
+  useEffect(() => {
+    const readRevision = () => {
+      const n = Number(localStorage.getItem("recf-content-changed") || 0);
+      return Number.isFinite(n) ? n : 0;
+    };
+    seenRef.current = readRevision();
+
+    const maybeReload = () => {
+      if (reloadingRef.current) return;
+      const next = readRevision();
+      if (next > seenRef.current) {
         reloadingRef.current = true;
         window.location.reload();
-        return;
       }
-      revisionRef.current = next;
-    } catch {
-      // A transient network error must never replace fresh content with defaults.
-    } finally {
-      checkingRef.current = false;
-    }
-  }, []);
+    };
 
-  useEffect(() => {
-    const onFocus = () => { void check(); };
-    const onVisibility = () => { if (document.visibilityState === "visible") void check(); };
     const onStorage = (event: StorageEvent) => {
-      if (event.key === "recf-content-changed") void check();
+      if (event.key === "recf-content-changed") maybeReload();
     };
-    window.addEventListener("focus", onFocus);
+    const onFocus = () => maybeReload();
+    const onVisibility = () => {
+      if (document.visibilityState === "visible") maybeReload();
+    };
+
     window.addEventListener("storage", onStorage);
+    window.addEventListener("focus", onFocus);
     document.addEventListener("visibilitychange", onVisibility);
-    const timer = window.setInterval(() => { void check(); }, 60_000);
     return () => {
-      window.removeEventListener("focus", onFocus);
       window.removeEventListener("storage", onStorage);
+      window.removeEventListener("focus", onFocus);
       document.removeEventListener("visibilitychange", onVisibility);
-      window.clearInterval(timer);
     };
-  }, [check]);
+  }, []);
 
   return null;
 }

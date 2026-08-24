@@ -1,6 +1,5 @@
 import Link from "next/link";
-import { getPublicHomeStats, getSettings, listEvents, listMedia, listNews, listPrograms } from "@/lib/db";
-import { PUBLIC_SETTING_KEYS } from "@/lib/content-consistency";
+import { getCachedHomeSnapshot } from "@/lib/public-cache";
 import { FigmaIcon, type FigmaIconName } from "@/components/FigmaIcon";
 import { CountUp, Reveal, RoutePath } from "@/components/Motion";
 
@@ -56,20 +55,18 @@ export const dynamic="force-dynamic";
 export const revalidate=0;
 
 export default async function Home() {
-  const [programRows,eventRows,newsRows,mediaRows,publicSettings,publicStats]=await Promise.all([
-    listPrograms(false),
-    listEvents(false),
-    listNews(false),
-    listMedia(false),
-    getSettings(PUBLIC_SETTING_KEYS),
-    getPublicHomeStats(),
-  ]);
-  const programs=programRows as Program[];
-  const events=eventRows as Event[];
-  const news=newsRows as News[];
-  const media=mediaRows as Media[];
-  const settings=publicSettings as Settings;
-  const stats=publicStats as HomeStats;
+  let snapshot:any={programs:[],events:[],news:[],media:[],settings:{},stats:EMPTY_STATS};
+  try {
+    snapshot=await getCachedHomeSnapshot();
+  } catch {
+    // Never turn a transient database/cache delay into a 504 for the public homepage.
+  }
+  const programs=(Array.isArray(snapshot.programs)?snapshot.programs:[]) as Program[];
+  const events=(Array.isArray(snapshot.events)?snapshot.events:[]) as Event[];
+  const news=(Array.isArray(snapshot.news)?snapshot.news:[]) as News[];
+  const media=(Array.isArray(snapshot.media)?snapshot.media:[]) as Media[];
+  const settings=(snapshot.settings&&typeof snapshot.settings==='object'?snapshot.settings:{}) as Settings;
+  const stats=(snapshot.stats&&typeof snapshot.stats==='object'?snapshot.stats:EMPTY_STATS) as HomeStats;
   const route=parseRoute(settings.season_route);
   const season=settings.season_label||"2026–27";
   const rawHero=(settings.hero_title||"MAÇ GÜNÜ HER GÜN.").trim();

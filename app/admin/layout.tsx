@@ -4,6 +4,7 @@ import {usePathname} from "next/navigation";
 import Logout from "@/components/Logout";
 import {useEffect,useState} from "react";
 import {FigmaIcon, type FigmaIconName} from "@/components/FigmaIcon";
+import ContentMutationBridge from "@/components/ContentMutationBridge";
 
 const ALL:[string,string,FigmaIconName,readonly string[]][]=[
 ["/admin","Genel Bakış","dashboard",["admin","editor","approvals","technical"]],
@@ -32,7 +33,7 @@ export default function AdminLayout({children}:{children:React.ReactNode}){
   useEffect(()=>{setOpen(false)},[path]);
   const menu=ALL.filter(x=>!me||x[3].includes(me.role));
   const sidebar=<><div className="border-b border-white/10 px-5 py-5 lg:py-6"><p className="flex items-center gap-2 font-display text-[15px] font-bold text-cyan-brand 2xl:text-[17px]"><FigmaIcon name="settings" className="h-5 w-5"/> RECF TR · CMS V3</p><p className="mt-0.5 text-[11px] text-white/40">İçerik + Operasyon Yönetimi</p></div><nav className="space-y-1 overflow-y-auto p-3 lg:max-h-[calc(100vh-92px)]">{menu.map(m=><Link key={m[0]} href={m[0]} className={`flex min-h-11 items-center gap-2.5 rounded-lg px-3 py-2.5 font-display text-[12px] 2xl:text-[13px] ${path===m[0]?"bg-cyan-brand font-bold text-ink [--figma-icon-accent:#0D1733]":"text-white/65 hover:bg-white/5 hover:text-white"}`}><FigmaIcon name={m[2]} className="h-[18px] w-[18px] shrink-0"/><span>{m[1]}</span></Link>)}</nav></>;
-  return <div className="min-h-screen bg-paper lg:grid lg:grid-cols-[260px_minmax(0,1fr)] 2xl:grid-cols-[285px_minmax(0,1fr)]">
+  return <><ContentMutationBridge/><div className="min-h-screen bg-paper lg:grid lg:grid-cols-[260px_minmax(0,1fr)] 2xl:grid-cols-[285px_minmax(0,1fr)]">
     <aside className="hidden bg-[#0a0f1e] lg:sticky lg:top-0 lg:block lg:h-screen">{sidebar}</aside>
     {open&&<><button type="button" aria-label="Menüyü kapat" className="app-drawer-backdrop fixed inset-0 z-[70] lg:hidden" onClick={()=>setOpen(false)}/><aside className="fixed inset-y-0 left-0 z-[80] w-[min(86vw,320px)] overflow-y-auto bg-[#0a0f1e] text-white shadow-2xl lg:hidden">{sidebar}</aside></>}
     <div className="min-w-0">
@@ -42,5 +43,5 @@ export default function AdminLayout({children}:{children:React.ReactNode}){
       </header>
       <main className="min-w-0 p-4 sm:p-5 lg:p-8 2xl:p-10"><div className="mx-auto w-full max-w-[110rem]">{children}</div></main>
     </div>
-  </div>;
+  </div></>;
 }

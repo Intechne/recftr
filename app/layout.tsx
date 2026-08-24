@@ -1,9 +1,8 @@
 import type {Metadata, Viewport} from "next";
 import "./globals.css";
-import {getSettings} from "@/lib/db";
+import {getCachedPublicSettings} from "@/lib/public-cache";
 
-export const dynamic="force-dynamic";
-export const revalidate=0;
+export const revalidate=300;
 
 export const viewport:Viewport={
   width:"device-width",
@@ -14,7 +13,7 @@ export const viewport:Viewport={
 
 export async function generateMetadata():Promise<Metadata>{
   let s:Record<string,string>={};
-  try{s=await getSettings(["site_name","favicon_url","apple_touch_icon_url","og_image"])}catch{}
+  try{s=(await getCachedPublicSettings()) as Record<string,string>}catch{}
   const site=s.site_name||"RECF Türkiye";
   return {
     title:{default:`${site} — Maç Günü. Her Gün.`,template:`%s | ${site}`},

@@ -6,7 +6,7 @@ async function db() {
   if (!PG_URL) throw new Error("DATABASE_URL is required. RECF V3 is Supabase/Postgres only.");
   if (_sql) return _sql;
   const postgres = (await import("postgres")).default;
-  _sql = postgres(PG_URL, { ssl: "require", prepare: false, max: 3, idle_timeout: 20 });
+  _sql = postgres(PG_URL, { ssl: "require", prepare: false, max: 3, idle_timeout: 15, connect_timeout: 5 });
   return _sql;
 }
 
@@ -233,6 +233,33 @@ export async function audit(actor:string,action:string,entity:string,entityId:st
 export async function listAudit(limit=100){ const sql=await db(); return sql`SELECT * FROM audit_logs ORDER BY created_at DESC LIMIT ${limit}`; }
 export async function getStats(){ const sql=await db(); const [[t],[a],[e],[n],[m],[u],[c]]=await Promise.all([sql`SELECT COUNT(*)::int c FROM teams WHERE status='AKTİF'`,sql`SELECT COUNT(*)::int c FROM applications WHERE status='BAŞVURU ALINDI'`,sql`SELECT COUNT(*)::int c FROM events WHERE published=true`,sql`SELECT COUNT(*)::int c FROM news WHERE published=true`,sql`SELECT COUNT(*)::int c FROM media`,sql`SELECT COUNT(*)::int c FROM cms_users WHERE active=true`,sql`SELECT COUNT(*)::int c FROM contacts WHERE status='YENİ'`]); return {teams:t.c,pending:a.c,events:e.c,news:n.c,media:m.c,users:u.c,contacts:c.c}; }
 export async function getPublicHomeStats(){ const sql=await db(); const [[t],[c],[e],[s],[p]]=await Promise.all([sql`SELECT COUNT(*)::int c FROM teams WHERE status='AKTİF' AND visible=true`,sql`SELECT COUNT(DISTINCT city)::int c FROM teams WHERE status='AKTİF' AND visible=true AND NULLIF(trim(city),'') IS NOT NULL`,sql`SELECT COUNT(*)::int c FROM events WHERE published=true`,sql`SELECT COUNT(*)::int c FROM members WHERE status='AKTİF' AND upper(coalesce(role,'')) <> 'MENTOR'`,sql`SELECT COUNT(*)::int c FROM program_content WHERE active=true`]); return {teams:Number(t.c)||0,cities:Number(c.c)||0,events:Number(e.c)||0,students:Number(s.c)||0,programs:Number(p.c)||0}; }
+
+export async function getPublicHomeSnapshot(keys:readonly string[]){
+  const sql=await db();
+  const [row]=await sql`
+    SELECT
+      COALESCE((SELECT jsonb_agg(to_jsonb(p) ORDER BY p.sort_order,p.slug) FROM program_content p WHERE p.active=true),'[]'::jsonb) AS programs,
+      COALESCE((SELECT jsonb_agg(to_jsonb(e) ORDER BY COALESCE(e.event_start,e.created_at),e.id) FROM (SELECT * FROM events WHERE published=true ORDER BY COALESCE(event_start,created_at),id LIMIT 6) e),'[]'::jsonb) AS events,
+      COALESCE((SELECT jsonb_agg(to_jsonb(n) ORDER BY n.featured DESC,n.date DESC) FROM (SELECT * FROM news WHERE published=true ORDER BY featured DESC,date DESC LIMIT 3) n),'[]'::jsonb) AS news,
+      COALESCE((SELECT jsonb_agg(to_jsonb(m) ORDER BY m.created_at DESC) FROM (SELECT * FROM media WHERE published=true ORDER BY created_at DESC LIMIT 7) m),'[]'::jsonb) AS media,
+      COALESCE((SELECT jsonb_object_agg(s.key,s.value) FROM settings s WHERE s.key IN ${sql([...keys])}),'{}'::jsonb) AS settings,
+      jsonb_build_object(
+        'teams',(SELECT COUNT(*)::int FROM teams WHERE status='AKTİF' AND visible=true),
+        'cities',(SELECT COUNT(DISTINCT city)::int FROM teams WHERE status='AKTİF' AND visible=true AND NULLIF(trim(city),'') IS NOT NULL),
+        'events',(SELECT COUNT(*)::int FROM events WHERE published=true),
+        'students',(SELECT COUNT(*)::int FROM members WHERE status='AKTİF' AND upper(coalesce(role,'')) <> 'MENTOR'),
+        'programs',(SELECT COUNT(*)::int FROM program_content WHERE active=true)
+      ) AS stats
+  `;
+  return {
+    programs:(Array.isArray(row?.programs)?row.programs:[]).map(normalizeProgramRow).filter(Boolean),
+    events:Array.isArray(row?.events)?row.events:[],
+    news:Array.isArray(row?.news)?row.news:[],
+    media:Array.isArray(row?.media)?row.media:[],
+    settings:row?.settings&&typeof row.settings==='object'?row.settings:{},
+    stats:row?.stats&&typeof row.stats==='object'?row.stats:{teams:0,cities:0,events:0,students:0,programs:0},
+  };
+}
 
 export async function dbDiagnostics(){
   const hasUrl=!!(process.env.DATABASE_URL||process.env.POSTGRES_URL);

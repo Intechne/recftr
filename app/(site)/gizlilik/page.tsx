@@ -1,9 +1,9 @@
-import { getPage } from "@/lib/db";
+import { getCachedPage } from "@/lib/public-cache";
 import { notFound } from "next/navigation";
 export const dynamic = "force-dynamic";
 
 export default async function GizlilikPage() {
-  const p = await getPage("gizlilik");
+  const p = await getCachedPage("gizlilik");
   if (!p) notFound();
   return (
     <div className="safe-x mx-auto max-w-3xl py-14">

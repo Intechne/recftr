@@ -1,6 +1,6 @@
-# RECF Türkiye V3.1.3 — Content Consistency & Responsive Media
+# RECF Türkiye V3.1.4 — Serverless Stability Hotfix
 
-> V3.1.2 güvenlik hardening korunur. V3.1.3 CMS → public veri akışını server-render + content revision mimarisine taşır, stale CMS overwrite riskini önler ve program/logo + mobil medya render sorunlarını kalıcı olarak düzeltir. Migration gerekmez.
+> V3.1.3 içerik tutarlılığı ve responsive media düzeltmeleri korunur. V3.1.4 public server-render veri okumalarını Next Data Cache ile korur, ana sayfayı tek DB snapshot sorgusuna indirir ve Vercel serverless timeout riskini ortadan kaldırmak için DB bağlantısını fail-fast hale getirir. Migration gerekmez.
 
 ## V3.1.0 Güvenlik
 
