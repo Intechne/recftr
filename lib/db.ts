@@ -151,8 +151,21 @@ export async function getPage(slug:string,includeDraft=false){ const sql=await d
 export async function savePage(slug:string,title:string,body:string,published=true){ const sql=await db(); const [r]=await sql`INSERT INTO pages(slug,title,body,published) VALUES(${slug},${title},${body},${published}) ON CONFLICT(slug) DO UPDATE SET title=EXCLUDED.title,body=EXCLUDED.body,published=EXCLUDED.published,updated=now() RETURNING *`; return r; }
 export async function deletePage(slug:string){ const sql=await db(); await sql`DELETE FROM pages WHERE slug=${slug}`; }
 
-export async function getSettings(keys?:string[]){ const sql=await db(); const rows = keys?.length ? await sql`SELECT key,value FROM settings WHERE key IN ${sql(keys)}` : await sql`SELECT key,value FROM settings`; return Object.fromEntries(rows.map((r:any)=>[r.key,r.value])); }
+export async function getSettings(keys?:readonly string[]){ const sql=await db(); const rows = keys?.length ? await sql`SELECT key,value FROM settings WHERE key IN ${sql([...keys])}` : await sql`SELECT key,value FROM settings`; return Object.fromEntries(rows.map((r:any)=>[r.key,r.value])); }
 export async function setSetting(key:string,value:string){ const sql=await db(); await sql`INSERT INTO settings(key,value) VALUES(${key},${value}) ON CONFLICT(key) DO UPDATE SET value=EXCLUDED.value`; }
+export async function setSettingsAtomic(entries:Array<[string,string]>) {
+  const sql=await db();
+  const revision=new Date().toISOString();
+  await sql.begin(async(tx:any)=>{
+    for(const [key,value] of entries){
+      await tx`INSERT INTO settings(key,value) VALUES(${key},${value}) ON CONFLICT(key) DO UPDATE SET value=EXCLUDED.value`;
+    }
+    await tx`INSERT INTO settings(key,value) VALUES('content_revision',${revision}) ON CONFLICT(key) DO UPDATE SET value=EXCLUDED.value`;
+  });
+  return revision;
+}
+export async function getContentRevision(){ const sql=await db(); const [row]=await sql`SELECT value FROM settings WHERE key='content_revision'`; return String(row?.value||'0'); }
+export async function touchContentRevision(){ const sql=await db(); const revision=new Date().toISOString(); await sql`INSERT INTO settings(key,value) VALUES('content_revision',${revision}) ON CONFLICT(key) DO UPDATE SET value=EXCLUDED.value`; return revision; }
 
 export async function listDocumentRequirements(all=false){ const sql=await db(); return all ? sql`SELECT * FROM document_requirements ORDER BY sort_order,id` : sql`SELECT * FROM document_requirements WHERE active=true ORDER BY sort_order,id`; }
 export async function saveDocumentRequirement(b:any){ const sql=await db(); if(b.id){const [r]=await sql`UPDATE document_requirements SET name=${b.name},descr=${b.descr??''},program=${b.program??'ALL'},required=${b.required!==false},active=${b.active!==false},sort_order=${Number(b.sort_order)||0},updated_at=now() WHERE id=${Number(b.id)} RETURNING *`;return r;} const [r]=await sql`INSERT INTO document_requirements(name,descr,program,required,active,sort_order) VALUES(${b.name},${b.descr??''},${b.program??'ALL'},${b.required!==false},${b.active!==false},${Number(b.sort_order)||0}) RETURNING *`;return r; }

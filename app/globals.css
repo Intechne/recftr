@@ -148,3 +148,51 @@ input, select, textarea { max-width: 100%; }
 @media (prefers-reduced-motion: reduce) {
   .home-orbit, .route-fly, .home-plate { animation: none !important; }
 }
+
+/* V3.1.3 — Kalıcı responsive media guardrails */
+img, video, canvas, svg {
+  max-inline-size: 100%;
+}
+img, video {
+  display: block;
+}
+
+/* CMS kaynaklı medya hiçbir breakpoint'te parent kutunun dışına taşamaz. */
+.cms-media-frame {
+  position: relative;
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+  overflow: hidden;
+}
+.cms-media-cover,
+.cms-media-contain {
+  display: block;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+}
+.cms-media-cover {
+  height: 100%;
+  object-fit: cover;
+}
+.cms-media-contain {
+  height: 100%;
+  object-fit: contain;
+}
+
+/* Uzun CMS metinleri / URL'ler flex-grid kartlarını mobilde genişletemez. */
+.cms-content,
+.cms-content * {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+html, body {
+  max-width: 100%;
+  overflow-x: clip;
+}
+main {
+  min-width: 0;
+  max-width: 100%;
+}

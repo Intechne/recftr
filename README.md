@@ -1,6 +1,6 @@
-# RECF Türkiye V3.1.2 — Security Hardening + Session Revocation Hotfix
+# RECF Türkiye V3.1.3 — Content Consistency & Responsive Media
 
-> V3.0.9 tasarım/CMS/portal özellikleri korunarak güvenlik hardening uygulanmıştır. V3.1.2, kullanıcı güncelleme/session revocation sırasında görülen PostgreSQL 42P18 hatasını giderir. Zorunlu migration: `supabase/security-v3.1.0.sql`. Sistem sağlık kontrolü: `/admin/sistem`.
+> V3.1.2 güvenlik hardening korunur. V3.1.3 CMS → public veri akışını server-render + content revision mimarisine taşır, stale CMS overwrite riskini önler ve program/logo + mobil medya render sorunlarını kalıcı olarak düzeltir. Migration gerekmez.
 
 ## V3.1.0 Güvenlik
 

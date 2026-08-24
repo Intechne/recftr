@@ -1,6 +1,6 @@
 export async function fetchArray<T = any>(url: string): Promise<T[]> {
   try {
-    const response = await fetch(url, { cache: "no-store" });
+    const response = await fetch(url, { cache: "no-store", credentials: "same-origin", headers: { "Cache-Control": "no-cache" } });
     const text = await response.text();
     let data: unknown = null;
     try { data = text ? JSON.parse(text) : null; } catch { data = null; }
@@ -24,7 +24,7 @@ export async function fetchObject<T extends Record<string, any> = Record<string,
   fallback: T = {} as T,
 ): Promise<T> {
   try {
-    const response = await fetch(url, { cache: "no-store" });
+    const response = await fetch(url, { cache: "no-store", credentials: "same-origin", headers: { "Cache-Control": "no-cache" } });
     const text = await response.text();
     let data: unknown = null;
     try { data = text ? JSON.parse(text) : null; } catch { data = null; }

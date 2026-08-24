@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { uploadFile } from "@/lib/client-upload";
 import { FigmaIcon } from "@/components/FigmaIcon";
+import { notifyPublicContentChanged } from "@/lib/content-client";
 
 type RouteStep={month:string;label:string;done:boolean};
 const DEFAULT_ROUTE:RouteStep[]=[
@@ -33,7 +34,16 @@ export default function Page(){
   const [msg,setMsg]=useState("");
   const [saving,setSaving]=useState(false);
   const [role,setRole]=useState("");
-  useEffect(()=>{fetch("/api/session",{cache:"no-store"}).then(r=>r.ok?r.json():null).then(x=>setRole(x?.role||""));fetch("/api/settings",{cache:"no-store"}).then(r=>r.json()).then(x=>setS({...x,ticker:parseList(x.ticker),season_route:parseRoute(x.season_route)})).catch(()=>setMsg("Hata: Site ayarları alınamadı."))},[]);
+  const [revision,setRevision]=useState("0");
+  useEffect(()=>{
+    fetch("/api/session",{cache:"no-store"}).then(r=>r.ok?r.json():null).then(x=>setRole(x?.role||""));
+    fetch("/api/settings",{cache:"no-store"}).then(async r=>{
+      const x=await r.json();
+      if(!r.ok)throw new Error(x?.error||`HTTP ${r.status}`);
+      setRevision(r.headers.get("x-content-revision")||"0");
+      setS({...x,ticker:parseList(x.ticker),season_route:parseRoute(x.season_route)});
+    }).catch(()=>setMsg("Hata: Site ayarları alınamadı."));
+  },[]);
   const set=(k:string,v:any)=>setS((x:any)=>({...x,[k]:v}));
   const i="mt-1 w-full rounded-md border-[1.5px] border-ink/20 bg-white px-3 py-2.5 text-[13px]";
   const checkbox=(key:string)=>s[key]!=="false";
@@ -48,14 +58,19 @@ export default function Page(){
     try{
       const body:any={ticker:JSON.stringify(s.ticker||[]),season_route:JSON.stringify(s.season_route||DEFAULT_ROUTE)};
       for(const k of KEYS){if(role!=="admin" && ["registration_fee_engage","registration_fee_achieve","registration_fee_inspire","registration_fee_adc","registration_fee_adc-pro","field_kit_fee","registration_discount"].includes(k))continue;body[k]=String(s[k]??"");}
-      const r=await fetch("/api/settings",{method:"PUT",headers:{"Content-Type":"application/json"},body:JSON.stringify(body)});
+      const r=await fetch("/api/settings",{method:"PUT",headers:{"Content-Type":"application/json",...(revision&&revision!=="0"?{"If-Match":revision}:{})},body:JSON.stringify(body)});
       const t=await r.text(); let j:any={}; try{j=t?JSON.parse(t):{}}catch{}
       if(!r.ok)throw new Error(j.error||t||`HTTP ${r.status}`);
-      setMsg("Başarılı: Site ayarları ve ana sayfa deneyimi kaydedildi.");
+      if(j?.settings){
+        setS((prev:any)=>({...prev,...j.settings,ticker:parseList(j.settings.ticker),season_route:parseRoute(j.settings.season_route)}));
+      }
+      if(j?.revision)setRevision(String(j.revision));
+      notifyPublicContentChanged();
+      setMsg(`Başarılı: Site ayarları veritabanına atomik olarak kaydedildi${j?.revision?` · sürüm ${String(j.revision).slice(11,19)}`:""}.`);
     }catch(e:any){setMsg("Hata: "+(e?.message||"Kaydedilemedi."))}
     finally{setSaving(false)}
   }
-  const asset=(k:string,label:string,help:string,previewClass="h-20 max-w-[260px] object-contain")=><label>{label}<input type="file" accept="image/*,.ico" className={i} onChange={e=>upload(k,e.target.files?.[0])}/><span className="mt-1 block text-[11px] leading-relaxed text-ink/45">{help}</span>{s[k]&&<img src={s[k]} alt={label} className={`mt-2 rounded border border-ink/10 bg-paper p-2 ${previewClass}`}/>}</label>;
+  const asset=(k:string,label:string,help:string,previewClass="h-20 max-w-[260px] object-contain")=><label>{label}<input type="file" accept="image/*,.ico" className={i} onChange={e=>upload(k,e.target.files?.[0])}/><span className="mt-1 block text-[11px] leading-relaxed text-ink/45">{help}</span>{s[k]&&<img src={s[k]} alt={label} className={`mt-2 block max-w-full rounded border border-ink/10 bg-white p-2 ${previewClass}`}/>}</label>;
   const updateRoute=(idx:number,patch:Partial<RouteStep>)=>set("season_route",(s.season_route||DEFAULT_ROUTE).map((r:RouteStep,i:number)=>i===idx?{...r,...patch}:r));
 
   return <div className="max-w-5xl">
@@ -76,7 +91,7 @@ export default function Page(){
 
     <section className="mt-5 rounded-xl border-2 border-ink bg-white p-4 sm:p-5">
       <div className="flex items-start gap-3"><FigmaIcon name="rota" className="mt-0.5 h-6 w-6 shrink-0"/><div><p className="font-display text-[14px] font-bold">ANA SAYFA DENEYİMİ & SEZON ROTASI</p><p className="mt-1 text-[12px] text-ink/50">Full CMS öncesindeki hareketli ana sayfa bölümlerini buradan yönetin. İstatistik sayıları veritabanından otomatik gelir.</p></div></div>
-      <div className="mt-5 grid gap-4 md:grid-cols-2"><label>Hero ana başlık<input className={i} value={s.hero_title||""} onChange={e=>set("hero_title",e.target.value)} placeholder="MAÇ GÜNÜ"/></label><label>Hero cyan vurgu satırı<input className={i} value={s.hero_accent_title||""} onChange={e=>set("hero_accent_title",e.target.value)} placeholder="HER GÜN."/></label><label className="md:col-span-2">Hero açıklama<textarea rows={3} className={i} value={s.hero_description||""} onChange={e=>set("hero_description",e.target.value)}/></label><label className="md:col-span-2">Hero görseli<input type="file" accept="image/*" className={i} onChange={e=>upload("hero_image",e.target.files?.[0])}/><span className="mt-1 block text-[11px] leading-relaxed text-ink/45">Önerilen: <b>1600 × 1200 px</b> (4:3). Sezon Oyunları panelinde üst görsel olarak kullanılır.</span></label>{s.hero_image&&<img src={s.hero_image} alt="Hero" className="h-40 rounded-lg object-cover md:col-span-2"/>}<label>Sezon etiketi<input className={i} value={s.season_label||""} onChange={e=>set("season_label",e.target.value)} placeholder="2026–27"/></label><label>Rota başlığı<input className={i} value={s.season_route_title||""} onChange={e=>set("season_route_title",e.target.value)} placeholder="SEZON ROTASI"/></label></div>
+      <div className="mt-5 grid gap-4 md:grid-cols-2"><label>Hero ana başlık<input className={i} value={s.hero_title||""} onChange={e=>set("hero_title",e.target.value)} placeholder="MAÇ GÜNÜ"/></label><label>Hero cyan vurgu satırı<input className={i} value={s.hero_accent_title||""} onChange={e=>set("hero_accent_title",e.target.value)} placeholder="HER GÜN."/></label><label className="md:col-span-2">Hero açıklama<textarea rows={3} className={i} value={s.hero_description||""} onChange={e=>set("hero_description",e.target.value)}/></label><label className="md:col-span-2">Hero görseli<input type="file" accept="image/*" className={i} onChange={e=>upload("hero_image",e.target.files?.[0])}/><span className="mt-1 block text-[11px] leading-relaxed text-ink/45">Önerilen: <b>1600 × 1200 px</b> (4:3). Sezon Oyunları panelinde üst görsel olarak kullanılır.</span></label>{s.hero_image&&<img src={s.hero_image} alt="Hero" className="block h-auto max-h-64 w-full max-w-full rounded-lg object-contain md:col-span-2"/>}<label>Sezon etiketi<input className={i} value={s.season_label||""} onChange={e=>set("season_label",e.target.value)} placeholder="2026–27"/></label><label>Rota başlığı<input className={i} value={s.season_route_title||""} onChange={e=>set("season_route_title",e.target.value)} placeholder="SEZON ROTASI"/></label></div>
 
       <div className="mt-5 rounded-lg bg-paper p-4"><div className="flex flex-wrap items-center justify-between gap-3"><p className="font-display text-[12px] font-bold">ROTA ADIMLARI</p><button type="button" onClick={()=>set("season_route",[...(s.season_route||DEFAULT_ROUTE),{month:"AY",label:"Yeni durak",done:false}])} className="rounded bg-ink px-3 py-2 text-[11px] font-bold text-white">ADIM EKLE</button></div>
         <div className="mt-3 space-y-2">{(s.season_route||DEFAULT_ROUTE).map((r:RouteStep,idx:number)=><div key={idx} className="grid gap-2 rounded-lg border border-ink/10 bg-white p-3 sm:grid-cols-[90px_1fr_auto_auto] sm:items-center"><input className={i+" mt-0"} value={r.month} onChange={e=>updateRoute(idx,{month:e.target.value.toUpperCase()})} placeholder="EYL"/><input className={i+" mt-0"} value={r.label} onChange={e=>updateRoute(idx,{label:e.target.value})} placeholder="Kayıtlar"/><label className="flex min-h-11 items-center gap-2 whitespace-nowrap text-[12px] font-semibold"><input type="checkbox" checked={!!r.done} onChange={e=>updateRoute(idx,{done:e.target.checked})}/> Tamamlandı</label><button type="button" onClick={()=>set("season_route",s.season_route.filter((_:RouteStep,i:number)=>i!==idx))} className="min-h-11 px-2 text-[11px] font-bold text-red-600">SİL</button></div>)}</div>

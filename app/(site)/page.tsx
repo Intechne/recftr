@@ -1,8 +1,6 @@
-"use client";
-
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
-import { fetchArray, fetchObject } from "@/lib/client-api";
+import { getPublicHomeStats, getSettings, listEvents, listMedia, listNews, listPrograms } from "@/lib/db";
+import { PUBLIC_SETTING_KEYS } from "@/lib/content-consistency";
 import { FigmaIcon, type FigmaIconName } from "@/components/FigmaIcon";
 import { CountUp, Reveal, RoutePath } from "@/components/Motion";
 
@@ -54,32 +52,25 @@ function programIcon(p:Program):FigmaIconName { return /ADC|PRO/i.test(p.code||"
 function isVideo(m?:Media){ const t=String(m?.type||"").toLocaleLowerCase("tr-TR"); return !!m && ((t==="video"||t==="vıdeo") || /\.(mp4|webm|mov)(\?|$)/i.test(m.url||"")); }
 function fmtDate(date?:string){ if(!date)return ""; try{return new Date(date).toLocaleDateString("tr-TR",{day:"numeric",month:"long",year:"numeric"})}catch{return date} }
 
-export default function Home() {
-  const [programs,setPrograms]=useState<Program[]>([]);
-  const [events,setEvents]=useState<Event[]>([]);
-  const [news,setNews]=useState<News[]>([]);
-  const [media,setMedia]=useState<Media[]>([]);
-  const [settings,setSettings]=useState<Settings>({});
-  const [stats,setStats]=useState<HomeStats>(EMPTY_STATS);
+export const dynamic="force-dynamic";
+export const revalidate=0;
 
-  useEffect(()=>{
-    let active=true;
-    void Promise.all([
-      fetchArray<Program>("/api/programs"),
-      fetchArray<Event>("/api/events"),
-      fetchArray<News>("/api/news"),
-      fetchArray<Media>("/api/media"),
-      fetchObject<Settings>("/api/settings",{}),
-      fetchObject<HomeStats>("/api/home-stats",EMPTY_STATS),
-    ]).then(([programRows,eventRows,newsRows,mediaRows,publicSettings,publicStats])=>{
-      if(!active)return;
-      setPrograms(programRows); setEvents(eventRows); setNews(newsRows); setMedia(mediaRows);
-      setSettings(publicSettings); setStats(publicStats);
-    });
-    return()=>{active=false};
-  },[]);
-
-  const route=useMemo(()=>parseRoute(settings.season_route),[settings.season_route]);
+export default async function Home() {
+  const [programRows,eventRows,newsRows,mediaRows,publicSettings,publicStats]=await Promise.all([
+    listPrograms(false),
+    listEvents(false),
+    listNews(false),
+    listMedia(false),
+    getSettings(PUBLIC_SETTING_KEYS),
+    getPublicHomeStats(),
+  ]);
+  const programs=programRows as Program[];
+  const events=eventRows as Event[];
+  const news=newsRows as News[];
+  const media=mediaRows as Media[];
+  const settings=publicSettings as Settings;
+  const stats=publicStats as HomeStats;
+  const route=parseRoute(settings.season_route);
   const season=settings.season_label||"2026–27";
   const rawHero=(settings.hero_title||"MAÇ GÜNÜ HER GÜN.").trim();
   const inferredAccent=/HER GÜN\.?$/i.test(rawHero)?(rawHero.match(/HER GÜN\.?$/i)?.[0]||""):"";
