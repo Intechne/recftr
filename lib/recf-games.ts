@@ -92,7 +92,7 @@ const PROGRAMS:Record<SiteProgramSlug,ProgramConfig>={
   achieve:{siteSlug:"achieve",apiSlug:"achieve",fallbackVersion:"1.2",fallbackGame:"Pinnacle"},
   inspire:{siteSlug:"inspire",apiSlug:"inspire",fallbackVersion:"1.2",fallbackGame:"Pinnacle"},
   adc:{siteSlug:"adc",apiSlug:"adc",fallbackVersion:"1.0",fallbackGame:"Mission 2027: Fast Track"},
-  "adc-pro":{siteSlug:"adc-pro",apiSlug:"adc-pro",fallbackVersion:"",fallbackGame:"Off Grid"},
+  "adc-pro":{siteSlug:"adc-pro",apiSlug:"adc-pro",fallbackVersion:"0.9 (ön değerlendirme)",fallbackGame:"Off Grid"},
 };
 
 const FALLBACK_ENGAGE_SCORES:EngageScores={floor:1,l1:5,l2:10,l3:25,l4:50,park:25};
@@ -304,6 +304,41 @@ function pinnacleScoring(manual:unknown){
   return {groups,examples};
 }
 
+
+function offGridScoring(manual:unknown){
+  const text=normalizeText(manual);
+  const launch=numberNear(text,/launch.{0,80}?(\d+)\s*points?/i,10);
+  const waypoint=numberNear(text,/waypoint.{0,80}?(\d+)\s*points?/i,15);
+  const payload=numberNear(text,/payload.{0,80}?(\d+)\s*points?/i,25);
+  const survey=numberNear(text,/survey.{0,80}?(\d+)\s*points?/i,20);
+  const precision=numberNear(text,/precision\s+land.{0,80}?(\d+)\s*points?/i,20);
+  const rtb=numberNear(text,/return\s+to\s+base.{0,80}?(\d+)\s*points?/i,15);
+  const groups:ProgramScoringGroup[]=[
+    {id:"mission",title:"Otonom Görev Aşamaları",subtitle:"Off Grid'de tüm uçuş kod ile yürür — GPS'siz saha, görev sıralı puanlanır.",items:[
+      item("launch","Otonom Kalkış",points(launch),"Komutla başlayan geçerli otonom kalkış.",0),
+      item("waypoint","Waypoint Geçişi",points(waypoint),"Rota üzerindeki her işaretli waypoint.",1),
+      item("survey","Alan Taraması",points(survey),"Belirlenen bölgenin sensörle taranması.",2),
+      item("payload","Payload Bırakma",points(payload),"Hedef bölgeye başarılı yük bırakma.",4),
+      item("rtb","Üsse Dönüş",points(rtb),"Görev sonunda üsse otonom dönüş.",5),
+      item("precision","Hassas İniş",points(precision),"Landing pad merkezine otonom iniş.",6),
+    ]},
+    {id:"multipliers",title:"Otonomi Çarpanları & Penaltılar",subtitle:"Müdahalesiz uçuş ödüllenir; pilot müdahalesi çarpanı düşürür.",items:[
+      item("full-auto","Tam Otonom Bonus","×1.5","Görev boyunca sıfır pilot müdahalesi.",3),
+      item("intervene","Pilot Müdahalesi","×0.5","Her manuel müdahale sonrası görev çarpanı.",6),
+      item("boundary","Saha İhlali","−10 puan","Sanal saha sınırının dışına çıkma.",6),
+      item("timeout","Süre Aşımı","0 puan","Süre içinde tamamlanamayan görev adımı.",2),
+    ]},
+  ];
+  const examples:ProgramScoringExample[]=[
+    {title:"Tam Otonom Görev Örneği",ruleLabel:"OG-3.2",rows:[
+      {label:"Kalkış + 3 Waypoint",detail:`${launch} + 3 × ${waypoint}`,points:String(launch+3*waypoint)},
+      {label:"Payload + Hassas İniş",detail:`${payload} + ${precision}`,points:String(payload+precision)},
+      {label:"Tam otonom bonus",detail:"×1.5",points:"×1.5"},
+    ],total:String(Math.round((launch+3*waypoint+payload+precision)*1.5)),note:"Değerler ön değerlendirmedir; resmî kılavuz yayınlandığında games.recf.org API'sinden otomatik güncellenir."},
+  ];
+  return {groups,examples};
+}
+
 function adcScoring(manual:unknown){
   const text=normalizeText(manual);
   const takeoff=numberNear(text,/Take\s*off.{0,80}?(\d+)\s*points?/i,5);
@@ -361,12 +396,14 @@ function fallbackScoring(siteSlug:SiteProgramSlug){
   if(siteSlug==="engage")return {groups:[],examples:[]};
   if(siteSlug==="achieve"||siteSlug==="inspire")return pinnacleScoring(null);
   if(siteSlug==="adc")return adcScoring(null);
+  if(siteSlug==="adc-pro")return offGridScoring(null);
   return {groups:[],examples:[]};
 }
 
 function scoringFor(siteSlug:SiteProgramSlug,manual:unknown){
   if(siteSlug==="achieve"||siteSlug==="inspire")return pinnacleScoring(manual);
   if(siteSlug==="adc")return adcScoring(manual);
+  if(siteSlug==="adc-pro")return offGridScoring(manual);
   return {groups:[],examples:[]};
 }
 
@@ -389,7 +426,7 @@ export async function getProgramOfficialData(inputSlug:string):Promise<OfficialP
     if(!hasProgram(programs,config.apiSlug)){
       const fallback=fallbackScoring(siteSlug);
       const links=officialLinks(config.apiSlug,config.fallbackVersion);
-      return {siteSlug,apiSlug:config.apiSlug,supported:false,available:false,source:"fallback",versionLabel:config.fallbackVersion,publishedAt:null,releasedDateLabel:null,gameName:config.fallbackGame,...links,scoringGroups:fallback.groups,examples:fallback.examples,engage:siteSlug==="engage"?engageData(null,config.fallbackVersion,{versionLabel:"",publishedAt:null,releasedDateLabel:null},config.fallbackGame,false):null,fetchedAt};
+      return {siteSlug,apiSlug:config.apiSlug,supported:true,available:false,source:"fallback",versionLabel:config.fallbackVersion,publishedAt:null,releasedDateLabel:null,gameName:config.fallbackGame,...links,scoringGroups:fallback.groups,examples:fallback.examples,engage:siteSlug==="engage"?engageData(null,config.fallbackVersion,{versionLabel:"",publishedAt:null,releasedDateLabel:null},config.fallbackGame,false):null,fetchedAt};
     }
     const version=latestVersionFromPrograms(programs,config.apiSlug)||config.fallbackVersion;
     const manualPayload=await getJson(`/api/v1/programs/${config.apiSlug}/manual/${encodeURIComponent(version)}`,`recf-games:${config.apiSlug}:${version}`);
@@ -406,7 +443,7 @@ export async function getProgramOfficialData(inputSlug:string):Promise<OfficialP
     const fallback=fallbackScoring(siteSlug);
     const links=officialLinks(config.apiSlug,config.fallbackVersion);
     return {
-      siteSlug,apiSlug:config.apiSlug,supported:siteSlug!=="adc-pro",available:false,source:"fallback",versionLabel:config.fallbackVersion,publishedAt:null,releasedDateLabel:null,gameName:config.fallbackGame,...links,scoringGroups:fallback.groups,examples:fallback.examples,engage:siteSlug==="engage"?engageData(null,config.fallbackVersion,{versionLabel:"",publishedAt:null,releasedDateLabel:null},config.fallbackGame,false):null,fetchedAt,
+      siteSlug,apiSlug:config.apiSlug,supported:true,available:false,source:"fallback",versionLabel:config.fallbackVersion,publishedAt:null,releasedDateLabel:null,gameName:config.fallbackGame,...links,scoringGroups:fallback.groups,examples:fallback.examples,engage:siteSlug==="engage"?engageData(null,config.fallbackVersion,{versionLabel:"",publishedAt:null,releasedDateLabel:null},config.fallbackGame,false):null,fetchedAt,
     };
   }
 }

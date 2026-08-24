@@ -16,6 +16,7 @@ import {
   listTeams,
 } from "@/lib/db";
 import { PUBLIC_SETTING_KEYS } from "@/lib/content-consistency";
+import { FALLBACK_PROGRAMS, fallbackProgram } from "@/lib/program-fallback";
 
 const TTL = 300;
 const TAG = "public-content";
@@ -41,10 +42,10 @@ export async function getCachedHomeSnapshot(){
 }
 
 const programsData = unstable_cache(async () => listPrograms(false), ["public-programs-v314"], { revalidate: TTL, tags: [TAG] });
-export async function getCachedPrograms(){ try{return await programsData();}catch{return [];} }
+export async function getCachedPrograms(){ try{const r=await programsData();return (Array.isArray(r)&&r.length)?r:FALLBACK_PROGRAMS;}catch{return FALLBACK_PROGRAMS;} }
 
 const programData = unstable_cache(async (slug:string) => getProgram(slug), ["public-program-v314"], { revalidate: TTL, tags: [TAG] });
-export async function getCachedProgram(slug:string){ try{return await programData(slug);}catch{return null;} }
+export async function getCachedProgram(slug:string){ try{return (await programData(slug))??fallbackProgram(slug);}catch{return fallbackProgram(slug);} }
 
 const eventsData = unstable_cache(async () => plainRows(await listEvents(false)), ["public-events-v314"], { revalidate: TTL, tags: [TAG] });
 export async function getCachedEvents(){ try{return await eventsData();}catch{return [];} }
