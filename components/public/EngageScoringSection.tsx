@@ -87,8 +87,6 @@ export function EngageScoringSection({facts=[],source="",live=null}:Props){
     note:"Mavi bean bag'ler kırmızı hedefte puan sayılmaz.",
     source:"fallback" as const,
   };
-  const apiLive=live?.source==="api"&&live.available;
-
   const change=(key:ScoreKey,delta:number)=>{
     setCounts(current=>{
       const item=ITEMS.find(x=>x.key===key)!;
@@ -104,10 +102,7 @@ export function EngageScoringSection({facts=[],source="",live=null}:Props){
   return <section aria-labelledby="engage-scoring-title" className="pt-14 sm:pt-16">
     <div className="rounded-[24px] bg-[#F6F9FD] p-4 sm:p-6 lg:p-8 2xl:p-10">
       <div className="max-w-4xl">
-        <div className="flex flex-wrap items-center gap-2">
-          <p className="font-display text-[11px] font-bold tracking-[.18em] text-cyan-deep">TEKNİK DETAYLAR · {gameName.toUpperCase()}</p>
-          <span className={`rounded-full px-2.5 py-1 text-[9px] font-bold tracking-[.08em] ${apiLive?"bg-emerald-100 text-emerald-700":"bg-amber-100 text-amber-700"}`}>{apiLive?"● RECF API CANLI":"● DOĞRULANMIŞ YEDEK"}</span>
-        </div>
+        <p className="font-display text-[11px] font-bold tracking-[.18em] text-cyan-deep">TEKNİK DETAYLAR · {gameName.toUpperCase()}</p>
         <h2 id="engage-scoring-title" className="mt-3 font-display text-[clamp(2rem,5vw,3rem)] font-bold leading-none text-ink">Puanlama Sistemi</h2>
         <p className="mt-4 max-w-3xl text-sm leading-6 text-ink/60 sm:text-base sm:leading-7">Hangi hedefin kaç puan verdiğini, renk eşleşmelerini ve resmî kılavuzdaki örnek skorun nasıl oluştuğunu tek bakışta görün.</p>
         <div className="mt-5 flex flex-wrap gap-2 text-[11px] font-bold sm:text-xs">
@@ -168,7 +163,6 @@ export function EngageScoringSection({facts=[],source="",live=null}:Props){
             <p className="font-display text-[10px] font-bold tracking-[.18em] text-cyan-deep">RESMÎ PUANLAMA ÖRNEĞİ · KURAL {officialExample.ruleLabel}</p>
             <h3 className="mt-2 font-display text-2xl font-bold sm:text-[28px]">Kılavuzdaki Örnek</h3>
             <p className="mt-3 text-xs leading-5 text-ink/55 sm:text-sm sm:leading-6">RECF Game Manual içindeki örneği, puanın nasıl oluştuğunu hızlıca gösterecek biçimde sadeleştirdik.</p>
-            <span className={`mt-4 inline-flex rounded-full px-2.5 py-1.5 text-[9px] font-bold ${officialExample.source==="api"?"bg-emerald-100 text-emerald-700":"bg-amber-100 text-amber-700"}`}>{officialExample.source==="api"?"API'DEN DOĞRULANDI":"YEDEK VERİYLE DOĞRULANDI"}</span>
           </div>
           <div className="space-y-2.5 bg-[#F9FBFE] p-5 sm:p-7">
             {officialExample.rows.map((row,i)=><div key={`${row.label}-${i}`} className="flex items-center justify-between gap-4 rounded-xl border border-[#E6EBF3] bg-white p-3.5"><div><b className="text-xs sm:text-sm">{row.label}</b><p className="mt-1 text-[10px] text-ink/45 sm:text-xs">{row.detail}</p></div><strong className="font-display text-lg text-ink sm:text-xl">+{row.points}</strong></div>)}
@@ -189,7 +183,7 @@ export function EngageScoringSection({facts=[],source="",live=null}:Props){
             <h3 className="mt-2 font-display text-2xl font-bold sm:text-[28px]">Puanını Hesapla</h3>
             <p className="mt-3 text-xs leading-5 text-ink/55 sm:text-sm sm:leading-6">Hedeflerdeki bean bag sayılarını ve park eden robot sayısını değiştir. Toplam skor anında güncellenir.</p>
             <div className="mt-4 rounded-xl bg-[#E8F8FD] p-3.5 text-xs leading-5 text-ink/70"><b className="block text-[10px] tracking-[.1em] text-cyan-deep">HIZLI KURAL</b>En fazla 38 bean bag dağıtılabilir. L4 yalnız sarı bean bag kabul eder. Renk geçerliliği için yukarıdaki eşleşme kartlarını kullan.</div>
-            <a href={calculatorHref} target="_blank" rel="noreferrer" className="mt-4 inline-flex text-[11px] font-bold text-cyan-deep hover:underline">RECF RESMÎ SCORE CALCULATOR ↗</a>
+            <a href={calculatorHref} target="_blank" rel="noreferrer" className="mt-4 inline-flex text-[11px] font-bold text-cyan-deep hover:underline">PUAN HESAPLAYICI ↗</a>
           </div>
 
           <div className="grid gap-2.5 sm:grid-cols-2">
@@ -218,14 +212,13 @@ export function EngageScoringSection({facts=[],source="",live=null}:Props){
 
       <div className="mt-5 flex flex-col gap-4 rounded-2xl bg-[#E9EDF5] p-4 sm:p-5 lg:flex-row lg:items-center lg:justify-between">
         <div>
-          <p className="text-[10px] font-bold tracking-[.12em] text-ink">RECF RESMÎ KAYNAK · API SENKRONU</p>
-          <p className="mt-1 text-xs leading-5 text-ink/60 sm:text-sm">{gameName} Game Manual v{version} · puanlar, kural özeti ve resmî örnek games.recf.org kaynağıyla eşleştirilir.</p>
-          <p className="mt-1 text-[10px] text-ink/40">Sunucu tarafında önbellekli senkron · API erişilemezse son doğrulanmış Tier Takeover değerleri kullanılır.</p>
+          <p className="text-[10px] font-bold tracking-[.12em] text-ink">KURALLAR VE ARAÇLAR</p>
+          <p className="mt-1 text-xs leading-5 text-ink/60 sm:text-sm">Detaylı oyun kuralları, soru-cevaplar ve puan hesaplama araçlarına ulaşın.</p>
         </div>
         <div className="flex flex-wrap gap-2">
           <a href={qnaHref} target="_blank" rel="noreferrer" className="inline-flex min-h-11 items-center justify-center rounded-xl border border-ink/15 bg-white px-4 py-2.5 text-xs font-bold text-ink transition hover:border-cyan-brand">Q&A ↗</a>
-          <a href={calculatorHref} target="_blank" rel="noreferrer" className="inline-flex min-h-11 items-center justify-center rounded-xl border border-ink/15 bg-white px-4 py-2.5 text-xs font-bold text-ink transition hover:border-cyan-brand">RESMÎ HESAPLAYICI ↗</a>
-          <a href={sourceHref} target="_blank" rel="noreferrer" className="inline-flex min-h-11 items-center justify-center rounded-xl bg-ink px-4 py-2.5 text-xs font-bold text-white transition hover:bg-ink-soft">KILAVUZU İNCELE ↗</a>
+          <a href={calculatorHref} target="_blank" rel="noreferrer" className="inline-flex min-h-11 items-center justify-center rounded-xl border border-ink/15 bg-white px-4 py-2.5 text-xs font-bold text-ink transition hover:border-cyan-brand">PUAN HESAPLAYICI ↗</a>
+          <a href={sourceHref} target="_blank" rel="noreferrer" className="inline-flex min-h-11 items-center justify-center rounded-xl bg-ink px-4 py-2.5 text-xs font-bold text-white transition hover:bg-ink-soft">OYUN KILAVUZU ↗</a>
         </div>
       </div>
     </div>

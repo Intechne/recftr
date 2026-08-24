@@ -26,6 +26,10 @@ const checks=[
   ['Global responsive media guard exists', 'app/globals.css', /cms-media-frame/],
   ['Global horizontal overflow guard exists', 'app/globals.css', /overflow-x:\s*clip/],
   ['Database connect fails fast instead of hanging to Vercel timeout', 'lib/db.ts', /connect_timeout:\s*5/],
+  ['All public program pages use shared RECF game data resolver', 'app/(site)/programlar/[slug]/page.tsx', /getProgramOfficialData/],
+  ['RECF resolver maps all five site programs', 'lib/recf-games.ts', /engage:[\s\S]*achieve:[\s\S]*inspire:[\s\S]*adc:[\s\S]*["']adc-pro["']:/],
+  ['Public program UI hides API health/status language', 'public-program-ui', !/(RECF API|API CANLI|API SENKRONU|DOĞRULANMIŞ YEDEK|API.DEN DOĞRULANDI)/i.test(read('components/public/EngageScoringSection.tsx')+'\n'+read('components/public/ProgramScoringSection.tsx')+'\n'+read('app/(site)/programlar/[slug]/page.tsx'))],
+  ['Non-Engage programs render visual scoring section', 'app/(site)/programlar/[slug]/page.tsx', /ProgramScoringSection/],
 ];
 
 let fail=0;
