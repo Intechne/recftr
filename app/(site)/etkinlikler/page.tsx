@@ -1,3 +1,6 @@
+import type { Metadata } from "next";
+import { pageMeta } from "@/lib/seo";
+export const metadata: Metadata = pageMeta({ title: "Etkinlik Takvimi", description: "2026–27 sezonu: lansman, 5 regional turnuva ve Türkiye Ulusal Şampiyonası. Tarihler, mekanlar ve kontenjanlar.", path: "/etkinlikler" });
 import {PageHead} from "@/components/Ui";
 import EventDirectory from "@/components/public/EventDirectory";
 import {getCachedEvents} from "@/lib/public-cache";

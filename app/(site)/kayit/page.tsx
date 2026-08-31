@@ -1,3 +1,6 @@
+import type { Metadata } from "next";
+import { pageMeta } from "@/lib/seo";
+export const metadata: Metadata = pageMeta({ title: "Mentor ve Takım Kaydı", description: "2026–27 sezonu için mentor ve takım ön kaydı. Takım numaranı al, sahaya çık.", path: "/kayit" });
 import {PageHead} from "@/components/Ui";
 import RegistrationForm from "@/components/public/RegistrationForm";
 import {getCachedPrograms,getCachedRegistrationPricing} from "@/lib/public-cache";

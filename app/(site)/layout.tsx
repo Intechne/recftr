@@ -1,5 +1,6 @@
 import { Ticker, Nav, Footer, type PublicSettings } from "@/components/Chrome";
 import ContentRefreshBridge from "@/components/ContentRefreshBridge";
+import CookieConsent from "@/components/seo/CookieConsent";
 import { getCachedPublicSettings } from "@/lib/public-cache";
 
 export const dynamic = "force-dynamic";
@@ -16,7 +17,7 @@ export default async function SiteLayout({ children }: { children: React.ReactNo
       <ContentRefreshBridge />
       <Ticker settings={publicSettings} />
       <Nav settings={publicSettings} />
-      <main>{children}</main>
+      <main>{children}<CookieConsent/></main>
       <Footer settings={publicSettings} />
     </>
   );

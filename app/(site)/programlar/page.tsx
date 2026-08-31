@@ -1,3 +1,6 @@
+import type { Metadata } from "next";
+import { pageMeta } from "@/lib/seo";
+export const metadata: Metadata = pageMeta({ title: "Programlar", description: "RECF Türkiye programları: Engage, Achieve, Inspire, Aerial Drone Competition ve ADC Pro — yaş grupları, sezon oyunları ve puanlama sistemleri.", path: "/programlar" });
 import Link from "next/link";
 import {PageHead} from "@/components/Ui";
 import {getCachedPrograms} from "@/lib/public-cache";

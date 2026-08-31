@@ -1,3 +1,6 @@
+import type { Metadata } from "next";
+import { pageMeta } from "@/lib/seo";
+export const metadata: Metadata = pageMeta({ title: "Dokümanlar ve Oyun Kılavuzları", description: "Resmî oyun kılavuzları, kayıt formları, jüri rubrikleri ve marka kılavuzu.", path: "/dokumanlar" });
 import {PageHead} from "@/components/Ui";
 import DocumentDirectory from "@/components/public/DocumentDirectory";
 import {getCachedDocuments} from "@/lib/public-cache";

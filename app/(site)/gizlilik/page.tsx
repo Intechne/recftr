@@ -1,3 +1,6 @@
+import type { Metadata } from "next";
+import { pageMeta } from "@/lib/seo";
+export const metadata: Metadata = pageMeta({ title: "Gizlilik Politikası", description: "RECF Türkiye web sitesi gizlilik politikası.", path: "/gizlilik" });
 import { getCachedPage } from "@/lib/public-cache";
 import { notFound } from "next/navigation";
 export const dynamic = "force-dynamic";

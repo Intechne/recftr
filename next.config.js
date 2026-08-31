@@ -37,8 +37,12 @@ const nextConfig = {
   serverExternalPackages: ["postgres"],
   reactStrictMode: true,
   poweredByHeader: false,
+  compress: true,
   async headers() {
-    return [{ source: "/:path*", headers: securityHeaders }];
+    return [{ source: "/:path*", headers: securityHeaders },
+      { source: "/_next/static/:path*", headers: [{ key: "Cache-Control", value: "public, max-age=31536000, immutable" }] },
+      { source: "/logos/:path*", headers: [{ key: "Cache-Control", value: "public, max-age=604800, stale-while-revalidate=86400" }] },
+      { source: "/(llms.txt|manifest.webmanifest)", headers: [{ key: "Cache-Control", value: "public, max-age=86400" }] }];
   },
 };
 module.exports = nextConfig;

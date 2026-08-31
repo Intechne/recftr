@@ -1,3 +1,6 @@
+import type { Metadata } from "next";
+import { pageMeta } from "@/lib/seo";
+export const metadata: Metadata = pageMeta({ title: "Takımlar", description: "RECF Türkiye'ye kayıtlı robotik ve drone takımları — şehir ve program dizini.", path: "/takimlar" });
 import {PageHead} from "@/components/Ui";
 import TeamDirectory from "@/components/public/TeamDirectory";
 import {getCachedTeams} from "@/lib/public-cache";

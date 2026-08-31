@@ -1,3 +1,6 @@
+import type { Metadata } from "next";
+import { pageMeta } from "@/lib/seo";
+export const metadata: Metadata = pageMeta({ title: "Galeri", description: "Etkinlik görselleri ve saha anları.", path: "/galeri" });
 import {PageHead} from "@/components/Ui";
 import {getCachedMedia} from "@/lib/public-cache";
 export const dynamic="force-dynamic";

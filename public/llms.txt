@@ -1,0 +1,24 @@
+# RECF Türkiye
+
+> RECF Türkiye, Robotics Education & Competition Foundation (RECF) programlarının Türkiye operasyonudur; Intechne Teknoloji A.Ş. (Teknopark İstanbul, Pendik) tarafından yürütülür. İlkokuldan üniversiteye robotik ve drone yarışma programları, bölgesel turnuvalar ve Türkiye Şampiyonası düzenler. RECF ve VEX Robotics ayrı kuruluşlardır.
+
+## Programlar (2026–27 sezonu)
+- [Engage — Tier Takeover](https://recfturkiye.com/programlar/engage): İlkokul-ortaokul (U12/U15). Solo sürüş, solo kodlama, ittifak maçı.
+- [Achieve — Pinnacle](https://recfturkiye.com/programlar/achieve): Ortaokul-lise (U15/U19). Türkiye Şampiyonası ve dünya kotaları.
+- [Inspire — Pinnacle](https://recfturkiye.com/programlar/inspire): Üniversite ligi; sahada 6 üyeye kadar.
+- [Aerial Drone Competition — Mission 2027: Fast Track](https://recfturkiye.com/programlar/adc): Pilotaj, otonom uçuş, teamwork, iletişim görevleri.
+- [ADC Pro — Off Grid](https://recfturkiye.com/programlar/adc-pro): GPS'siz sahada tam otonom görev uçuşu.
+
+## Temel sayfalar
+- [Etkinlik takvimi](https://recfturkiye.com/etkinlikler): Lansman, 5 regional turnuva, Ulusal Şampiyona (Nisan 2027, Ankara).
+- [Mentor ve takım kaydı](https://recfturkiye.com/kayit)
+- [Dokümanlar ve oyun kılavuzları](https://recfturkiye.com/dokumanlar) — resmî kaynak: https://games.recf.org
+- [Takım kayıt rehberi](https://recfturkiye.com/rehber/takim-kaydi) · [Mentor rehberi](https://recfturkiye.com/rehber/mentor)
+- [Hakkımızda](https://recfturkiye.com/hakkimizda)
+
+## Politikalar
+- [KVKK](https://recfturkiye.com/kvkk) · [Gizlilik](https://recfturkiye.com/gizlilik) · [Kullanım Koşulları](https://recfturkiye.com/kullanim-kosullari) · [Çerez Politikası](https://recfturkiye.com/cerez-politikasi)
+
+## İletişim
+- Takımlar: takim@recfturkiye.org · Kurumsal: info@recfturkiye.org
+- Alan adları: recfturkiye.com, recfturkiye.org

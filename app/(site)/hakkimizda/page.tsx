@@ -1,3 +1,6 @@
+import type { Metadata } from "next";
+import { pageMeta } from "@/lib/seo";
+export const metadata: Metadata = pageMeta({ title: "Hakkımızda", description: "RECF Türkiye, Robotics Education & Competition Foundation programlarının Türkiye operasyonudur; Intechne Teknoloji A.Ş. tarafından yürütülür.", path: "/hakkimizda" });
 import {PageHead} from "@/components/Ui";
 import AboutContent from "@/components/public/AboutContent";
 import {getCachedPage,getCachedPublicSettings,getCachedStaff} from "@/lib/public-cache";

@@ -1,3 +1,6 @@
+import type { Metadata } from "next";
+import { pageMeta } from "@/lib/seo";
+export const metadata: Metadata = pageMeta({ title: "RECF Türkiye — Maç Günü. Her Gün.", description: "Türkiye'nin resmi RECF robotik ve drone programları: Engage, Achieve, Inspire, Aerial Drone Competition, ADC Pro. Takım numaranı al, dünya şampiyonasına giden yolculuğa başla.", path: "/" });
 import Link from "next/link";
 import { getCachedHomeSnapshot } from "@/lib/public-cache";
 import { FigmaIcon, type FigmaIconName } from "@/components/FigmaIcon";

@@ -3,13 +3,17 @@ import {FigmaIcon} from "@/components/FigmaIcon";
 import {EngageScoringSection} from "@/components/public/EngageScoringSection";
 import {ProgramScoringSection} from "@/components/public/ProgramScoringSection";
 import {getProgramOfficialData} from "@/lib/recf-games";
+import {pageMeta} from "@/lib/seo";
+import Breadcrumbs from "@/components/seo/Breadcrumbs";
 import {notFound} from "next/navigation";
 import type {Metadata} from "next";
 import {getCachedProgram,getCachedEvents} from "@/lib/public-cache";
 export const dynamic="force-dynamic";
 const arr=(v:any)=>Array.isArray(v)?v:[];
 const txt=(v:any)=>typeof v==="string"?v:(v==null?"":String(v));
-export async function generateMetadata({params}:{params:Promise<{slug:string}>}):Promise<Metadata>{const {slug}=await params;const p:any=await getCachedProgram(slug);return {title:txt(p?.name)||'Program',description:txt(p?.short)||undefined};}
+export async function generateMetadata({params}:{params:Promise<{slug:string}>}):Promise<Metadata>{
+  const {slug}=await params;const p:any=await getCachedProgram(slug);if(!p)return {title:"Program"};return pageMeta({title:`${p.name} — ${p.game||"RECF Programı"}`,description:p.short||p.long||undefined,path:`/programlar/${slug}`,image:p.cover_url||undefined});
+}
 export default async function ProgramPage({params}:{params:Promise<{slug:string}>}){
   const {slug}=await params;
   const p:any=await getCachedProgram(slug);
@@ -24,7 +28,7 @@ export default async function ProgramPage({params}:{params:Promise<{slug:string}
   const official=await getProgramOfficialData(slug);
   const gameLabel=official?.available&&official.gameName?official.gameName:txt(p.game);
   const manualHref=official?.available&&official.manualUrl?official.manualUrl:(txt(p.source)?(txt(p.source).startsWith('http')?txt(p.source):`https://${txt(p.source)}`):'');
-  return <div className="pb-20">
+  return <div className="pb-20"><Breadcrumbs items={[{name:"Programlar",path:"/programlar"},{name:txt(p.name),path:`/programlar/${slug}`}]}/>
     <section className="relative overflow-hidden bg-ink text-white"><div className="safe-x mx-auto grid max-w-7xl gap-8 py-10 sm:py-14 lg:grid-cols-[1.15fr_.85fr] lg:items-center lg:gap-10 lg:px-10 lg:py-16 2xl:gap-16"><div className="min-w-0"><p className="font-display text-xs font-bold tracking-[2px] text-cyan-brand"><Link href="/programlar">PROGRAMLAR</Link> / {txt(p.code)}</p><h1 className="mt-4 font-display text-[clamp(2.4rem,10vw,4rem)] font-bold leading-[.98] [overflow-wrap:anywhere] lg:text-[60px] 2xl:text-[68px]">{txt(p.name).toUpperCase()}</h1>{gameLabel&&<p className="mt-3 font-display text-xl font-bold" style={{color:txt(p.color_hex)||'#29B9E5'}}>2026–27 · “{gameLabel}”</p>}<p className="mt-5 max-w-2xl break-words text-base leading-relaxed text-white/70">{txt(p.long)||txt(p.short)}</p><div className="mt-5 flex flex-wrap gap-2">{chips.map((c:any,i:number)=><span key={`${txt(c)}-${i}`} className="rounded border border-white/20 bg-white/[.07] px-3 py-1.5 text-xs font-semibold">{txt(c)}</span>)}</div><Link href="/kayit" className="mt-7 inline-flex min-h-12 items-center justify-center rounded-md bg-cyan-brand px-6 py-3.5 font-display text-sm font-bold text-ink">BU PROGRAMA KAYDOL →</Link></div><div className="min-w-0">{cover?<div className="flex aspect-[4/3] w-full items-center justify-center overflow-hidden rounded-2xl border-2 border-white/20 bg-white p-5 shadow-[0_18px_50px_rgba(0,0,0,.22)] sm:p-7"><img src={cover} alt={txt(p.name)||'Program görseli'} className="block max-h-full max-w-full object-contain"/></div>:<div className="flex aspect-[4/3] items-center justify-center rounded-xl border-2 border-white/20" style={{background:txt(p.color_hex)||'#29B9E5'}}><span className="font-display text-7xl font-bold text-white">{txt(p.code)}</span></div>}</div></div></section>
     <div className="safe-x mx-auto max-w-7xl pt-10 sm:pt-14 lg:px-10">
       <div className={isEngage?"grid gap-10":"grid gap-10 lg:grid-cols-[1.2fr_.8fr]"}>

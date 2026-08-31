@@ -1,3 +1,6 @@
+import type { Metadata } from "next";
+import { pageMeta } from "@/lib/seo";
+export const metadata: Metadata = pageMeta({ title: "KVKK Aydınlatma Metni", description: "Kişisel verilerin işlenmesine ilişkin aydınlatma metni.", path: "/kvkk" });
 import { getCachedPage } from "@/lib/public-cache";
 import { notFound } from "next/navigation";
 export const dynamic = "force-dynamic";
