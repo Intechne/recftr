@@ -29,6 +29,7 @@ export async function middleware(req:NextRequest){
 
   const admin=p.startsWith("/admin"), portal=p.startsWith("/portal");
   if(!admin&&!portal)return NextResponse.next();
+  if(portal&&process.env.PORTAL_ENABLED!=="1"){const u=req.nextUrl.clone();u.pathname="/giris";u.search="";return NextResponse.redirect(u);}
   const s=await verifySessionToken(req.cookies.get(SESSION_COOKIE)?.value);
   if(admin&&s&&CMS.includes(s.role))return NextResponse.next();
   if(portal&&s?.role==="mentor"&&s.teamNum){

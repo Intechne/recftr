@@ -1,61 +1,25 @@
-"use client";
 import Link from "next/link";
-import { useRouter, useSearchParams } from "next/navigation";
-import { Suspense, useState } from "react";
-import {FigmaIcon} from "@/components/FigmaIcon";
-import {safeInternalPath} from "@/lib/safe-path";
+export const metadata = { title: "Takım Portalı — Yakında | RECF Türkiye" };
 
-function GirisForm() {
-  const router = useRouter();
-  const params = useSearchParams();
-  const [email, setEmail] = useState("");
-  const [pass, setPass] = useState("");
-  const [err, setErr] = useState("");
-  const [busy, setBusy] = useState(false);
-
-  const login = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setErr(""); setBusy(true);
-    const r = await fetch("/api/auth", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ email, pass, scope: "portal" }) });
-    setBusy(false);
-    if (!r.ok) { setErr((await r.json()).error ?? "Giriş başarısız."); return; }
-    const { role, mustChangePassword } = await r.json();
-    const next = params.get("next");
-    router.push(mustChangePassword ? "/portal/ayarlar" : safeInternalPath(next, role === "admin" ? "/admin" : "/portal"));
-    router.refresh();
-  };
-  const input = "mt-1.5 w-full rounded-md border-[1.5px] border-white/25 bg-white/[.07] px-4 py-3.5 text-[15px] text-white placeholder:text-white/35 outline-none focus:border-cyan-brand";
-
-  return (
-    <div className="w-full max-w-md">
-      <Link href="/" className="inline-flex items-center gap-2 font-display text-[19px] font-bold text-cyan-brand sm:text-[22px]"><FigmaIcon name="robot" className="h-6 w-6"/> RECF TÜRKİYE</Link>
-      <h1 className="mt-6 font-display text-[30px] font-bold text-white sm:text-[34px] 2xl:text-[40px]">TAKIM PORTALI</h1>
-      <p className="mt-2 text-[14.5px] text-white/60">Mentor hesabınla giriş yap — üyeler, belgeler, etkinlik kayıtları ve ödemeler.</p>
-      <form onSubmit={login} className="mt-8">
-        <label className="block font-display text-[12px] font-semibold tracking-[1px] text-white/70">MENTOR E-POSTA
-          <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="mentor@okulunuz.org" className={input} required />
-        </label>
-        <label className="mt-4 block font-display text-[12px] font-semibold tracking-[1px] text-white/70">ŞİFRE
-          <input type="password" value={pass} onChange={(e) => setPass(e.target.value)} placeholder="••••••••" className={input} required />
-        </label>
-        {err && <p className="mt-3 rounded-md border border-red-400 bg-red-400/10 px-3.5 py-2.5 text-[13.5px] font-semibold text-red-300">{err}</p>}
-        <button type="submit" disabled={busy}
-          className="plate-hover mt-6 w-full rounded-md bg-cyan-brand py-4 font-display text-[15px] font-bold text-ink shadow-plateSm shadow-white/25 disabled:opacity-50">
-          {busy ? "GİRİLİYOR…" : "GİRİŞ YAP"}
-        </button>
-      </form>
-      <p className="mt-6 text-[12.5px] text-white/40">
-        Şifreni mi unuttun? <span className="text-white/60">takim@recfturkiye.org</span> · Takımın yok mu? <Link href="/kayit" className="text-cyan-brand underline">Takım kaydı</Link>
-      </p>
-    </div>
-  );
-}
 export default function GirisPage() {
   return (
-    <div className="field-grid-dark safe-x relative flex min-h-screen min-h-[100dvh] items-center justify-center overflow-hidden bg-ink py-10 sm:py-12">
-      <div aria-hidden className="absolute -left-24 -top-24 h-56 w-56 rotate-45 bg-alliance-red/80" />
-      <div aria-hidden className="absolute -bottom-24 -right-24 h-56 w-56 rotate-45 bg-alliance-blue/80" />
-      <Suspense><GirisForm /></Suspense>
+    <div className="field-grid-dark relative flex min-h-screen items-center justify-center overflow-hidden bg-ink px-5 py-12">
+      <div aria-hidden className="absolute -left-24 -top-24 h-56 w-56 rotate-45 bg-alliance-red/70" />
+      <div aria-hidden className="absolute -bottom-24 -right-24 h-56 w-56 rotate-45 bg-alliance-blue/70" />
+      <div className="w-full max-w-xl text-center">
+        <Link href="/" className="font-display text-[22px] font-bold text-cyan-brand">⬡ RECF TÜRKİYE</Link>
+        <p className="mx-auto mt-8 inline-block rounded-md border border-cyan-brand/50 bg-cyan-brand/10 px-3.5 py-1.5 font-display text-[12px] font-bold tracking-[2px] text-cyan-brand">GELİŞTİRME AŞAMASINDA</p>
+        <h1 className="mt-5 font-display text-[34px] font-bold leading-tight text-white sm:text-[42px]">TAKIM PORTALI YAKINDA</h1>
+        <p className="mx-auto mt-4 max-w-lg text-[15px] leading-relaxed text-white/65">
+          Mentor girişi, üye yönetimi, belge yükleme ve etkinlik kayıtları için Takım Yönetim Platformu son hazırlık aşamasında.
+          Sezon başvuruları şimdiden açık: mentor ve takım kaydını bugün tamamla, portal yayına alındığında giriş bilgilerin kayıtlı e-postana gelsin.
+        </p>
+        <div className="mt-8 flex flex-col justify-center gap-3 sm:flex-row">
+          <Link href="/kayit" className="plate-hover rounded-md bg-cyan-brand px-6 py-3.5 font-display text-[14px] font-bold text-ink shadow-plateSm shadow-white/25">MENTOR & TAKIM KAYDI →</Link>
+          <Link href="/etkinlikler" className="rounded-md border-2 border-white/35 px-6 py-3.5 font-display text-[14px] font-bold text-white hover:border-cyan-brand">ETKİNLİK TAKVİMİ</Link>
+        </div>
+        <p className="mt-8 text-[12.5px] text-white/40">Sorular için: takim@recfturkiye.org</p>
+      </div>
     </div>
   );
 }

@@ -76,7 +76,7 @@ export default function RegistrationForm({initialPrograms,initialPricing}:{initi
                 <FigmaIcon name="rozet" className="mx-auto h-14 w-14 text-ink"/>
                 <h2 className="mt-4 font-display text-[24px] font-bold text-ink">BAŞVURUN ALINDI!</h2>
                 <p className="mx-auto mt-3 max-w-md text-[15px] leading-relaxed text-ink/60">{form.num || "TAKIM NO"} için ön kaydın oluşturuldu{appId ? ` (Başvuru No: #${String(appId).padStart(4, "0")})` : ""}. Onay e-postası 24 saat içinde <strong>{form.email || "e-posta adresine"}</strong> gönderilecek. Resmi kayıt recfevents.org üzerinde tamamlanır.</p>
-                <Link href="/portal" className="mt-6 inline-block rounded-md bg-ink px-6 py-3.5 font-display text-[14px] font-bold text-white">TAKIM PORTALINA GİT →</Link>
+                <p className="mt-5 rounded-lg border border-cyan-deep/30 bg-cyan-brand/10 px-4 py-3 text-[13px] leading-relaxed text-ink/70">Başvurun RECF Türkiye ekibine iletildi. Takım Portalı geliştirme aşamasındadır; portal yayına alındığında mentor giriş bilgilerin kayıtlı e-postana gönderilecek.</p><Link href="/etkinlikler" className="mt-4 inline-block rounded-md bg-ink px-6 py-3.5 font-display text-[14px] font-bold text-white">ETKİNLİK TAKVİMİNE GİT →</Link>
               </div>
             ) : <>
               <h2 className="font-display text-[20px] font-bold text-ink">ADIM {step + 1} — {steps[step]}</h2>
@@ -98,7 +98,7 @@ export default function RegistrationForm({initialPrograms,initialPricing}:{initi
               {step === 2 && <div className="mt-5 space-y-4">
                 <div><span className={label}>Mentor Ad Soyad* (18+)</span><input maxLength={120} className={input} value={form.mentor} onChange={(e) => set("mentor", e.target.value)} placeholder="İsim Soyisim" autoComplete="name" /></div>
                 <div className="grid gap-4 sm:grid-cols-2"><div><span className={label}>E-posta*</span><input type="email" maxLength={254} className={input} value={form.email} onChange={(e) => set("email", e.target.value)} placeholder="mentor@okul.k12.tr" autoComplete="email" /></div><div><span className={label}>GSM*</span><input maxLength={40} className={input} value={form.phone} onChange={(e) => set("phone", e.target.value)} placeholder="05xx xxx xx xx" autoComplete="tel" /></div></div>
-                <p className="rounded-lg bg-paper px-4 py-3 text-[13px] text-ink/60"><span className="inline-flex items-start gap-1.5"><FigmaIcon name="mentor" className="mt-0.5 h-4 w-4 shrink-0"/> Öğrenci üyeler kayıt sonrası Takım Portalı üzerinden davet edilir; 18 yaş altı üyeler için gerekli veli izinleri portal sürecinde toplanır.</span></p>
+                <p className="rounded-lg bg-paper px-4 py-3 text-[13px] text-ink/60"><span className="inline-flex items-start gap-1.5"><FigmaIcon name="mentor" className="mt-0.5 h-4 w-4 shrink-0"/> Bu form mentor ve takım ön kaydını birlikte alır. Öğrenci üyeler, Takım Portalı yayına alındığında portal üzerinden davet edilir; 18 yaş altı üyeler için veli izinleri o aşamada toplanır.</span></p>
               </div>}
 
               {step === 3 && <div className="mt-5 space-y-4">
