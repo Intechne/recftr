@@ -2,7 +2,7 @@
 
 4 Ekim 2026. Yerel dal: `fix/security-baseline`. Başlangıç commit'i: `f4d6c4eb524093b2572af33a6d29ad2a93055576`.
 
-**Durum:** Yerel güncelleme hazır ve test edildi. GitHub'a gönderilmedi, canlı yayın ve veritabanı değiştirilmedi. Üretim yapılandırması ve oturumlu iş akışları henüz doğrulanmadı.
+**Durum:** Güncelleme ayrı çalışma dalında hazır ve yerelde test edildi. Bu dal ana dala alınmadan ve yayınlanmadan canlı sitede uygulanmış sayılmaz. Üretim yapılandırması ve oturumlu iş akışları henüz doğrulanmadı; veritabanı değiştirilmedi.
 
 ## Hazırlanan değişiklikler
 
