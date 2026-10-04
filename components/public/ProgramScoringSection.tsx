@@ -3,16 +3,17 @@ import type {OfficialProgramData} from "@/lib/recf-games";
 type Props={official:OfficialProgramData|null|undefined};
 
 export function ProgramScoringSection({official}:Props){
-  if(!official||official.scoringGroups.length===0)return null;
+  if(!official)return null;
   return <section aria-labelledby="program-scoring-title" className="pt-14 sm:pt-16">
     <div className="rounded-[24px] bg-[#F6F9FD] p-4 sm:p-6 lg:p-8 2xl:p-10">
       <div className="max-w-4xl">
         <p className="font-display text-[11px] font-bold tracking-[.18em] text-cyan-deep">TEKNİK DETAYLAR · {official.gameName.toUpperCase()}</p>
         <h2 id="program-scoring-title" className="mt-3 font-display text-[clamp(2rem,5vw,3rem)] font-bold leading-none text-ink">Puanlama Sistemi</h2>
-        <p className="mt-4 max-w-3xl text-sm leading-6 text-ink/60 sm:text-base sm:leading-7">Oyundaki temel puan kalemlerini ve örnek hesaplamaları hızlıca inceleyin.</p>
+        <p className="mt-4 max-w-3xl text-sm leading-6 text-ink/60 sm:text-base sm:leading-7">{official.scoringGroups.length?"Oyundaki temel puan kalemlerini inceleyin. Bu özetin dışında kalan görevler, sınırlar ve geçerlilik koşulları için resmî kılavuzu kullanın.":"Bu sürümün puanlama özeti henüz doğrulanmadı. Güncel kurallar ve puanlar için resmî kılavuzu kullanın."}</p>
         {official.versionLabel&&<div className="mt-5 flex flex-wrap gap-2 text-[11px] font-bold sm:text-xs"><span className="rounded-full bg-[#E9ECF4] px-3 py-2 text-ink">2026–27 · Game Manual v{official.versionLabel}</span></div>}
       </div>
 
+      {official.siteSlug==="adc-pro"&&official.versionLabel==="2.0"&&<p className="mt-4 text-xs leading-relaxed text-ink/55">Puanlama özeti v2.0 kılavuzuna göre 4 Ekim 2026’da kontrol edildi. Yeni sürümler ve resmî Q&A kararları için aşağıdaki kaynakları takip edin.</p>}
       <div className="mt-8 space-y-6">
         {official.scoringGroups.map(group=><div key={group.id} className="rounded-[20px] border border-[#DFE6F1] bg-white p-4 sm:p-6">
           <div className="max-w-3xl"><h3 className="font-display text-xl font-bold text-ink sm:text-2xl">{group.title}</h3><p className="mt-2 text-xs leading-5 text-ink/55 sm:text-sm">{group.subtitle}</p></div>

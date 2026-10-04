@@ -2,9 +2,9 @@ import Link from "next/link";
 import type { Metadata } from "next";
 const registrationFaqs = [
   { q: "Kimler takım kurabilir?", a: "Programın yaş/kademe koşullarını sağlayan öğrenciler, 18 yaş üstü bir mentor eşliğinde takım oluşturabilir." },
-  { q: "Takım numarası nasıl alınır?", a: "Bu sitedeki takım kayıt formunu gönderin. Başvuru CMS üzerinden onaylandıktan sonra takımınız oluşturulur ve mentor portal hesabı açılır." },
-  { q: "Etkinlik kaydı nasıl yapılır?", a: "Onaylı takım mentorları Takım Portalı > Etkinlikler bölümünden programlarına uygun etkinliklere başvurabilir." },
-  { q: "Belgeleri nereye yükleyeceğiz?", a: "Takım Portalı > Belgeler bölümünde programınıza tanımlanan zorunlu ve opsiyonel evrakları yükleyebilirsiniz." },
+  { q: "Takım numarası nasıl alınır?", a: "Türkiye ön başvurusu için bu sitedeki formu kullanın. Resmî sezon kaydı ve takım numarası RECFevents üzerinde ayrıca tamamlanır. Tercih ettiğiniz numarayı yazmanız resmî tahsis veya rezervasyon değildir." },
+  { q: "Etkinlik kaydı nasıl yapılır?", a: "Etkinlik takvimindeki duyuruları takip edin. Takım Portalı henüz açılmadı; etkinlik kayıt kanalı ve katılım koşulları ayrıca duyurulacak. Takım ön başvurusu etkinlik kaydı değildir." },
+  { q: "Belgeleri nereye yükleyeceğiz?", a: "Belge yükleme, Takım Portalı açıldığında kullanılabilecek. Gerekli belgeler ve güvenli yükleme yolu ayrıca duyurulacak; bu ön başvuruda öğrenci veya veli belgesi yüklenmez." },
 ];
 import { PageHead } from "@/components/Ui";
 import { Reveal } from "@/components/Motion";
@@ -13,15 +13,15 @@ export const metadata: Metadata = { title: "Takım Kaydı Nasıl Yapılır?" };
 
 const steps = [
   { title: "PROGRAMINI SEÇ", link: { t: "Program sayfaları", h: "/programlar" },
-    desc: "Öğrencilerin yaşına göre program belirle: Engage (15 yaşa kadar, U12/U15) · Achieve (19 yaşa kadar, U15/U19) · Inspire (üniversite) · ADC (ortaokul/lise) · ADC Pro (13+ lise & üni). Kararsızsan Programlar sayfasındaki karşılaştırmayı kullan veya takim@recfturkiye.org'a yaz." },
+    desc: "Öğrencilerin yaşına göre program belirle: Engage (15 yaşa kadar, U12/U15) · Achieve (19 yaşa kadar, U15/U19) · Inspire (üniversite) · ADC (ortaokul/lise) · ADC Pro (U19 lise & üniversite; uygunluk için resmî kılavuz). Kararsızsan Programlar sayfasındaki karşılaştırmayı kullan veya takim@recfturkiye.org'a yaz." },
   { title: "EKİBİNİ TOPLA", link: { t: "Mentor rehberi", h: "/rehber/mentor" },
     desc: "Engage için en az 2 öğrenci, Achieve için 1+ öğrenci yeterli; ideal ekip 4–6 kişidir. Her takımın 18 yaş üstü bir yetişkin mentoru (öğretmen, veli veya gönüllü) olmalı. Okul zorunlu değil — kulüp ve bağımsız topluluklar da kaydolabilir." },
-  { title: "RECFEVENTS.ORG'DA TAKIMINI KAYDET", link: { t: "Ön kayıt formu", h: "/kayit" },
-    desc: "Resmi kayıt platformu recfevents.org'da mentor hesabı aç, programını seç, takım bilgilerini gir ve sezon lisans ücretini öde. Sistem sana benzersiz takım numaranı (plakanı) verir — ör. 123A. Bu numara tüm sezonun kimliğidir." },
+  { title: "TÜRKİYE ÖN BAŞVURUNU YAP", link: { t: "Ön kayıt formu", h: "/kayit" },
+    desc: "Mentor ve takım bilgilerinle Türkiye ön başvuru formunu doldur. Resmî sezon kaydı ve takım numarası için RECFevents sürecini ayrıca tamamla. Yerel ön başvuru, resmî lisans veya etkinlik kaydı yerine geçmez." },
   { title: "DONANIMINI EDİN", link: { t: "Donanım rehberi", h: "/dokumanlar" },
-    desc: "Engage: VEX IQ® veya LEGO® SPIKE/Mindstorms. Achieve: VEX V5® elektronik + Robits®/TETRIX® MAX yapı. ADC/ADC Pro: onaylı drone kitleri. Başlangıç kitleri ve yerel tedarik seçenekleri için Dokümanlar'daki donanım rehberine bak." },
+    desc: "Engage: VEX IQ® veya LEGO® SPIKE/Mindstorms. Achieve: VEX V5® elektronik + Robits®/TETRIX® MAX yapı. ADC/ADC Pro: onaylı drone kitleri. Programına uygun donanımı satın almadan önce resmî kılavuzdaki onaylı bileşenleri ve teknik sınırları kontrol et." },
   { title: "İLK ETKİNLİĞİNE BAŞVUR", link: { t: "Etkinlik takvimi", h: "/etkinlikler" },
-    desc: "RECF Türkiye Etkinlikler sayfasından ilindeki veya bölgendeki etkinliği seç, takım numaranla başvur. Kontenjanlar sınırlı — erken kayıt hem yer garantiler hem indirim sağlar. Başvurun 24 saat içinde e-postayla onaylanır." },
+    desc: "RECF Türkiye Etkinlikler sayfasından ilindeki veya bölgendeki etkinliği seç, takım numaranla başvur. Etkinlik kaydı, kontenjan ve katılım koşulları ayrı duyurulur; takım ön başvurusu yer garantisi sağlamaz." },
   { title: "HAZIRLAN VE SAHAYA ÇIK", link: { t: "Sezon dokümanları", h: "/dokumanlar" },
     desc: "Oyun kılavuzunu indir, robotunu kur, mühendislik defterini tutmaya ilk günden başla. Etkinlik gününde robot denetiminden geç, açılış seremonisine katıl — plakan artık sahada!" },
 ];
@@ -30,7 +30,7 @@ export default function Rehber() {
   return (
     <div className="pb-20">
       <PageHead kicker="REHBER" title="TAKIM KAYDI NASIL YAPILIR?"
-        sub="Sıfırdan sahaya: bir RECF takımı kurmanın ve ilk etkinliğe kaydolmanın eksiksiz yolu. Ortalama süre: 30 dakika başvuru + 24 saat onay." />
+        sub="Sıfırdan sahaya: bir RECF takımı kurmanın ve ilk etkinliğe kaydolmanın eksiksiz yolu. Türkiye ön başvurusu, resmî sezon kaydı ve etkinlik katılımı ayrı adımlardır." />
       <div className="safe-x mx-auto max-w-5xl space-y-4 lg:px-10">
         {steps.map((s, i) => (
           <Reveal key={s.title} delay={i * 50}>
