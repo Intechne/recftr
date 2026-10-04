@@ -71,7 +71,8 @@ export default async function Home() {
   const media=(Array.isArray(snapshot.media)?snapshot.media:[]) as Media[];
   const settings=(snapshot.settings&&typeof snapshot.settings==='object'?snapshot.settings:{}) as Settings;
   const stats=(snapshot.stats&&typeof snapshot.stats==='object'?snapshot.stats:EMPTY_STATS) as HomeStats;
-  const route=parseRoute(settings.season_route);
+  const pendingChampionship=events.some((e:Event)=>e.slug==="recf-turkiye-ulusal-sampiyonasi"&&e.status==="TARİH BEKLENİYOR");
+  const route=parseRoute(settings.season_route).map(step=>pendingChampionship&&/Türkiye Şampiyonası/i.test(step.label)?{...step,month:"YAKINDA",done:false}:step);
   const season=settings.season_label||"2026–27";
   const rawHero=(settings.hero_title||"MAÇ GÜNÜ HER GÜN.").trim();
   const inferredAccent=/HER GÜN\.?$/i.test(rawHero)?(rawHero.match(/HER GÜN\.?$/i)?.[0]||""):"";

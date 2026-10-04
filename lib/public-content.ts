@@ -42,10 +42,10 @@ export function publicEvent<T extends EventDates & { slug?: string; body?: strin
   // This published record says March in its timestamps and April in its body.
   // Do not choose a date on the organiser's behalf while these values conflict.
   if (item.slug === 'recf-turkiye-ulusal-sampiyonasi' && !item.date_label?.trim()
-      && timestamp(item.event_start) === Date.parse('2027-03-13T08:00:00Z') && /17\s*[–-]\s*18 Nisan 2027/.test(item.body || '')) {
+      && timestamp(item.event_start) === Date.parse('2027-03-13T08:00:00Z') && /(?:17\s*[–-]\s*18|17|18) Nisan 2027/.test(item.body || '')) {
     item = { ...item, event_start: null, event_end: null, registration_enabled: false,
       date_label: 'Tarih doğrulaması bekleniyor', status: 'TARİH BEKLENİYOR',
-      body: item.body?.replace(/17\s*[–-]\s*18 Nisan 2027/g, 'Kesin tarih ayrıca duyurulacak') };
+      body: item.body?.replace(/(?:17\s*[–-]\s*18|17|18) Nisan 2027/g, 'Tarih bekleniyor') };
   }
   const phase = eventPhase(item, now);
   if (phase === 'past') return { ...item, status: 'GEÇMİŞ ETKİNLİK', registration_enabled: false };

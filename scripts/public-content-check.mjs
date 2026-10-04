@@ -27,6 +27,7 @@ const held = publicEvent(conflicting, now);
 assert.equal(held.event_start, null);
 assert.equal(held.registration_enabled, false);
 assert.equal(publicEvent({...conflicting,event_start:new Date(conflicting.event_start)},now).event_start,null);
+assert.equal(publicEvent({...conflicting,body:'BİRİNCİ GÜN — 17 Nisan 2027\nİKİNCİ GÜN — 18 Nisan 2027'},now).event_start,null);
 assert.ok(!held.body.includes('17–18 Nisan'));
 assert.equal(conflicting.event_start, '2027-03-13T08:00:00.000Z');
 assert.equal(publicEvent({...conflicting,date_label:'13–14 Mart 2027'}, now).event_start, conflicting.event_start);
