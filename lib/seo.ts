@@ -44,11 +44,10 @@ export const breadcrumbLd = (items: { name: string; path: string }[]) => ({
 export const eventLd = (e: any) => ({
   "@context": "https://schema.org", "@type": "Event", name: e.title, description: e.excerpt || undefined,
   url: abs(`/etkinlikler/${e.slug}`), image: e.cover_url || undefined,
-  startDate: e.start_at || undefined, endDate: e.end_at || undefined,
+  startDate: e.event_start || undefined, endDate: e.event_end || undefined,
   eventStatus: "https://schema.org/EventScheduled", eventAttendanceMode: "https://schema.org/OfflineEventAttendanceMode",
   location: { "@type": "Place", name: e.venue || e.city, address: { "@type": "PostalAddress", addressLocality: e.city, addressCountry: "TR" } },
   organizer: { "@id": abs("/#organization") },
-  offers: { "@type": "Offer", url: abs("/kayit"), availability: "https://schema.org/InStock", price: "0", priceCurrency: "TRY" },
 });
 export const articleLd = (n: any) => ({
   "@context": "https://schema.org", "@type": "NewsArticle", headline: n.title, description: n.excerpt || undefined,

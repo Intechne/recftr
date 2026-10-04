@@ -14,6 +14,7 @@
     "security:postdeploy": "bash scripts/security-postdeploy.sh",
     "security:advanced": "node scripts/security-advanced.mjs",
     "content:check": "node scripts/content-consistency-check.mjs",
+    "content:regression": "node scripts/public-content-check.mjs",
     "content:smoke": "node scripts/content-smoke.mjs",
     "stability:smoke": "node scripts/stability-smoke.mjs"
   },

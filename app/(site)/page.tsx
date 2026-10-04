@@ -3,6 +3,7 @@ import { pageMeta } from "@/lib/seo";
 export const metadata: Metadata = pageMeta({ title: "RECF Türkiye — Maç Günü. Her Gün.", description: "Türkiye'nin resmi RECF robotik ve drone programları: Engage, Achieve, Inspire, Aerial Drone Competition, ADC Pro. Takım numaranı al, dünya şampiyonasına giden yolculuğa başla.", path: "/" });
 import Link from "next/link";
 import { getCachedHomeSnapshot } from "@/lib/public-cache";
+import { eventPhase } from "@/lib/public-content";
 import { FigmaIcon, type FigmaIconName } from "@/components/FigmaIcon";
 import { CountUp, Reveal, RoutePath } from "@/components/Motion";
 
@@ -12,7 +13,7 @@ type Program = {
 };
 type Event = {
   id:number|string; slug:string; code?:string; title:string; cover_url?:string;
-  date_label?:string; city?:string; venue?:string; capacity?:number; status?:string;
+  event_start?:string; event_end?:string; date_label?:string; city?:string; venue?:string; capacity?:number; status?:string;
 };
 type News = {
   id:number|string; slug:string; tag?:string; title:string; excerpt?:string;
@@ -65,12 +66,13 @@ export default async function Home() {
     // Never turn a transient database/cache delay into a 504 for the public homepage.
   }
   const programs=(Array.isArray(snapshot.programs)?snapshot.programs:[]) as Program[];
-  const events=(Array.isArray(snapshot.events)?snapshot.events:[]) as Event[];
+  const events=((Array.isArray(snapshot.events)?snapshot.events:[]) as Event[]).filter(e=>eventPhase(e)!=="past");
   const news=(Array.isArray(snapshot.news)?snapshot.news:[]) as News[];
   const media=(Array.isArray(snapshot.media)?snapshot.media:[]) as Media[];
   const settings=(snapshot.settings&&typeof snapshot.settings==='object'?snapshot.settings:{}) as Settings;
   const stats=(snapshot.stats&&typeof snapshot.stats==='object'?snapshot.stats:EMPTY_STATS) as HomeStats;
-  const route=parseRoute(settings.season_route);
+  const pendingChampionship=events.some((e:Event)=>e.slug==="recf-turkiye-ulusal-sampiyonasi"&&e.status==="TARİH BEKLENİYOR");
+  const route=parseRoute(settings.season_route).map(step=>pendingChampionship&&/Türkiye Şampiyonası/i.test(step.label)?{...step,month:"YAKINDA",done:false}:step);
   const season=settings.season_label||"2026–27";
   const rawHero=(settings.hero_title||"MAÇ GÜNÜ HER GÜN.").trim();
   const inferredAccent=/HER GÜN\.?$/i.test(rawHero)?(rawHero.match(/HER GÜN\.?$/i)?.[0]||""):"";
@@ -132,7 +134,7 @@ export default async function Home() {
       <div className="safe-x mx-auto max-w-7xl py-14 sm:py-16 lg:px-10 lg:py-20 2xl:py-24">
         <div className="mb-8 flex flex-col gap-4 md:flex-row md:items-end md:justify-between sm:mb-10">
           <h2 className="font-display text-[30px] font-bold leading-tight text-ink sm:text-[36px] lg:text-[44px]">PROGRAMINI SEÇ.<br/><span className="text-cyan-deep">SAHAYA ÇIK.</span></h2>
-          <p className="max-w-md text-[14px] leading-relaxed text-ink/50 md:text-right sm:text-[15px]">Program kartları CMS’teki canlı oyun, yaş grubu ve marka renklerinden oluşur.</p>
+          <p className="max-w-md text-[14px] leading-relaxed text-ink/50 md:text-right sm:text-[15px]">Yaş grubuna ve ilgi alanına uygun programı seç; sezon oyununu ve katılım koşullarını incele.</p>
         </div>
         <div className="grid gap-4 min-[480px]:grid-cols-2 md:grid-cols-3 xl:grid-cols-5 2xl:gap-5">
           {programs.map((p,i)=><Reveal key={p.slug} delay={i*70} className="h-full"><Link href={`/programlar/${p.slug}`} className="plate-hover flex h-full flex-col overflow-hidden rounded-xl border-2 border-ink bg-white shadow-plate" style={{["--tw-shadow-color" as string]:p.color_hex||"#29B9E5"}}>
@@ -184,7 +186,7 @@ export default async function Home() {
             <span className="flex items-center gap-2 text-[13px] text-ink/60"><FigmaIcon name="konum" className="h-4 w-4 shrink-0"/>{[e.city,e.venue].filter(Boolean).join(" · ")||"Konum yakında"}</span>
             <span className="flex items-center gap-2 font-display text-[11px] font-bold text-cyan-deep"><span className="pulse-soft h-2 w-2 rounded-full bg-cyan-brand"/>{e.status||"YAYINDA"}</span>
           </Link></Reveal>)}
-          {events.length===0&&<p className="p-7 text-sm text-ink/45">Yayınlanmış etkinlik henüz yok.</p>}
+          {events.length===0&&<p className="p-7 text-sm text-ink/45">Yaklaşan etkinlik henüz duyurulmadı. Geçmiş etkinlikleri takvimde inceleyebilirsin.</p>}
         </div>
       </div>
     </section>}

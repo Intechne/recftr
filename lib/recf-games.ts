@@ -89,10 +89,10 @@ type ProgramConfig={
 
 const PROGRAMS:Record<SiteProgramSlug,ProgramConfig>={
   engage:{siteSlug:"engage",apiSlug:"engage",fallbackVersion:"1.1",fallbackGame:"Tier Takeover"},
-  achieve:{siteSlug:"achieve",apiSlug:"achieve",fallbackVersion:"1.2",fallbackGame:"Pinnacle"},
+  achieve:{siteSlug:"achieve",apiSlug:"achieve",fallbackVersion:"2.0",fallbackGame:"Pinnacle"},
   inspire:{siteSlug:"inspire",apiSlug:"inspire",fallbackVersion:"1.2",fallbackGame:"Pinnacle"},
   adc:{siteSlug:"adc",apiSlug:"adc",fallbackVersion:"1.0",fallbackGame:"Mission 2027: Fast Track"},
-  "adc-pro":{siteSlug:"adc-pro",apiSlug:"adc-pro",fallbackVersion:"0.9 (ön değerlendirme)",fallbackGame:"Off Grid"},
+  "adc-pro":{siteSlug:"adc-pro",apiSlug:"pro",fallbackVersion:"2.0",fallbackGame:"Off Grid"},
 };
 
 const FALLBACK_ENGAGE_SCORES:EngageScores={floor:1,l1:5,l2:10,l3:25,l4:50,park:25};
@@ -272,7 +272,7 @@ function engageData(manual:unknown,version:string,meta:ReturnType<typeof revisio
   };
 }
 
-function pinnacleScoring(manual:unknown){
+function pinnacleScoring(manual:unknown,achieveV2=false){
   const text=normalizeText(manual);
   const cup=numberNear(text,/Scored\s+cup.{0,100}?(\d+)\s*point\s+per/i,1);
   const halfpin=numberNear(text,/red\s+or\s+blue\s+halfpin.{0,180}?(\d+)\s*points?\s+per/i,5);
@@ -286,7 +286,8 @@ function pinnacleScoring(manual:unknown){
     ]},
     {id:"alliance",title:"İttifak ve Oyun Sonu",subtitle:"Alliance maçlarında öne çıkan temel skor değerleri.",items:[
       item("alliance-halfpin","İttifak Halfpin",points(halfpin),"İttifak rengindeki uygun goal üzerinde skorlanan görünür halfpin.",3),
-      item("center-alliance","Center Goal",points(center),"Center goal üzerindeki uygun görünür halfpin.",4),
+      ...(achieveV2?[item("neutral-alliance","Neutral Goal Halfpin","7 puan","İttifak rengi: 7; sarı için roller rengi koşulu aranır (§5.1.3).",2)]:[]),
+      item("center-alliance","Center Goal",points(center),"İttifak rengi halfpin: 10; sarı halfpin ve cup için üstünlük koşulu aranır.",4),
       item("park","Parked Robot",points(park),"Maç sonunda ittifak loader'ına temas eden uygun robot.",6),
     ]},
   ];
@@ -305,38 +306,34 @@ function pinnacleScoring(manual:unknown){
 }
 
 
-function offGridScoring(manual:unknown){
-  const text=normalizeText(manual);
-  const launch=numberNear(text,/launch.{0,80}?(\d+)\s*points?/i,10);
-  const waypoint=numberNear(text,/waypoint.{0,80}?(\d+)\s*points?/i,15);
-  const payload=numberNear(text,/payload.{0,80}?(\d+)\s*points?/i,25);
-  const survey=numberNear(text,/survey.{0,80}?(\d+)\s*points?/i,20);
-  const precision=numberNear(text,/precision\s+land.{0,80}?(\d+)\s*points?/i,20);
-  const rtb=numberNear(text,/return\s+to\s+base.{0,80}?(\d+)\s*points?/i,15);
+// Reviewed against https://games.recf.org/pro/2.0, sections 3.1, 4.2 and 5.1.
+// Curated v2.0 summary: do not infer scores from arbitrary nearby numbers in a manual.
+function offGridScoring(){
   const groups:ProgramScoringGroup[]=[
-    {id:"mission",title:"Otonom Görev Aşamaları",subtitle:"Off Grid'de tüm uçuş kod ile yürür — GPS'siz saha, görev sıralı puanlanır.",items:[
-      item("launch","Otonom Kalkış",points(launch),"Komutla başlayan geçerli otonom kalkış.",0),
-      item("waypoint","Waypoint Geçişi",points(waypoint),"Rota üzerindeki her işaretli waypoint.",1),
-      item("survey","Alan Taraması",points(survey),"Belirlenen bölgenin sensörle taranması.",2),
-      item("payload","Payload Bırakma",points(payload),"Hedef bölgeye başarılı yük bırakma.",4),
-      item("rtb","Üsse Dönüş",points(rtb),"Görev sonunda üsse otonom dönüş.",5),
-      item("precision","Hassas İniş",points(precision),"Landing pad merkezine otonom iniş.",6),
+    {id:"piloting",title:"Solo Pilotaj · 60 saniye",subtitle:"Kılavuz §3.1 — geçerlilik koşulları ve görev sınırları resmî kılavuzda açıklanır.",items:[
+      item("panel","Panel Geçişi","5 / 10 puan","Büyük delik: 5; küçük delik: 10.",0),
+      item("color","Renk Eşleştirme","10 puan","Geçerli renk eşleştirmesi yapılan her pad.",1),
+      item("canister","Canister Bölgesi","5 / 10 / 15 puan","Bölge 1, 2 veya 3; yalnız bir bölge sayılır.",2),
+      item("park","Park Eden Araç","5 puan","Geçerli park eden araç başına; en fazla iki araç.",3),
+      item("dock","Drone Docking","10 puan","Geçerli biçimde robota dock eden drone.",4),
     ]},
-    {id:"multipliers",title:"Otonomi Çarpanları & Penaltılar",subtitle:"Müdahalesiz uçuş ödüllenir; pilot müdahalesi çarpanı düşürür.",items:[
-      item("full-auto","Tam Otonom Bonus","×1.5","Görev boyunca sıfır pilot müdahalesi.",3),
-      item("intervene","Pilot Müdahalesi","×0.5","Her manuel müdahale sonrası görev çarpanı.",6),
-      item("boundary","Saha İhlali","−10 puan","Sanal saha sınırının dışına çıkma.",6),
-      item("timeout","Süre Aşımı","0 puan","Süre içinde tamamlanamayan görev adımı.",2),
+    {id:"autonomous",title:"Solo Otonom · 60 saniye",subtitle:"Kılavuz §4.2 — kodla yürütülen görevler; durdurma süresi puanı verilmez.",items:[
+      item("panel","Panel Geçişi","10 / 20 puan","Büyük delik: 10; küçük delik: 20.",0),
+      item("color","Renk Eşleştirme","20 puan","Geçerli renk eşleştirmesi yapılan her pad.",1),
+      item("canister","Canister Bölgesi","10 / 20 / 30 puan","Bölge 1, 2 veya 3; yalnız bir bölge sayılır.",2),
+      item("park","Park Eden Araç","10 puan","Geçerli park eden araç başına; en fazla iki araç.",3),
+      item("dock","Drone Docking","20 puan","Geçerli biçimde robota dock eden drone.",4),
+    ]},
+    {id:"alliance",title:"İttifak / Teamwork · 120 saniye",subtitle:"Kılavuz §5.1 — iki takımlı kırmızı ve mavi ittifaklar.",items:[
+      item("pump","Pump","10 puan","Geçerli skorlanan pump.",0),
+      item("drop","Drop Zone","15 puan","Drop zone başına en fazla bir power cell.",1),
+      item("supply","Supply Station","5 puan","İstasyonda skorlanan her power cell.",2),
+      item("fuel","Fuel","1 / 2 puan","Rakip saha tarafında: cooling pool içinde 1, dışında 2.",3),
+      item("dock","Drone Docking","5 puan","Geçerli docking.",4),
+      item("park","Park Eden Araç","1 puan","Geçerli park eden araç başına.",5),
     ]},
   ];
-  const examples:ProgramScoringExample[]=[
-    {title:"Tam Otonom Görev Örneği",ruleLabel:"OG-3.2",rows:[
-      {label:"Kalkış + 3 Waypoint",detail:`${launch} + 3 × ${waypoint}`,points:String(launch+3*waypoint)},
-      {label:"Payload + Hassas İniş",detail:`${payload} + ${precision}`,points:String(payload+precision)},
-      {label:"Tam otonom bonus",detail:"×1.5",points:"×1.5"},
-    ],total:String(Math.round((launch+3*waypoint+payload+precision)*1.5)),note:"Değerler ön değerlendirmedir; resmî kılavuz yayınlandığında games.recf.org API'sinden otomatik güncellenir."},
-  ];
-  return {groups,examples};
+  return {groups,examples:[] as ProgramScoringExample[]};
 }
 
 function adcScoring(manual:unknown){
@@ -394,16 +391,16 @@ function adcScoring(manual:unknown){
 
 function fallbackScoring(siteSlug:SiteProgramSlug){
   if(siteSlug==="engage")return {groups:[],examples:[]};
-  if(siteSlug==="achieve"||siteSlug==="inspire")return pinnacleScoring(null);
+  if(siteSlug==="achieve"||siteSlug==="inspire")return pinnacleScoring(null,siteSlug==="achieve");
   if(siteSlug==="adc")return adcScoring(null);
-  if(siteSlug==="adc-pro")return offGridScoring(null);
+  if(siteSlug==="adc-pro")return offGridScoring();
   return {groups:[],examples:[]};
 }
 
 function scoringFor(siteSlug:SiteProgramSlug,manual:unknown){
-  if(siteSlug==="achieve"||siteSlug==="inspire")return pinnacleScoring(manual);
+  if(siteSlug==="achieve"||siteSlug==="inspire")return pinnacleScoring(manual,siteSlug==="achieve");
   if(siteSlug==="adc")return adcScoring(manual);
-  if(siteSlug==="adc-pro")return offGridScoring(manual);
+  if(siteSlug==="adc-pro")return offGridScoring();
   return {groups:[],examples:[]};
 }
 
@@ -435,7 +432,7 @@ export async function getProgramOfficialData(inputSlug:string):Promise<OfficialP
     const versionLabel=meta.versionLabel||version;
     const gameName=extractGameName(manual,config);
     const links=officialLinks(config.apiSlug,versionLabel);
-    const scoring=scoringFor(siteSlug,manual);
+    const scoring=(siteSlug==="adc-pro"||siteSlug==="achieve")&&versionLabel!=="2.0"?{groups:[],examples:[]}:scoringFor(siteSlug,manual);
     return {
       siteSlug,apiSlug:config.apiSlug,supported:true,available:true,source:"api",versionLabel,publishedAt:meta.publishedAt,releasedDateLabel:meta.releasedDateLabel,gameName,...links,scoringGroups:scoring.groups,examples:scoring.examples,engage:siteSlug==="engage"?engageData(manual,versionLabel,meta,gameName,true):null,fetchedAt,
     };

@@ -1,14 +1,15 @@
 "use client";
 import Link from "next/link";
+import {initialRegistrationProgram} from "@/lib/public-content";
 import {FigmaIcon} from "@/components/FigmaIcon";
 import { useEffect, useMemo, useState } from "react";
 
-const steps = ["PROGRAM SEÇİMİ", "TAKIM BİLGİLERİ", "MENTOR & ÜYELER", "ÖDEME & ONAY"];
+const steps = ["PROGRAM SEÇİMİ", "TAKIM BİLGİLERİ", "MENTOR BİLGİLERİ", "ÜCRET ÖZETİ & BAŞVURU"];
 const provinces = [
   "Adana","Adıyaman","Afyonkarahisar","Ağrı","Amasya","Ankara","Antalya","Artvin","Aydın","Balıkesir","Bilecik","Bingöl","Bitlis","Bolu","Burdur","Bursa","Çanakkale","Çankırı","Çorum","Denizli","Diyarbakır","Edirne","Elazığ","Erzincan","Erzurum","Eskişehir","Gaziantep","Giresun","Gümüşhane","Hakkari","Hatay","Isparta","Mersin","İstanbul","İzmir","Kars","Kastamonu","Kayseri","Kırklareli","Kırşehir","Kocaeli","Konya","Kütahya","Malatya","Manisa","Kahramanmaraş","Mardin","Muğla","Muş","Nevşehir","Niğde","Ordu","Rize","Sakarya","Samsun","Siirt","Sinop","Sivas","Tekirdağ","Tokat","Trabzon","Tunceli","Şanlıurfa","Uşak","Van","Yozgat","Zonguldak","Aksaray","Bayburt","Karaman","Kırıkkale","Batman","Şırnak","Bartın","Ardahan","Iğdır","Yalova","Karabük","Kilis","Osmaniye","Düzce"
 ].sort((a,b)=>a.localeCompare(b,"tr"));
 
-export default function RegistrationForm({initialPrograms,initialPricing}:{initialPrograms:any[];initialPricing:any}) {
+export default function RegistrationForm({initialPrograms,initialPricing,requestedProgram}:{initialPrograms:any[];initialPricing:any;requestedProgram?:string}) {
   const programs = initialPrograms;
   const pricing = initialPricing;
   const [districts,setDistricts]=useState<string[]>([]);
@@ -17,7 +18,7 @@ export default function RegistrationForm({initialPrograms,initialPricing}:{initi
   const [appId, setAppId] = useState<number | null>(null);
   const [err, setErr] = useState("");
   const [busy, setBusy] = useState(false);
-  const [prog, setProg] = useState("achieve");
+  const [prog, setProg] = useState(()=>initialRegistrationProgram(requestedProgram,initialPrograms));
   const [form, setForm] = useState({ team: "", org: "", city: "", district: "", type: "Okul Takımı", num: "", mentor: "", email: "", phone: "", website: "", kit: false, kvkk: false, done: false });
 
   useEffect(()=>{
@@ -59,6 +60,7 @@ export default function RegistrationForm({initialPrograms,initialPricing}:{initi
 
   return (
     <div className="safe-x mx-auto max-w-7xl lg:px-10">
+        <p className="mb-6 rounded-lg border border-cyan-deep/25 bg-cyan-brand/10 p-4 text-sm leading-relaxed text-ink/70">Bu form RECF Türkiye takım ve mentor ön başvurusudur. Resmî sezon kaydı ve takım numarası doğrulaması RECFevents üzerinde ayrıca tamamlanır.</p>
         <ol className="flex flex-wrap items-center gap-3">
           {steps.map((s, i) => (
             <li key={s} className="flex items-center gap-3">
@@ -75,7 +77,7 @@ export default function RegistrationForm({initialPrograms,initialPricing}:{initi
               <div className="py-8 text-center">
                 <FigmaIcon name="rozet" className="mx-auto h-14 w-14 text-ink"/>
                 <h2 className="mt-4 font-display text-[24px] font-bold text-ink">BAŞVURUN ALINDI!</h2>
-                <p className="mx-auto mt-3 max-w-md text-[15px] leading-relaxed text-ink/60">{form.num || "TAKIM NO"} için ön kaydın oluşturuldu{appId ? ` (Başvuru No: #${String(appId).padStart(4, "0")})` : ""}. Onay e-postası 24 saat içinde <strong>{form.email || "e-posta adresine"}</strong> gönderilecek. Resmi kayıt recfevents.org üzerinde tamamlanır.</p>
+                <p className="mx-auto mt-3 max-w-md text-[15px] leading-relaxed text-ink/60">{form.num || "TAKIM NO"} için ön kaydın oluşturuldu{appId ? ` (Başvuru No: #${String(appId).padStart(4, "0")})` : ""}. Ekibimiz başvurunu inceleyerek <strong>{form.email || "e-posta adresin"}</strong> üzerinden dönüş yapacak. Resmî sezon kaydı RECFevents üzerinde ayrıca tamamlanır; bu başvuru resmî lisans veya takım numarası tahsisi değildir.</p>
                 <p className="mt-5 rounded-lg border border-cyan-deep/30 bg-cyan-brand/10 px-4 py-3 text-[13px] leading-relaxed text-ink/70">Başvurun RECF Türkiye ekibine iletildi. Takım Portalı geliştirme aşamasındadır; portal yayına alındığında mentor giriş bilgilerin kayıtlı e-postana gönderilecek.</p><Link href="/etkinlikler" className="mt-4 inline-block rounded-md bg-ink px-6 py-3.5 font-display text-[14px] font-bold text-white">ETKİNLİK TAKVİMİNE GİT →</Link>
               </div>
             ) : <>
@@ -85,29 +87,29 @@ export default function RegistrationForm({initialPrograms,initialPricing}:{initi
 
               {step === 1 && <div className="mt-5 space-y-4">
                 <input type="text" tabIndex={-1} autoComplete="off" aria-hidden="true" className="absolute left-[-9999px] h-px w-px opacity-0" value={form.website} onChange={(e)=>set("website",e.target.value)} name="website" />
-                <div><span className={label}>Takım Adı*</span><input maxLength={120} className={input} value={form.team} onChange={(e) => set("team", e.target.value)} placeholder="Takım adı" /></div>
-                <div><span className={label}>Okul / Kurum*</span><input maxLength={160} className={input} value={form.org} onChange={(e) => set("org", e.target.value)} placeholder="Okul veya kurum adı" /></div>
+                <div><label htmlFor="registration-team" className={label}>Takım Adı*</label><input id="registration-team" maxLength={120} className={input} value={form.team} onChange={(e) => set("team", e.target.value)} placeholder="Takım adı" /></div>
+                <div><label htmlFor="registration-org" className={label}>Okul / Kurum*</label><input id="registration-org" maxLength={160} className={input} value={form.org} onChange={(e) => set("org", e.target.value)} placeholder="Okul veya kurum adı" /></div>
                 <div className="grid gap-4 sm:grid-cols-2">
-                  <div><span className={label}>İl*</span><select className={input} value={form.city} onChange={e=>setForm(f=>({...f,city:e.target.value,district:""}))}><option value="">İl seçin</option>{provinces.map(city=><option key={city} value={city}>{city}</option>)}</select></div>
-                  <div><span className={label}>İlçe*</span><select className={input} value={form.district} disabled={!form.city||districtLoading} onChange={e=>set("district",e.target.value)}><option value="">{!form.city?"Önce il seçin":districtLoading?"İlçeler yükleniyor…":"İlçe seçin"}</option>{districts.map(d=><option key={d} value={d}>{d}</option>)}</select></div>
+                  <div><label htmlFor="registration-city" className={label}>İl*</label><select id="registration-city" className={input} value={form.city} onChange={e=>setForm(f=>({...f,city:e.target.value,district:""}))}><option value="">İl seçin</option>{provinces.map(city=><option key={city} value={city}>{city}</option>)}</select></div>
+                  <div><label htmlFor="registration-district" className={label}>İlçe*</label><select id="registration-district" className={input} value={form.district} disabled={!form.city||districtLoading} onChange={e=>set("district",e.target.value)}><option value="">{!form.city?"Önce il seçin":districtLoading?"İlçeler yükleniyor…":"İlçe seçin"}</option>{districts.map(d=><option key={d} value={d}>{d}</option>)}</select></div>
                 </div>
-                <div><span className={label}>Kuruluş Tipi*</span><select className={input} value={form.type} onChange={(e) => set("type", e.target.value)}>{["Okul Takımı", "Kulüp / Dernek", "Bağımsız Topluluk"].map((t) => <option key={t}>{t}</option>)}</select></div>
-                <div><span className={label}>Tercih Edilen Takım No*</span><input className={input} value={form.num} onChange={(e) => set("num", e.target.value.toUpperCase().replace(/[^A-Z0-9]/g,"").slice(0,10))} placeholder="Örn. 123A" inputMode="text" autoComplete="off" maxLength={10} /><span className="mt-1 block text-[11.5px] text-ink/45">Yalnızca harf ve rakam kullanın. Müsaitlik başvuru sırasında kontrol edilir.</span></div>
+                <div><label htmlFor="registration-type" className={label}>Kuruluş Tipi*</label><select id="registration-type" className={input} value={form.type} onChange={(e) => set("type", e.target.value)}>{["Okul Takımı", "Kulüp / Dernek", "Bağımsız Topluluk"].map((t) => <option key={t}>{t}</option>)}</select></div>
+                <div><label htmlFor="registration-num" className={label}>Tercih Edilen Takım No*</label><input id="registration-num" className={input} value={form.num} onChange={(e) => set("num", e.target.value.toUpperCase().replace(/[^A-Z0-9]/g,"").slice(0,10))} placeholder="Örn. 123A" inputMode="text" autoComplete="off" maxLength={10} /><span className="mt-1 block text-[11.5px] text-ink/45">Yalnızca harf ve rakam kullanın. Tercih kaydıdır; resmî numara tahsisi veya rezervasyon anlamına gelmez.</span></div>
               </div>}
 
               {step === 2 && <div className="mt-5 space-y-4">
-                <div><span className={label}>Mentor Ad Soyad* (18+)</span><input maxLength={120} className={input} value={form.mentor} onChange={(e) => set("mentor", e.target.value)} placeholder="İsim Soyisim" autoComplete="name" /></div>
-                <div className="grid gap-4 sm:grid-cols-2"><div><span className={label}>E-posta*</span><input type="email" maxLength={254} className={input} value={form.email} onChange={(e) => set("email", e.target.value)} placeholder="mentor@okul.k12.tr" autoComplete="email" /></div><div><span className={label}>GSM*</span><input maxLength={40} className={input} value={form.phone} onChange={(e) => set("phone", e.target.value)} placeholder="05xx xxx xx xx" autoComplete="tel" /></div></div>
+                <div><label htmlFor="registration-mentor" className={label}>Mentor Ad Soyad* (18+)</label><input id="registration-mentor" maxLength={120} className={input} value={form.mentor} onChange={(e) => set("mentor", e.target.value)} placeholder="İsim Soyisim" autoComplete="name" /></div>
+                <div className="grid gap-4 sm:grid-cols-2"><div><label htmlFor="registration-email" className={label}>E-posta*</label><input id="registration-email" type="email" maxLength={254} className={input} value={form.email} onChange={(e) => set("email", e.target.value)} placeholder="mentor@okul.k12.tr" autoComplete="email" /></div><div><label htmlFor="registration-phone" className={label}>GSM*</label><input id="registration-phone" maxLength={40} className={input} value={form.phone} onChange={(e) => set("phone", e.target.value)} placeholder="05xx xxx xx xx" autoComplete="tel" /></div></div>
                 <p className="rounded-lg bg-paper px-4 py-3 text-[13px] text-ink/60"><span className="inline-flex items-start gap-1.5"><FigmaIcon name="mentor" className="mt-0.5 h-4 w-4 shrink-0"/> Bu form mentor ve takım ön kaydını birlikte alır. Öğrenci üyeler, Takım Portalı yayına alındığında portal üzerinden davet edilir; 18 yaş altı üyeler için veli izinleri o aşamada toplanır.</span></p>
               </div>}
 
               {step === 3 && <div className="mt-5 space-y-4">
                 <label className="flex items-start gap-3 rounded-lg border-[1.5px] border-ink/20 p-4"><input type="checkbox" checked={form.kit} onChange={(e) => set("kit", e.target.checked)} className="mt-1 h-4 w-4 accent-cyan-deep" /><span><span className="font-semibold text-ink">Saha kiti eklensin (₺{Number(pricing.fieldKitFee||0).toLocaleString("tr-TR")})</span><span className="block text-[13px] text-ink/55">Antrenman için resmi oyun elemanları seti — opsiyonel.</span></span></label>
                 <label className={`flex items-start gap-3 rounded-lg border-[1.5px] p-4 text-[13.5px] ${form.kvkk?"border-cyan-deep bg-cyan-deep/5":"border-ink/20"}`}><input type="checkbox" checked={form.kvkk} onChange={e=>set("kvkk",e.target.checked)} className="mt-0.5 h-4 w-4 accent-cyan-deep" /><span><Link href="/kvkk" target="_blank" className="font-semibold text-cyan-deep underline">KVKK Aydınlatma Metni</Link>'ni okudum; başvuru kapsamında kişisel verilerimin işlenmesini kabul ediyorum.*<span className="mt-1 block text-[11.5px] text-ink/45">Bu onay zorunludur. Onay vermeden başvuru gönderilemez.</span></span></label>
-                <p className="rounded-lg bg-paper px-4 py-3 text-[13px] text-ink/60"><span className="inline-flex items-center gap-1.5"><FigmaIcon name="plaka" className="h-4 w-4"/> Ödeme, başvuru onayı sonrası e-postana gelen güvenli bağlantı üzerinden alınır. Erken kayıt indirimi (−₺{Number(pricing.discount||0).toLocaleString("tr-TR")}) otomatik uygulanmıştır.</span></p>
+                <p className="rounded-lg bg-paper px-4 py-3 text-[13px] text-ink/60"><span className="inline-flex items-center gap-1.5"><FigmaIcon name="plaka" className="h-4 w-4"/> Bu formda ödeme alınmaz. Ücret özeti seçtiğin program ve saha kitine göre hesaplanır. Ödeme ve kayıt koşulları başvurunun değerlendirilmesinden sonra ayrıca paylaşılır.</span></p>
               </div>}
 
-              {err && <p className="mt-5 rounded-lg border-2 border-red-500 bg-red-50 px-4 py-3 text-[13.5px] font-semibold text-red-700">{err}</p>}
+              {err && <p role="alert" className="mt-5 rounded-lg border-2 border-red-500 bg-red-50 px-4 py-3 text-[13.5px] font-semibold text-red-700">{err}</p>}
 
               <div className="mt-7 flex items-center justify-between">
                 <button onClick={() => {setErr("");setStep((s) => Math.max(0, s - 1));}} disabled={step === 0} className="rounded-md border-2 border-ink bg-white px-5 py-3 font-display text-[13px] font-bold text-ink disabled:opacity-30">← GERİ</button>
