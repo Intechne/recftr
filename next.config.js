@@ -34,6 +34,7 @@ const securityHeaders = [
 ];
 
 const nextConfig = {
+  outputFileTracingRoot: __dirname,
   serverExternalPackages: ["postgres"],
   reactStrictMode: true,
   poweredByHeader: false,

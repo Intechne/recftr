@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { getPage } from "@/lib/db";
+import { getCachedPage } from "@/lib/public-cache";
 import { LEGAL_FALLBACK } from "@/lib/legal-fallback";
 import { pageMeta } from "@/lib/seo";
 import Breadcrumbs from "@/components/seo/Breadcrumbs";
@@ -7,7 +7,7 @@ export const dynamic = "force-dynamic";
 const SLUG = "cerez-politikasi";
 export const metadata: Metadata = pageMeta({ title: LEGAL_FALLBACK[SLUG].title, description: LEGAL_FALLBACK[SLUG].body.slice(0, 155).replace(/\n/g, " "), path: "/" + SLUG });
 export default async function CerezPolitikasi() {
-  let p: any = null; try { p = await getPage(SLUG); } catch {}
+  const p = await getCachedPage(SLUG);
   const title = p?.title ?? LEGAL_FALLBACK[SLUG].title, body = p?.body ?? LEGAL_FALLBACK[SLUG].body;
   return (<><Breadcrumbs items={[{ name: title, path: "/" + SLUG }]} /><article className="mx-auto max-w-3xl px-5 py-12">
     <p className="font-display text-[13px] font-semibold tracking-[2px] text-cyan-deep">⬡ YASAL</p>
