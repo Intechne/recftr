@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useRef, useState } from "react";
 
 const EMPTY = { name: "", email: "", phone: "", subject: "Genel", message: "", website: "" };
@@ -48,6 +49,7 @@ export default function ContactForm() {
     <label htmlFor="contact-message" className={label}>Mesajınız*</label>
     <textarea disabled={busy} id="contact-message" required maxLength={5000} value={form.message} onChange={event => set("message", event.target.value)} rows={5} className={field}/>
     <div hidden aria-hidden="true"><label htmlFor="contact-website">Website</label><input disabled={busy} id="contact-website" tabIndex={-1} autoComplete="off" value={form.website} onChange={event => set("website", event.target.value)}/></div>
+    <p className="mt-3 text-xs leading-relaxed text-white/70">Gönderdiğiniz bilgiler için <Link href="/kvkk" target="_blank" className="text-cyan-brand underline">KVKK Aydınlatma Metni</Link>’ni inceleyebilirsiniz.</p>
     {message && <p role={failed ? "alert" : "status"} className={`mt-3 text-sm ${failed ? "text-red-200" : "text-cyan-brand"}`}>{message}</p>}
     <button disabled={busy} type="submit" className="mt-4 w-full rounded-md bg-cyan-brand py-3.5 font-display text-sm font-bold text-ink hover:bg-white disabled:cursor-wait disabled:opacity-60">{busy ? "KAYDEDİLİYOR…" : "GÖNDER"}</button>
   </form>;

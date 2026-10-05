@@ -1,0 +1,20 @@
+[
+  {
+    "slug": "kvkk",
+    "title": "KVKK Aydınlatma Metni",
+    "pdf": "/legal/kvkk.pdf",
+    "pageCount": 2
+  },
+  {
+    "slug": "acik-riza",
+    "title": "Açık Rıza Metni",
+    "pdf": "/legal/acik-riza.pdf",
+    "pageCount": 1
+  },
+  {
+    "slug": "katilim-onami",
+    "title": "Katılım Onamı, Risk Kabulü ve Sorumluluk Beyanı",
+    "pdf": "/legal/katilim-onami.pdf",
+    "pageCount": 2
+  }
+]

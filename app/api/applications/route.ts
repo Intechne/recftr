@@ -20,7 +20,7 @@ export async function POST(req:NextRequest){
     if(!/^[A-Z0-9]{2,10}$/.test(num))return NextResponse.json({error:'Takım numarası geçersiz.'},{status:400});
     if(!validEmail(email))return NextResponse.json({error:'Geçerli e-posta girin.'},{status:400});
     if(!PROGRAMS.includes(program))return NextResponse.json({error:'Geçersiz program.'},{status:400});
-    if(b.kvkk!==true)return NextResponse.json({error:'KVKK Aydınlatma Metni onayı zorunludur.'},{status:400});
+    if(b.kvkk!==true)return NextResponse.json({error:'KVKK Aydınlatma Metni için okuma bildirimi zorunludur.'},{status:400});
     const emailLimit=await enforceRateLimit(req,'application-email',email,3,24*60*60);if(!emailLimit.ok)return rateLimitResponse(emailLimit.retryAfter);
     const s=await getSettings([`registration_fee_${program}`,'field_kit_fee','registration_discount']);const base=Number(s[`registration_fee_${program}`]);if(!Number.isFinite(base))return NextResponse.json({error:'Geçersiz program veya kayıt ücreti tanımsız.'},{status:400});
     const total=Math.max(0,base+(b.kit?Number(s.field_kit_fee)||0:0)-(Number(s.registration_discount)||0));

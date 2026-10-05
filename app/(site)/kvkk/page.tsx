@@ -1,23 +1,6 @@
-import type { Metadata } from "next";
-import { pageMeta } from "@/lib/seo";
-export const metadata: Metadata = pageMeta({ title: "KVKK Aydınlatma Metni", description: "Kişisel verilerin işlenmesine ilişkin aydınlatma metni.", path: "/kvkk" });
-import { getCachedPage } from "@/lib/public-cache";
-import { notFound } from "next/navigation";
-export const dynamic = "force-dynamic";
-
-export default async function KvkkPage() {
-  const p = await getCachedPage("kvkk");
-  if (!p) notFound();
-  return (
-    <div className="safe-x mx-auto max-w-3xl py-14">
-      <p className="font-display text-[13px] font-semibold tracking-[2px] text-cyan-deep">⬡ YASAL</p>
-      <h1 className="mt-2 font-display text-[34px] font-bold text-ink">{p.title.toUpperCase()}</h1>
-      <div className="mt-8 space-y-5">
-        {String(p.body).split("\n\n").map((par: string, i: number) => (
-          <p key={i} className="text-[15.5px] leading-[1.75] text-ink/75">{par}</p>
-        ))}
-      </div>
-      <p className="mt-10 text-[12.5px] text-ink/45">Son güncelleme: {new Date(p.updated).toLocaleDateString("tr-TR", { day: "numeric", month: "long", year: "numeric" })}</p>
-    </div>
-  );
-}
+import LegalDocument from "@/components/public/LegalDocument";
+import {pageMeta} from "@/lib/seo";
+import {legalDocument} from "@/lib/legal-documents";
+const document=legalDocument('kvkk')!;
+export const metadata=pageMeta({title:document.title,description:document.description,path:"/kvkk"});
+export default function Page(){return <LegalDocument slug="kvkk"/>;}
