@@ -7,7 +7,7 @@ export const LEGAL_FALLBACK: Record<string, { title: string; body: string }> = {
 
 Verileriniz açık rızanız olmadan üçüncü taraflarla paylaşılmaz; sponsorlara aktarılmaz. Barındırma altyapısı (Vercel, Supabase) veri işleyen sıfatıyla yalnızca teknik saklama hizmeti verir. Saklama süresi sezon bitimini takip eden 2 yıldır.
 
-KVKK 11. madde kapsamındaki haklarınız (bilgi talebi, düzeltme, silme, itiraz) için kvkk@recfturkiye.org adresine başvurabilirsiniz; başvurular 30 gün içinde yanıtlanır.` },
+KVKK 11. madde kapsamındaki haklarınız (bilgi talebi, düzeltme, silme, itiraz) için destek@recfturkiye.com adresine başvurabilirsiniz; başvurular 30 gün içinde yanıtlanır.` },
   "gizlilik": { title: "Gizlilik Politikası", body:
 `Bu web sitesi yalnızca zorunlu oturum çerezleri kullanır; reklam veya izleme çerezi barındırmaz. Ziyaretçi analitiği yapılıyorsa yalnızca anonimleştirilmiş, çerezsiz sayım biçiminde olur.
 
@@ -15,7 +15,7 @@ Takım Portalı ve CMS oturumları httpOnly, Secure çerezlerle yönetilir; şif
 
 Etkinliklerde çekilen fotoğraf ve videolar, kayıt sırasında alınan görsel kullanım onamı kapsamında yayınlanır; onam vermeyen katılımcılar yayın akışında bulanıklaştırılır. Yapay zekâ ile üretilen görseller gerçek etkinlik fotoğrafı gibi sunulmaz.
 
-Bu politika KVKK Aydınlatma Metni, Çerez Politikası ve Kullanım Koşulları ile birlikte geçerlidir. Sorularınız için: gizlilik@recfturkiye.org` },
+Bu politika KVKK Aydınlatma Metni, Çerez Politikası ve Kullanım Koşulları ile birlikte geçerlidir. Sorularınız için: destek@recfturkiye.com` },
   "kullanim-kosullari": { title: "Kullanım Koşulları", body:
 `Bu web sitesi (recfturkiye.com ve recfturkiye.org) Intechne Teknoloji A.Ş. tarafından, Robotics Education & Competition Foundation (RECF) programlarının Türkiye operasyonu kapsamında işletilmektedir. Siteyi kullanarak aşağıdaki koşulları kabul etmiş sayılırsınız.
 
@@ -33,7 +33,7 @@ Bu politika KVKK Aydınlatma Metni, Çerez Politikası ve Kullanım Koşulları 
 
 7. Uygulanacak Hukuk — Türkiye Cumhuriyeti hukuku uygulanır; uyuşmazlıklarda İstanbul (Anadolu) Mahkemeleri ve İcra Daireleri yetkilidir.
 
-İletişim: info@recfturkiye.org` },
+İletişim: destek@recfturkiye.com` },
   "cerez-politikasi": { title: "Çerez Politikası", body:
 `Bu politika, recfturkiye.com ve recfturkiye.org adreslerinde çerezlerin nasıl kullanıldığını açıklar.
 
@@ -45,5 +45,5 @@ Kullanmadığımız çerezler: reklam, davranışsal izleme, üçüncü taraf an
 
 Çerezleri yönetme: Tarayıcı ayarlarından çerezleri silebilir veya engelleyebilirsiniz. Zorunlu çerezler engellenirse yönetim paneline giriş yapılamaz; kamuya açık sayfalar etkilenmez.
 
-Bu politika KVKK Aydınlatma Metni ve Gizlilik Politikası ile birlikte okunmalıdır. Sorular: gizlilik@recfturkiye.org` },
+Bu politika KVKK Aydınlatma Metni ve Gizlilik Politikası ile birlikte okunmalıdır. Sorular: destek@recfturkiye.com` },
 };

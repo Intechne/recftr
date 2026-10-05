@@ -1,3 +1,4 @@
+import { PUBLIC_CONTACT } from "@/lib/public-contact";
 // ── SEO merkezi yapılandırma ──
 export const SITE_URL = (process.env.NEXT_PUBLIC_SITE_URL || "https://recfturkiye.com").replace(/\/$/, "");
 export const SITE_NAME = "RECF Türkiye";
@@ -5,8 +6,8 @@ export const ORG = {
   name: "RECF Türkiye",
   legalName: "Intechne Teknoloji A.Ş.",
   url: SITE_URL,
-  email: "info@recfturkiye.org",
-  teamEmail: "takim@recfturkiye.org",
+  email: PUBLIC_CONTACT.support,
+  eventEmail: PUBLIC_CONTACT.events,
   address: { locality: "Pendik", region: "İstanbul", country: "TR", street: "Teknopark İstanbul" },
   sameAs: ["https://www.instagram.com/recfturkiye", "https://www.youtube.com/@recfturkiye", "https://www.linkedin.com/company/recfturkiye"],
   parent: { name: "Robotics Education & Competition Foundation", url: "https://recf.org" },
@@ -30,7 +31,10 @@ export const organizationLd = () => ({
   logo: abs("/logos/recf-turkiye.svg"), email: ORG.email, sameAs: ORG.sameAs,
   address: { "@type": "PostalAddress", streetAddress: ORG.address.street, addressLocality: ORG.address.locality, addressRegion: ORG.address.region, addressCountry: ORG.address.country },
   parentOrganization: { "@type": "Organization", name: ORG.parent.name, url: ORG.parent.url },
-  contactPoint: [{ "@type": "ContactPoint", contactType: "customer support", email: ORG.teamEmail, availableLanguage: ["tr", "en"] }],
+  contactPoint: [
+    { "@type": "ContactPoint", contactType: "customer support", email: ORG.email, availableLanguage: ["tr", "en"] },
+    { "@type": "ContactPoint", contactType: "event registration", email: ORG.eventEmail, availableLanguage: ["tr", "en"] },
+  ],
 });
 export const websiteLd = () => ({
   "@context": "https://schema.org", "@type": "WebSite", "@id": abs("/#website"),

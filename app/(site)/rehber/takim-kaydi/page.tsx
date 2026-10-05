@@ -13,7 +13,7 @@ export const metadata: Metadata = { title: "Takım Kaydı Nasıl Yapılır?" };
 
 const steps = [
   { title: "PROGRAMINI SEÇ", link: { t: "Program sayfaları", h: "/programlar" },
-    desc: "Öğrencilerin yaşına göre program belirle: Engage (15 yaşa kadar, U12/U15) · Achieve (19 yaşa kadar, U15/U19) · Inspire (üniversite) · ADC (ortaokul/lise) · ADC Pro (U19 lise & üniversite; uygunluk için resmî kılavuz). Kararsızsan Programlar sayfasındaki karşılaştırmayı kullan veya takim@recfturkiye.org'a yaz." },
+    desc: "Öğrencilerin yaşına göre program belirle: Engage (15 yaşa kadar, U12/U15) · Achieve (19 yaşa kadar, U15/U19) · Inspire (üniversite) · ADC (ortaokul/lise) · ADC Pro (U19 lise & üniversite; uygunluk için resmî kılavuz). Kararsızsan Programlar sayfasındaki karşılaştırmayı kullan veya etkinlik@recfturkiye.com'a yaz." },
   { title: "EKİBİNİ TOPLA", link: { t: "Mentor rehberi", h: "/rehber/mentor" },
     desc: "Engage için en az 2 öğrenci, Achieve için 1+ öğrenci yeterli; ideal ekip 4–6 kişidir. Her takımın 18 yaş üstü bir yetişkin mentoru (öğretmen, veli veya gönüllü) olmalı. Okul zorunlu değil — kulüp ve bağımsız topluluklar da kaydolabilir." },
   { title: "TÜRKİYE ÖN BAŞVURUNU YAP", link: { t: "Ön kayıt formu", h: "/kayit" },

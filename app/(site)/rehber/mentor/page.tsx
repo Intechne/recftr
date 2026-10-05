@@ -66,7 +66,7 @@ export default function MentorPage() {
           ))}
         </div>
         <p className="mt-6 text-[14px] text-ink/55">
-          Sorular için: <a href="mailto:mentor@recfturkiye.org" className="font-semibold text-cyan-deep underline">mentor@recfturkiye.org</a> · Yeni eğitim tarihi henüz duyurulmadı. <Link href="/duyurular" className="font-semibold text-cyan-deep underline">Duyuruları takip et</Link>.
+          Sorular için: <a href="mailto:destek@recfturkiye.com" className="font-semibold text-cyan-deep underline">destek@recfturkiye.com</a> · Yeni eğitim tarihi henüz duyurulmadı. <Link href="/duyurular" className="font-semibold text-cyan-deep underline">Duyuruları takip et</Link>.
         </p>
       </div>
     </div>

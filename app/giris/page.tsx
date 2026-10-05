@@ -18,7 +18,7 @@ export default function GirisPage() {
           <Link href="/kayit" className="plate-hover rounded-md bg-cyan-brand px-6 py-3.5 font-display text-[14px] font-bold text-ink shadow-plateSm shadow-white/25">MENTOR & TAKIM KAYDI →</Link>
           <Link href="/etkinlikler" className="rounded-md border-2 border-white/35 px-6 py-3.5 font-display text-[14px] font-bold text-white hover:border-cyan-brand">ETKİNLİK TAKVİMİ</Link>
         </div>
-        <p className="mt-8 text-[12.5px] text-white/40">Sorular için: takim@recfturkiye.org</p>
+        <p className="mt-8 text-[12.5px] text-white/40">Sorular için: etkinlik@recfturkiye.com</p>
       </div>
     </div>
   );

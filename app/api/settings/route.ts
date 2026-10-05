@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { adminSession, contentSession } from "@/lib/auth";
 import { getSettings, setSettingsAtomic } from "@/lib/db";
 import { apiError } from "@/lib/api-server";
+import { currentContactSettings } from "@/lib/public-contact";
 import { cleanText, validHttpUrl } from "@/lib/security";
 import { currentContentRevision, publishContentChange, PUBLIC_SETTING_KEYS } from "@/lib/content-consistency";
 
@@ -19,9 +20,9 @@ export async function GET(req:NextRequest){
   try{
     const revision=await currentContentRevision();
     const headers={...NO_STORE,"X-Content-Revision":revision};
-    const admin=await adminSession(req);if(admin)return NextResponse.json(await getSettings([...ALL]),{headers});
-    const editor=await contentSession(req);if(editor)return NextResponse.json(await getSettings(CONTENT),{headers});
-    return NextResponse.json(await getSettings(PUBLIC),{headers});
+    const admin=await adminSession(req);if(admin)return NextResponse.json(currentContactSettings(await getSettings([...ALL])),{headers});
+    const editor=await contentSession(req);if(editor)return NextResponse.json(currentContactSettings(await getSettings(CONTENT)),{headers});
+    return NextResponse.json(currentContactSettings(await getSettings(PUBLIC)),{headers});
   }catch(e){return apiError(e,'Site ayarları alınamadı.');}
 }
 

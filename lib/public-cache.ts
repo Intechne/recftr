@@ -20,6 +20,8 @@ import { FALLBACK_PROGRAMS, fallbackProgram } from "@/lib/program-fallback";
 import { publicTickerMessages } from "@/lib/public-announcements";
 import { correctAchieveContent, publicEvent } from "@/lib/public-content";
 
+import { currentContactEmails, currentContactSettings } from "@/lib/public-contact";
+
 const TTL = 300;
 const TAG = "public-content";
 const plainRows = (rows: any) => Array.isArray(rows) ? rows.map((row: any) => row && typeof row === "object" ? { ...row } : row) : [];
@@ -30,7 +32,7 @@ const publicSettingsData = unstable_cache(
   { revalidate: TTL, tags: [TAG] },
 );
 export const getCachedPublicSettings = cache(async () => {
-  try { const settings=await publicSettingsData(); return {...settings,ticker:JSON.stringify(publicTickerMessages(settings.ticker))}; } catch { return {ticker:JSON.stringify(publicTickerMessages())}; }
+  try { const settings=await publicSettingsData(); return {...currentContactSettings(settings),ticker:JSON.stringify(publicTickerMessages(settings.ticker))}; } catch { return {...currentContactSettings({}),ticker:JSON.stringify(publicTickerMessages())}; }
 });
 
 const homeSnapshotData = unstable_cache(
@@ -39,8 +41,8 @@ const homeSnapshotData = unstable_cache(
   { revalidate: TTL, tags: [TAG] },
 );
 export async function getCachedHomeSnapshot(){
-  try { const data = await homeSnapshotData(); return { ...data, programs: data.programs.map(correctAchieveContent), events: data.events.map((e:any) => publicEvent(e)) }; }
-  catch { return {programs:[],events:[],news:[],media:[],settings:{},stats:{teams:0,cities:0,events:0,students:0,programs:0}}; }
+  try { const data = await homeSnapshotData(); return { ...data, settings: currentContactSettings(data.settings), programs: data.programs.map(correctAchieveContent), events: data.events.map((e:any) => publicEvent(e)) }; }
+  catch { return {programs:[],events:[],news:[],media:[],settings:currentContactSettings({}),stats:{teams:0,cities:0,events:0,students:0,programs:0}}; }
 }
 
 const programsData = unstable_cache(async () => listPrograms(false), ["public-programs-v314"], { revalidate: TTL, tags: [TAG] });
@@ -74,7 +76,7 @@ const staffData = unstable_cache(async () => plainRows(await listPublicStaff()),
 export async function getCachedStaff(){ try{return await staffData();}catch{return [];} }
 
 const pageData = unstable_cache(async (slug:string) => getPage(slug), ["public-page-v314"], { revalidate: TTL, tags: [TAG] });
-export async function getCachedPage(slug:string){ try{return await pageData(slug);}catch{return null;} }
+export async function getCachedPage(slug:string){ try{const page=await pageData(slug);return page?{...page,body:currentContactEmails(String(page.body||""))}:null;}catch{return null;} }
 
 const registrationPricingData = unstable_cache(
   async () => getSettings([
