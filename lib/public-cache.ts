@@ -17,6 +17,7 @@ import {
 } from "@/lib/db";
 import { PUBLIC_SETTING_KEYS } from "@/lib/content-consistency";
 import { FALLBACK_PROGRAMS, fallbackProgram } from "@/lib/program-fallback";
+import { publicTickerMessages } from "@/lib/public-announcements";
 import { correctAchieveContent, publicEvent } from "@/lib/public-content";
 
 const TTL = 300;
@@ -29,7 +30,7 @@ const publicSettingsData = unstable_cache(
   { revalidate: TTL, tags: [TAG] },
 );
 export const getCachedPublicSettings = cache(async () => {
-  try { return await publicSettingsData(); } catch { return {}; }
+  try { const settings=await publicSettingsData(); return {...settings,ticker:JSON.stringify(publicTickerMessages(settings.ticker))}; } catch { return {ticker:JSON.stringify(publicTickerMessages())}; }
 });
 
 const homeSnapshotData = unstable_cache(

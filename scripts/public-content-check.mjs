@@ -40,6 +40,16 @@ for (const {slug} of programs) assert.equal(initialRegistrationProgram(slug,prog
 assert.equal(initialRegistrationProgram('unknown',programs),'achieve');
 assert.equal(initialRegistrationProgram(undefined,[]),'');
 
+
+const { publicTickerMessages } = await load('lib/public-announcements.ts');
+const expired='Coach Academy Eylül dönemi başvuruları başlıyor!';
+assert.ok(publicTickerMessages(JSON.stringify([expired]), Date.parse('2026-09-30T20:59:59Z')).includes(expired));
+assert.ok(!publicTickerMessages(JSON.stringify([expired]), Date.parse('2026-09-30T21:00:00Z')).includes(expired));
+assert.deepEqual(publicTickerMessages(JSON.stringify([expired,'Kasım eğitimi duyuruldu']),now),['Kasım eğitimi duyuruldu']);
+assert.deepEqual(publicTickerMessages(JSON.stringify(['Coach Academy Eylül 2027 eğitimi'])),['Coach Academy Eylül 2027 eğitimi']);
+assert.ok(publicTickerMessages('invalid').length>0);
+assert.ok(publicTickerMessages('[" "]').length>0);
+
 const originalFetch = globalThis.fetch;
 try {
   const {getProgramOfficialData} = await load('lib/recf-games.ts');
@@ -53,6 +63,28 @@ try {
   assert.equal(fallback.examples.length,0);
   const achieveFallback=await getProgramOfficialData('achieve');
   assert.equal(achieveFallback.scoringGroups[1].items.find(x=>x.key==='neutral-alliance').points,'7 puan');
+  const inspire=await getProgramOfficialData('inspire');
+  assert.equal(inspire.versionLabel,'2.0');
+  assert.equal(inspire.scoringGroups[1].items.find(x=>x.key==='neutral-alliance').points,'7 puan');
+  const adc=await getProgramOfficialData('adc');
+  assert.equal(adc.manualUrl,'https://games.recf.org/adc/1.1');
+  assert.ok(adc.scoringGroups[1].title.includes('180 saniye'));
+  const engage=await getProgramOfficialData('engage');
+  assert.equal(engage.manualUrl,'https://games.recf.org/engage/2.0');
+  assert.equal(engage.engage.officialExample.total,80);
+  for (const slug of ['engage','achieve','inspire','adc','adc-pro']) {
+    const apiSlug=slug==='adc-pro'?'pro':slug;
+    globalThis.fetch=async url=>({ok:true,json:async()=>url.endsWith('/programs')?{data:[{slug:apiSlug,currentVersionLabel:'9.0'}]}:{data:{revision:{versionLabel:'9.0'},sections:[]}}});
+    const future=await getProgramOfficialData(slug);
+    assert.equal(future.scoringGroups.length,0,slug+' must withhold unreviewed scores');
+    assert.equal(future.examples.length,0);
+    assert.equal(future.engage,null);
+    assert.equal(future.manualUrl,'https://games.recf.org/'+apiSlug+'/9.0');
+  }
+  globalThis.fetch=async url=>({ok:true,json:async()=>url.endsWith('/programs')?{data:[{slug:'inspire',currentVersionLabel:'2.0'}]}:{data:{revision:{versionLabel:'2.0'},sections:[{title:'Misleading unrelated numbers',body:'center goal 999 points, Parked robot 999 points'}]}}});
+  const reviewed=await getProgramOfficialData('inspire');
+  assert.equal(reviewed.scoringGroups[0].items.find(x=>x.key==='center').points,'10 puan');
+  assert.equal(reviewed.scoringGroups[1].items.find(x=>x.key==='park').points,'21 puan');
   let calls=[];
   globalThis.fetch = async url => {
     calls.push(url);

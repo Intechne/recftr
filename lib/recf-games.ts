@@ -88,10 +88,10 @@ type ProgramConfig={
 };
 
 const PROGRAMS:Record<SiteProgramSlug,ProgramConfig>={
-  engage:{siteSlug:"engage",apiSlug:"engage",fallbackVersion:"1.1",fallbackGame:"Tier Takeover"},
+  engage:{siteSlug:"engage",apiSlug:"engage",fallbackVersion:"2.0",fallbackGame:"Tier Takeover"},
   achieve:{siteSlug:"achieve",apiSlug:"achieve",fallbackVersion:"2.0",fallbackGame:"Pinnacle"},
-  inspire:{siteSlug:"inspire",apiSlug:"inspire",fallbackVersion:"1.2",fallbackGame:"Pinnacle"},
-  adc:{siteSlug:"adc",apiSlug:"adc",fallbackVersion:"1.0",fallbackGame:"Mission 2027: Fast Track"},
+  inspire:{siteSlug:"inspire",apiSlug:"inspire",fallbackVersion:"2.0",fallbackGame:"Pinnacle"},
+  adc:{siteSlug:"adc",apiSlug:"adc",fallbackVersion:"1.1",fallbackGame:"Mission 2027: Fast Track"},
   "adc-pro":{siteSlug:"adc-pro",apiSlug:"pro",fallbackVersion:"2.0",fallbackGame:"Off Grid"},
 };
 
@@ -121,17 +121,6 @@ function isRecord(v:unknown):v is JsonRecord{return !!v&&typeof v==="object"&&!A
 function unwrap(v:unknown){return isRecord(v)&&"data" in v?v.data:v;}
 function str(v:unknown){return typeof v==="string"?v:"";}
 
-function collectStrings(value:unknown,out:string[]=[]):string[]{
-  if(typeof value==="string")out.push(value);
-  else if(Array.isArray(value))for(const item of value)collectStrings(item,out);
-  else if(isRecord(value))for(const item of Object.values(value))collectStrings(item,out);
-  return out;
-}
-
-function normalizeText(value:unknown){
-  return collectStrings(value).join(" ").replace(/<[^>]+>/g," ").replace(/&nbsp;/g," ").replace(/\s+/g," ").trim();
-}
-
 function findNode(value:unknown,predicate:(node:JsonRecord)=>boolean):JsonRecord|null{
   if(Array.isArray(value)){
     for(const item of value){const found=findNode(item,predicate);if(found)return found;}
@@ -141,13 +130,6 @@ function findNode(value:unknown,predicate:(node:JsonRecord)=>boolean):JsonRecord
   if(predicate(value))return value;
   for(const item of Object.values(value)){const found=findNode(item,predicate);if(found)return found;}
   return null;
-}
-
-function numberNear(text:string,pattern:RegExp,fallback:number){
-  const m=text.match(pattern);
-  if(!m)return fallback;
-  const n=Number(m[1]);
-  return Number.isFinite(n)?n:fallback;
 }
 
 function points(n:number){return `${n} puan`;}
@@ -213,55 +195,22 @@ function extractGameName(manual:unknown,config:ProgramConfig){
   return afterColon||title||config.fallbackGame;
 }
 
-function extractEngageScores(manual:unknown):EngageScores{
-  const scoring=findNode(manual,node=>{
-    const num=str(node.displayNumber||node.label).trim();
-    const title=str(node.title).toLowerCase();
-    return num==="3.1"||title==="scoring"||title.includes("solo match scoring");
-  });
-  const text=normalizeText(scoring||manual);
-  return {
-    floor:numberNear(text,/Floor\s*goal.{0,180}?(\d+)\s*point/i,FALLBACK_ENGAGE_SCORES.floor),
-    l1:numberNear(text,/L1\s*goal.{0,180}?(\d+)\s*point/i,FALLBACK_ENGAGE_SCORES.l1),
-    l2:numberNear(text,/L2\s*goal.{0,180}?(\d+)\s*point/i,FALLBACK_ENGAGE_SCORES.l2),
-    l3:numberNear(text,/L3\s*goal.{0,180}?(\d+)\s*point/i,FALLBACK_ENGAGE_SCORES.l3),
-    l4:numberNear(text,/L4\s*goal.{0,180}?(\d+)\s*point/i,FALLBACK_ENGAGE_SCORES.l4),
-    park:numberNear(text,/Parked\s+(?:robot|Robot).{0,180}?(\d+)\s*point/i,FALLBACK_ENGAGE_SCORES.park),
-  };
-}
-
-function engageExample(manual:unknown,scores:EngageScores):OfficialScoringExample{
-  const example=findNode(manual,node=>{
-    const label=str(node.displayNumber||node.label).trim();
-    const title=str(node.title).toLowerCase();
-    return label==="3.1.7"||title.includes("scoring example");
-  });
-  const text=normalizeText(example);
-  const detected=/two\s+red/i.test(text)&&/L1/i.test(text)&&/L2/i.test(text)&&/one\s+red\s+and\s+one\s+yellow/i.test(text)&&/L3/i.test(text);
-  const rows=[
-    {label:"Red L1",detail:"2 kırmızı bean bag",points:2*scores.l1},
-    {label:"Red L2",detail:"2 kırmızı bean bag",points:2*scores.l2},
-    {label:"Red L3",detail:"1 kırmızı + 1 sarı bean bag",points:2*scores.l3},
-  ];
-  return {ruleLabel:"3.1.7",rows,total:rows.reduce((sum,row)=>sum+row.points,0),note:"Mavi bean bag'ler kırmızı hedefte puan sayılmaz.",source:detected?"api":"fallback"};
-}
-
-function engageData(manual:unknown,version:string,meta:ReturnType<typeof revisionMeta>,gameName:string,available:boolean):EngageScoringData{
-  const scores=available?extractEngageScores(manual):FALLBACK_ENGAGE_SCORES;
+function engageData(version:string,meta:ReturnType<typeof revisionMeta>,gameName:string,available:boolean):EngageScoringData{
+  const scores={...FALLBACK_ENGAGE_SCORES};
   const base=baseUrl();
   return {
     available,
     source:available?"api":"fallback",
-    versionLabel:meta.versionLabel||version||"1.1",
+    versionLabel:meta.versionLabel||version||"2.0",
     publishedAt:meta.publishedAt,
     releasedDateLabel:meta.releasedDateLabel,
     gameName,
-    manualUrl:`${base}/engage/${encodeURIComponent(meta.versionLabel||version||"1.1")}`,
+    manualUrl:`${base}/engage/${encodeURIComponent(meta.versionLabel||version||"2.0")}`,
     calculatorUrl:`${base}/engage/calculator`,
     qnaUrl:`${base}/engage/qa`,
     apiDocsUrl:`${base}/api-docs`,
     scores,
-    officialExample:available?engageExample(manual,scores):FALLBACK_ENGAGE_EXAMPLE,
+    officialExample:FALLBACK_ENGAGE_EXAMPLE,
     ruleSummary:{
       highestValue:"Bir bean bag birden fazla hedef için uygun görünse bile yalnızca en yüksek değerli hedef üzerinden puanlanır.",
       colorMatching:"Kırmızı bean bag kırmızı hedeflerde, mavi bean bag mavi hedeflerde; sarı bean bag ise tüm hedeflerde puanlanabilir.",
@@ -272,21 +221,18 @@ function engageData(manual:unknown,version:string,meta:ReturnType<typeof revisio
   };
 }
 
-function pinnacleScoring(manual:unknown,achieveV2=false){
-  const text=normalizeText(manual);
-  const cup=numberNear(text,/Scored\s+cup.{0,100}?(\d+)\s*point\s+per/i,1);
-  const halfpin=numberNear(text,/red\s+or\s+blue\s+halfpin.{0,180}?(\d+)\s*points?\s+per/i,5);
-  const center=numberNear(text,/center\s+goal.{0,180}?(\d+)\s*points?\s+per/i,10);
-  const park=numberNear(text,/Parked\s+robot.{0,180}?(\d+)\s*points?/i,21);
+// Verified v2.0 summary shared by Achieve and Inspire (§3.1 and §5.1).
+function pinnacleScoring(){
+  const cup=1, halfpin=5, center=10, park=21;
   const groups:ProgramScoringGroup[]=[
     {id:"solo",title:"Solo Puanlama",subtitle:"Solo Sürüş ve Solo Kodlama maçlarının temel puan değerleri.",items:[
       item("cup","Cup",points(cup),"Hedef üzerinde geçerli biçimde skorlanan her cup.",0),
-      item("halfpin","Renk Eşleşen Halfpin",points(halfpin),"Eşleşen renkli veya neutral goal üzerindeki görünür halfpin.",1),
+      item("halfpin","Renk Eşleşen Halfpin",points(halfpin),"Kırmızı/mavi halfpin: eşleşen veya neutral goal. Sarı için roller rengi koşulu aranır.",1),
       item("center","Center Goal Halfpin",points(center),"Center goal üzerinde skorlanan her görünür halfpin.",2),
     ]},
     {id:"alliance",title:"İttifak ve Oyun Sonu",subtitle:"Alliance maçlarında öne çıkan temel skor değerleri.",items:[
       item("alliance-halfpin","İttifak Halfpin",points(halfpin),"İttifak rengindeki uygun goal üzerinde skorlanan görünür halfpin.",3),
-      ...(achieveV2?[item("neutral-alliance","Neutral Goal Halfpin","7 puan","İttifak rengi: 7; sarı için roller rengi koşulu aranır (§5.1.3).",2)]:[]),
+      item("neutral-alliance","Neutral Goal Halfpin","7 puan","İttifak rengi: 7; sarı için roller rengi koşulu aranır (§5.1.3).",2),
       item("center-alliance","Center Goal",points(center),"İttifak rengi halfpin: 10; sarı halfpin ve cup için üstünlük koşulu aranır.",4),
       item("park","Parked Robot",points(park),"Maç sonunda ittifak loader'ına temas eden uygun robot.",6),
     ]},
@@ -336,24 +282,11 @@ function offGridScoring(){
   return {groups,examples:[] as ProgramScoringExample[]};
 }
 
-function adcScoring(manual:unknown){
-  const text=normalizeText(manual);
-  const takeoff=numberNear(text,/Take\s*off.{0,80}?(\d+)\s*points?/i,5);
-  const phase1=numberNear(text,/Phase\s*1.{0,80}?(\d+)\s*points?/i,5);
-  const phase2=numberNear(text,/Phase\s*2.{0,80}?(\d+)\s*points?/i,10);
-  const phase3=numberNear(text,/Phase\s*3.{0,80}?(\d+)\s*points?/i,15);
-  const phase4=numberNear(text,/Phase\s*4.{0,80}?(\d+)\s*points?/i,10);
-  const green=numberNear(text,/green\s+keyhole\s+gate.{0,80}?(\d+)\s*points?/i,10);
-  const yellow=numberNear(text,/yellow\s+keyhole\s+gate.{0,80}?(\d+)\s*points?/i,20);
-  const cube=numberNear(text,/large\s+cube.{0,80}?(\d+)\s*points?/i,25);
-  const mini=numberNear(text,/mini\s+keyhole\s*#1.{0,80}?(\d+)\s*points?/i,15);
-  const spiral=numberNear(text,/Spiral\s+bonus.{0,80}?(\d+)\s*points?/i,10);
-  const tunnel=numberNear(text,/tunnel.{0,80}?(\d+)\s*points?/i,15);
-  const ball=numberNear(text,/Each\s+ball\s+in\s+a\s+goal.{0,80}?(\d+)\s*points?/i,2);
-  const goalBonus=numberNear(text,/Goal\s+bonus.{0,100}?(\d+)\s*x/i,5);
-  const zone=numberNear(text,/Each\s+ball\s+in\s+a\s+scoring\s+zone.{0,80}?(\d+)\s*point/i,1);
-  const bean=numberNear(text,/Each\s+bean\s+bag\s+cleared.{0,80}?(\d+)\s*points?/i,10);
-  const flight=numberNear(text,/Completed\s+flight\s+path.{0,80}?(\d+)\s*points?/i,10);
+// Verified ADC v1.1 summary (§3.1, §4.2, §5.1), checked 5 October 2026.
+function adcScoring(){
+  const takeoff=5, phase1=5, phase2=10, phase3=15, phase4=10;
+  const green=10, yellow=20, cube=25, mini=15, spiral=10, tunnel=15;
+  const ball=2, goalBonus=5, zone=1, bean=10, flight=10;
   const groups:ProgramScoringGroup[]=[
     {id:"piloting",title:"Solo Pilotaj",subtitle:"60 saniyelik pilotaj görevindeki temel puan değerleri.",items:[
       item("takeoff","Kalkış",points(takeoff),"Görev başlangıcındaki geçerli kalkış.",0),
@@ -363,21 +296,21 @@ function adcScoring(manual:unknown){
       item("phase4","Phase 4",points(phase4),"Pilotaj parkurunun 4. aşaması.",4),
       item("landing","İniş","5 / 10 / 15 puan","Landing pad, cube veya bullseye konumuna göre.",6),
     ]},
-    {id:"autonomous",title:"Solo Otonom Uçuş",subtitle:"Kodlama görevindeki yüksek değerli geçişler ve bonuslar.",items:[
+    {id:"autonomous",title:"Solo Otonom Uçuş · 180 saniye",subtitle:"§4.2 — geçiş başına sınırlar ve geçerlilik koşulları resmî kılavuzda açıklanır.",items:[
       item("green","Yeşil Keyhole",points(green),"Yeşil keyhole gate geçişi.",1),
       item("yellow","Sarı Keyhole",points(yellow),"Sarı keyhole gate geçişi.",3),
       item("cube","Large Cube",points(cube),"Büyük cube içerisinden geçiş.",4),
       item("mini","Mini Keyhole",points(mini),"Her mini keyhole geçişi.",2),
-      item("spiral","Spiral Bonus",points(spiral),"Üç mini keyhole'u doğru sırada tamamlama bonusu.",5),
+      item("spiral","Spiral Bonus",points(spiral),"Üç mini keyhole ardışık 1 → 2 → 3; araya başka görev girmemeli.",5),
       item("tunnel","Tunnel",points(tunnel),"Tunnel içerisinden geçiş.",6),
     ]},
     {id:"teamwork",title:"Teamwork / Alliance",subtitle:"90 saniyelik ortak skor maçında öne çıkan değerler.",items:[
       item("ball-goal","Goal İçindeki Ball",points(ball),"Goal içinde skorlanan her ball.",0),
       item("goal-bonus","Goal Bonus",`${goalBonus} × en düşük goal`,"En az ball bulunan goal üzerinden hesaplanan denge bonusu.",1),
       item("zone-ball","Scoring Zone Ball",points(zone),"Goal dışında scoring zone içinde kalan her ball.",2),
-      item("bean-cleared","Bean Bag Cleared",points(bean),"High switch platformundan temizlenen her bean bag.",3),
-      item("flight-path","Flight Path",points(flight),"Final bölümünde tamamlanan geçerli flight path.",4),
-      item("cube-land","Cube Landing","15 / 20 puan","Large cube veya small cube üzerine geçerli iniş.",5),
+      item("bean-cleared","Bean Bag Cleared",points(bean),"High switch platformundan temizlenen her bean bag; en fazla iki.",3),
+      item("flight-path","Flight Path",points(flight),"Son 30 saniyede geçerli rota; drone başına en fazla bir.",4),
+      item("cube-land","Cube Landing","15 / 20 puan","Büyük cube: 15; küçük cube: 20. Cube başına en fazla bir drone.",5),
     ]},
   ];
   const examples:ProgramScoringExample[]=[
@@ -391,15 +324,8 @@ function adcScoring(manual:unknown){
 
 function fallbackScoring(siteSlug:SiteProgramSlug){
   if(siteSlug==="engage")return {groups:[],examples:[]};
-  if(siteSlug==="achieve"||siteSlug==="inspire")return pinnacleScoring(null,siteSlug==="achieve");
-  if(siteSlug==="adc")return adcScoring(null);
-  if(siteSlug==="adc-pro")return offGridScoring();
-  return {groups:[],examples:[]};
-}
-
-function scoringFor(siteSlug:SiteProgramSlug,manual:unknown){
-  if(siteSlug==="achieve"||siteSlug==="inspire")return pinnacleScoring(manual,siteSlug==="achieve");
-  if(siteSlug==="adc")return adcScoring(manual);
+  if(siteSlug==="achieve"||siteSlug==="inspire")return pinnacleScoring();
+  if(siteSlug==="adc")return adcScoring();
   if(siteSlug==="adc-pro")return offGridScoring();
   return {groups:[],examples:[]};
 }
@@ -423,7 +349,7 @@ export async function getProgramOfficialData(inputSlug:string):Promise<OfficialP
     if(!hasProgram(programs,config.apiSlug)){
       const fallback=fallbackScoring(siteSlug);
       const links=officialLinks(config.apiSlug,config.fallbackVersion);
-      return {siteSlug,apiSlug:config.apiSlug,supported:true,available:false,source:"fallback",versionLabel:config.fallbackVersion,publishedAt:null,releasedDateLabel:null,gameName:config.fallbackGame,...links,scoringGroups:fallback.groups,examples:fallback.examples,engage:siteSlug==="engage"?engageData(null,config.fallbackVersion,{versionLabel:"",publishedAt:null,releasedDateLabel:null},config.fallbackGame,false):null,fetchedAt};
+      return {siteSlug,apiSlug:config.apiSlug,supported:true,available:false,source:"fallback",versionLabel:config.fallbackVersion,publishedAt:null,releasedDateLabel:null,gameName:config.fallbackGame,...links,scoringGroups:fallback.groups,examples:fallback.examples,engage:siteSlug==="engage"?engageData(config.fallbackVersion,{versionLabel:"",publishedAt:null,releasedDateLabel:null},config.fallbackGame,false):null,fetchedAt};
     }
     const version=latestVersionFromPrograms(programs,config.apiSlug)||config.fallbackVersion;
     const manualPayload=await getJson(`/api/v1/programs/${config.apiSlug}/manual/${encodeURIComponent(version)}`,`recf-games:${config.apiSlug}:${version}`);
@@ -432,20 +358,21 @@ export async function getProgramOfficialData(inputSlug:string):Promise<OfficialP
     const versionLabel=meta.versionLabel||version;
     const gameName=extractGameName(manual,config);
     const links=officialLinks(config.apiSlug,versionLabel);
-    const scoring=(siteSlug==="adc-pro"||siteSlug==="achieve")&&versionLabel!=="2.0"?{groups:[],examples:[]}:scoringFor(siteSlug,manual);
+    const reviewed=versionLabel===config.fallbackVersion;
+    const scoring=reviewed?fallbackScoring(siteSlug):{groups:[],examples:[]};
     return {
-      siteSlug,apiSlug:config.apiSlug,supported:true,available:true,source:"api",versionLabel,publishedAt:meta.publishedAt,releasedDateLabel:meta.releasedDateLabel,gameName,...links,scoringGroups:scoring.groups,examples:scoring.examples,engage:siteSlug==="engage"?engageData(manual,versionLabel,meta,gameName,true):null,fetchedAt,
+      siteSlug,apiSlug:config.apiSlug,supported:true,available:true,source:"api",versionLabel,publishedAt:meta.publishedAt,releasedDateLabel:meta.releasedDateLabel,gameName,...links,scoringGroups:scoring.groups,examples:scoring.examples,engage:siteSlug==="engage"&&reviewed?engageData(versionLabel,meta,gameName,true):null,fetchedAt,
     };
   }catch{
     const fallback=fallbackScoring(siteSlug);
     const links=officialLinks(config.apiSlug,config.fallbackVersion);
     return {
-      siteSlug,apiSlug:config.apiSlug,supported:true,available:false,source:"fallback",versionLabel:config.fallbackVersion,publishedAt:null,releasedDateLabel:null,gameName:config.fallbackGame,...links,scoringGroups:fallback.groups,examples:fallback.examples,engage:siteSlug==="engage"?engageData(null,config.fallbackVersion,{versionLabel:"",publishedAt:null,releasedDateLabel:null},config.fallbackGame,false):null,fetchedAt,
+      siteSlug,apiSlug:config.apiSlug,supported:true,available:false,source:"fallback",versionLabel:config.fallbackVersion,publishedAt:null,releasedDateLabel:null,gameName:config.fallbackGame,...links,scoringGroups:fallback.groups,examples:fallback.examples,engage:siteSlug==="engage"?engageData(config.fallbackVersion,{versionLabel:"",publishedAt:null,releasedDateLabel:null},config.fallbackGame,false):null,fetchedAt,
     };
   }
 }
 
 export async function getEngageScoringData(){
   const data=await getProgramOfficialData("engage");
-  return data?.engage||engageData(null,"1.1",{versionLabel:"",publishedAt:null,releasedDateLabel:null},"Tier Takeover",false);
+  return data?.engage||null;
 }
