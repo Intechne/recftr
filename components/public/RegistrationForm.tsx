@@ -78,7 +78,7 @@ export default function RegistrationForm({initialPrograms,initialPricing,request
                 <FigmaIcon name="rozet" className="mx-auto h-14 w-14 text-ink"/>
                 <h2 className="mt-4 font-display text-[24px] font-bold text-ink">BAŞVURUN ALINDI!</h2>
                 <p className="mx-auto mt-3 max-w-md text-[15px] leading-relaxed text-ink/60">{form.num || "TAKIM NO"} için ön kaydın oluşturuldu{appId ? ` (Başvuru No: #${String(appId).padStart(4, "0")})` : ""}. Ekibimiz başvurunu inceleyerek <strong>{form.email || "e-posta adresin"}</strong> üzerinden dönüş yapacak. Resmî sezon kaydı RECFevents üzerinde ayrıca tamamlanır; bu başvuru resmî lisans veya takım numarası tahsisi değildir.</p>
-                <p className="mt-5 rounded-lg border border-cyan-deep/30 bg-cyan-brand/10 px-4 py-3 text-[13px] leading-relaxed text-ink/70">Başvurun RECF Türkiye ekibine iletildi. Takım Portalı geliştirme aşamasındadır; portal yayına alındığında mentor giriş bilgilerin kayıtlı e-postana gönderilecek.</p><Link href="/etkinlikler" className="mt-4 inline-block rounded-md bg-ink px-6 py-3.5 font-display text-[14px] font-bold text-white">ETKİNLİK TAKVİMİNE GİT →</Link>
+                <p className="mt-5 rounded-lg border border-cyan-deep/30 bg-cyan-brand/10 px-4 py-3 text-[13px] leading-relaxed text-ink/70">Başvurun yönetim paneline kaydedildi. Takım Portalı henüz açık değil; erişim ve sonraki kayıt adımları ayrıca duyurulacak.</p><Link href="/etkinlikler" className="mt-4 inline-block rounded-md bg-ink px-6 py-3.5 font-display text-[14px] font-bold text-white">ETKİNLİK TAKVİMİNE GİT →</Link>
               </div>
             ) : <>
               <h2 className="font-display text-[20px] font-bold text-ink">ADIM {step + 1} — {steps[step]}</h2>
@@ -121,6 +121,7 @@ export default function RegistrationForm({initialPrograms,initialPricing,request
                     const r = await fetch("/api/applications", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ num: form.num, team: form.team, org: form.org, city: form.city, district: form.district, type: form.type, program: prog, mentor: form.mentor, email: form.email, phone: form.phone, website: form.website, kit: form.kit, kvkk: form.kvkk, total }) });
                     const j = await r.json();
                     if (!r.ok) { setErr(j.error ?? "Başvuru gönderilemedi."); setBusy(false); return; }
+                    if(!Number.isSafeInteger(j.id)||j.id<=0){setErr("Başvuru sonucu doğrulanamadı. Tekrar denemeden önce ekibimizle iletişime geçin.");setBusy(false);return;}
                     setAppId(j.id); set("done", true);
                   } catch { setErr("Sunucuya ulaşılamadı — tekrar deneyin."); }
                   setBusy(false);
