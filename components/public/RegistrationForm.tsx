@@ -78,7 +78,7 @@ export default function RegistrationForm({initialPrograms,initialPricing,request
                 <FigmaIcon name="rozet" className="mx-auto h-14 w-14 text-ink"/>
                 <h2 className="mt-4 font-display text-[24px] font-bold text-ink">BAŞVURUN ALINDI!</h2>
                 <p className="mx-auto mt-3 max-w-md text-[15px] leading-relaxed text-ink/60">{form.num || "TAKIM NO"} için ön kaydın oluşturuldu{appId ? ` (Başvuru No: #${String(appId).padStart(4, "0")})` : ""}. Ekibimiz başvurunu inceleyerek <strong>{form.email || "e-posta adresin"}</strong> üzerinden dönüş yapacak. Resmî sezon kaydı RECFevents üzerinde ayrıca tamamlanır; bu başvuru resmî lisans veya takım numarası tahsisi değildir.</p>
-                <p className="mt-5 rounded-lg border border-cyan-deep/30 bg-cyan-brand/10 px-4 py-3 text-[13px] leading-relaxed text-ink/70">Başvurun RECF Türkiye ekibine iletildi. Takım Portalı geliştirme aşamasındadır; portal yayına alındığında mentor giriş bilgilerin kayıtlı e-postana gönderilecek.</p><Link href="/etkinlikler" className="mt-4 inline-block rounded-md bg-ink px-6 py-3.5 font-display text-[14px] font-bold text-white">ETKİNLİK TAKVİMİNE GİT →</Link>
+                <p className="mt-5 rounded-lg border border-cyan-deep/30 bg-cyan-brand/10 px-4 py-3 text-[13px] leading-relaxed text-ink/70">Başvurun yönetim paneline kaydedildi. Takım Portalı henüz açık değil; erişim ve sonraki kayıt adımları ayrıca duyurulacak.</p><Link href="/etkinlikler" className="mt-4 inline-block rounded-md bg-ink px-6 py-3.5 font-display text-[14px] font-bold text-white">ETKİNLİK TAKVİMİNE GİT →</Link>
               </div>
             ) : <>
               <h2 className="font-display text-[20px] font-bold text-ink">ADIM {step + 1} — {steps[step]}</h2>
@@ -105,7 +105,8 @@ export default function RegistrationForm({initialPrograms,initialPricing,request
 
               {step === 3 && <div className="mt-5 space-y-4">
                 <label className="flex items-start gap-3 rounded-lg border-[1.5px] border-ink/20 p-4"><input type="checkbox" checked={form.kit} onChange={(e) => set("kit", e.target.checked)} className="mt-1 h-4 w-4 accent-cyan-deep" /><span><span className="font-semibold text-ink">Saha kiti eklensin (₺{Number(pricing.fieldKitFee||0).toLocaleString("tr-TR")})</span><span className="block text-[13px] text-ink/55">Antrenman için resmi oyun elemanları seti — opsiyonel.</span></span></label>
-                <label className={`flex items-start gap-3 rounded-lg border-[1.5px] p-4 text-[13.5px] ${form.kvkk?"border-cyan-deep bg-cyan-deep/5":"border-ink/20"}`}><input type="checkbox" checked={form.kvkk} onChange={e=>set("kvkk",e.target.checked)} className="mt-0.5 h-4 w-4 accent-cyan-deep" /><span><Link href="/kvkk" target="_blank" className="font-semibold text-cyan-deep underline">KVKK Aydınlatma Metni</Link>'ni okudum; başvuru kapsamında kişisel verilerimin işlenmesini kabul ediyorum.*<span className="mt-1 block text-[11.5px] text-ink/45">Bu onay zorunludur. Onay vermeden başvuru gönderilemez.</span></span></label>
+                <div className="mb-4 rounded-lg border border-ink/15 bg-paper p-4 text-sm leading-relaxed text-ink/70"><Link href="/hukuki-belgeler" target="_blank" className="font-semibold text-cyan-deep underline">Hukuki belgeleri incele</Link>: <Link href="/acik-riza" target="_blank" className="text-cyan-deep underline">Açık Rıza Metni</Link> ve <Link href="/katilim-onami" target="_blank" className="text-cyan-deep underline">Katılım Onamı</Link>. Bu ön başvuru, bireysel rıza tercihleri veya veli/öğrenci imzası yerine geçmez.</div>
+                <label className={`flex items-start gap-3 rounded-lg border-[1.5px] p-4 text-[13.5px] ${form.kvkk?"border-cyan-deep bg-cyan-deep/5":"border-ink/20"}`}><input type="checkbox" checked={form.kvkk} onChange={e=>set("kvkk",e.target.checked)} className="mt-0.5 h-4 w-4 accent-cyan-deep" /><span><Link href="/kvkk" target="_blank" className="font-semibold text-cyan-deep underline">KVKK Aydınlatma Metni</Link>'ni okudum ve bilgi edindim.*<span className="mt-1 block text-[11.5px] text-ink/45">Başvuru için metni okuduğunuzu belirtmeniz gerekir.</span></span></label>
                 <p className="rounded-lg bg-paper px-4 py-3 text-[13px] text-ink/60"><span className="inline-flex items-center gap-1.5"><FigmaIcon name="plaka" className="h-4 w-4"/> Bu formda ödeme alınmaz. Ücret özeti seçtiğin program ve saha kitine göre hesaplanır. Ödeme ve kayıt koşulları başvurunun değerlendirilmesinden sonra ayrıca paylaşılır.</span></p>
               </div>}
 
@@ -115,16 +116,17 @@ export default function RegistrationForm({initialPrograms,initialPricing,request
                 <button onClick={() => {setErr("");setStep((s) => Math.max(0, s - 1));}} disabled={step === 0} className="rounded-md border-2 border-ink bg-white px-5 py-3 font-display text-[13px] font-bold text-ink disabled:opacity-30">← GERİ</button>
                 {step < 3 ? <button onClick={nextStep} className="plate-hover rounded-md bg-cyan-brand px-6 py-3 font-display text-[13px] font-bold text-ink shadow-plateSm shadow-ink/20">DEVAM ET →</button> : <button disabled={busy||!form.kvkk} onClick={async () => {
                   setErr("");
-                  if(!form.kvkk){setErr("Başvuruyu göndermek için KVKK Aydınlatma Metni onayını vermelisiniz.");return;}
+                  if(!form.kvkk){setErr("Başvuruyu göndermek için KVKK Aydınlatma Metni’ni okuduğunuzu belirtmelisiniz.");return;}
                   setBusy(true);
                   try {
                     const r = await fetch("/api/applications", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ num: form.num, team: form.team, org: form.org, city: form.city, district: form.district, type: form.type, program: prog, mentor: form.mentor, email: form.email, phone: form.phone, website: form.website, kit: form.kit, kvkk: form.kvkk, total }) });
                     const j = await r.json();
                     if (!r.ok) { setErr(j.error ?? "Başvuru gönderilemedi."); setBusy(false); return; }
+                    if(!Number.isSafeInteger(j.id)||j.id<=0){setErr("Başvuru sonucu doğrulanamadı. Tekrar denemeden önce ekibimizle iletişime geçin.");setBusy(false);return;}
                     setAppId(j.id); set("done", true);
                   } catch { setErr("Sunucuya ulaşılamadı — tekrar deneyin."); }
                   setBusy(false);
-                }} className="plate-hover rounded-md bg-ink px-6 py-3 font-display text-[13px] font-bold text-white shadow-plateSm shadow-cyan-brand disabled:cursor-not-allowed disabled:opacity-40">{busy ? "GÖNDERİLİYOR…" : !form.kvkk ? "KVKK ONAYI GEREKLİ" : "BAŞVURUYU GÖNDER"}</button>}
+                }} className="plate-hover rounded-md bg-ink px-6 py-3 font-display text-[13px] font-bold text-white shadow-plateSm shadow-cyan-brand disabled:cursor-not-allowed disabled:opacity-40">{busy ? "GÖNDERİLİYOR…" : !form.kvkk ? "METNİ OKUMA BİLDİRİMİ" : "BAŞVURUYU GÖNDER"}</button>}
               </div>
             </>}
           </div>

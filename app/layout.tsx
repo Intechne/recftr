@@ -25,7 +25,7 @@ export async function generateMetadata():Promise<Metadata>{
     keywords:["RECF Türkiye","robotik yarışması","drone yarışması","Aerial Drone Competition","RECF Engage","RECF Achieve","RECF Inspire","robotik eğitimi","STEM Türkiye","Intechne"],
     title:{default:`${site} — Maç Günü. Her Gün.`,template:`%s | ${site}`},
     description:"Türkiye'nin resmi RECF robotik ve drone programları. Engage, Achieve, Inspire, Aerial Drone Competition ve ADC Pro. Programları keşfet, takım ön başvurusu ve etkinlik bilgilerine ulaş.",
-    icons:{icon:s.favicon_url||undefined,apple:s.apple_touch_icon_url||s.favicon_url||undefined},
+    icons:{icon:s.favicon_url||"/logos/icon-512.png",apple:s.apple_touch_icon_url||"/logos/apple-touch-icon.png"},
     openGraph:{title:site,description:"RECF Türkiye robotik ve drone programları, etkinlikleri ve takım süreçleri.",images:s.og_image?[{url:s.og_image}]:undefined,type:"website",siteName:site,locale:"tr_TR",url:SITE_URL},
     twitter:{card:"summary_large_image",title:site,description:"RECF Türkiye robotik ve drone programları, etkinlikleri ve takım süreçleri.",images:s.og_image?[s.og_image]:undefined},
   };

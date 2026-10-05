@@ -1,1 +1,26 @@
-{"name":"RECF Türkiye","short_name":"RECF TR","description":"Türkiye'nin resmi RECF robotik ve drone programları.","start_url":"/","display":"standalone","background_color":"#F3F5F9","theme_color":"#10192F","lang":"tr","icons":[{"src":"/logos/icon-192.png","sizes":"192x192","type":"image/png"},{"src":"/logos/icon-512.png","sizes":"512x512","type":"image/png"}]}
+{
+  "name": "RECF Türkiye",
+  "short_name": "RECF TR",
+  "description": "Türkiye'nin resmi RECF robotik ve drone programları.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#F3F5F9",
+  "theme_color": "#10192F",
+  "lang": "tr",
+  "icons": [
+    {
+      "src": "/logos/icon-192.svg",
+      "sizes": "192x192",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "/logos/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ],
+  "id": "/",
+  "scope": "/"
+}
