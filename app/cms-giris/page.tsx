@@ -32,7 +32,7 @@ function CmsForm() {
       <p className="mt-2 text-[13.5px] text-white/50">Yalnızca yetkili ekip üyeleri. Tüm oturumlar kayıt altındadır.</p>
       <form onSubmit={login} className="mt-7">
         <label className="block font-display text-[11.5px] font-semibold tracking-[1px] text-white/60">KURUMSAL E-POSTA
-          <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="ad@recfturkiye.org" className={input} required />
+          <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="ad@recfturkiye.com" className={input} required />
         </label>
         <label className="mt-4 block font-display text-[11.5px] font-semibold tracking-[1px] text-white/60">ŞİFRE
           <input type="password" value={pass} onChange={(e) => setPass(e.target.value)} className={input} required autoComplete="current-password" />
