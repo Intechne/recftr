@@ -14,6 +14,7 @@ export function ProgramScoringSection({official}:Props){
       </div>
 
       {official.siteSlug==="adc-pro"&&official.versionLabel==="2.0"&&<p className="mt-4 text-xs leading-relaxed text-ink/55">Puanlama özeti v2.0 kılavuzuna göre 4 Ekim 2026’da kontrol edildi. Yeni sürümler ve resmî Q&A kararları için aşağıdaki kaynakları takip edin.</p>}
+      {["inspire","adc"].includes(official.siteSlug)&&official.scoringGroups.length>0&&<p className="mt-4 text-xs leading-relaxed text-ink/55">Bu sınırlı puan özeti v{official.versionLabel} kılavuzuna göre 5 Ekim 2026’da kontrol edildi. Yeni sürümler ve resmî Q&A kararları için aşağıdaki kaynakları takip edin.</p>}
       <div className="mt-8 space-y-6">
         {official.scoringGroups.map(group=><div key={group.id} className="rounded-[20px] border border-[#DFE6F1] bg-white p-4 sm:p-6">
           <div className="max-w-3xl"><h3 className="font-display text-xl font-bold text-ink sm:text-2xl">{group.title}</h3><p className="mt-2 text-xs leading-5 text-ink/55 sm:text-sm">{group.subtitle}</p></div>

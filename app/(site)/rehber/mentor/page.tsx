@@ -8,13 +8,13 @@ export const metadata: Metadata = { title: "Mentor Nasıl Olunur?" };
 const cols:{title:string;icon:FigmaIconName;hex:string;items:string[]}[] = [
   { title: "KİM OLABİLİR?", icon:"mentor", hex: "#29B9E5", items: ["18 yaşını doldurmuş herkes", "Öğretmenler ve okul personeli", "Veliler", "Mühendisler & sektör gönüllüleri", "Üniversite öğrencileri"] },
   { title: "SORUMLULUKLAR", icon:"defter", hex: "#10192F", items: ["Takımın resmi kaydını yönetmek", "Etkinlik günü takımın başında olmak", "Güvenlik ve davranış kurallarını gözetmek", "Öğrenci odaklı çalışmayı korumak (robotu öğrenciler yapar)", "İletişim: veli ↔ RECF Türkiye"] },
-  { title: "SANA SUNDUKLARIMIZ", icon:"rozet", hex: "#8DC63F", items: ["Ücretsiz mentor eğitim programı (Eylül)", "Hazır müfredat ve ders planları", "Mentor topluluğu (özel iletişim kanalı)", "Etkinliklerde mentor yaka kartı & alanı", "Sezon sonu mentor sertifikası"] },
+  { title: "KAYNAKLAR VE DUYURULAR", icon:"rozet", hex: "#8DC63F", items: ["Resmî oyun kılavuzları ve soru-cevap kaynakları", "Takım ön başvuru rehberi", "Etkinlik takvimi", "Mentor eğitimleri: yeni tarih duyurusu bekleniyor", "Güncel program duyuruları"] },
 ];
 const proc = [
-  { t: "Başvuru formu", d: "Online form · 10 dk" },
-  { t: "Tanışma görüşmesi", d: "15 dk video görüşme" },
-  { t: "Mentor eğitimi", d: "2 saat online oturum" },
-  { t: "Takımınla eşleş", d: "Kendi takımını kur ya da mevcut takıma katıl" },
+  { t: "Programı seç", d: "Takımına uygun robotik veya drone programını incele." },
+  { t: "Takım bilgilerini hazırla", d: "Okul, şehir ve takım bilgilerini belirle." },
+  { t: "Ön başvuruyu gönder", d: "Takım kayıt formuna mentor iletişim bilgilerini ekle." },
+  { t: "Duyuruları takip et", d: "Eğitim tarihleri ve sonraki kayıt adımları ayrıca duyurulur." },
 ];
 
 export default function MentorPage() {
@@ -29,9 +29,9 @@ export default function MentorPage() {
             Öğretmen, veli, mühendis veya üniversite öğrencisi — bir takımın arkasındaki
             yetişkin sen olabilirsin. Teknik uzmanlık şart değil; rehberlik yeterli.
           </p>
-          <a href="mailto:mentor@recfturkiye.org" className="plate-hover mt-6 inline-block rounded-md bg-adc px-6 py-3.5 font-display text-[15px] font-bold text-[#0d1f08] shadow-plateSm shadow-white/25">
-            MENTOR BAŞVURUSU YAP
-          </a>
+          <Link href="/kayit" className="plate-hover mt-6 inline-block rounded-md bg-adc px-6 py-3.5 font-display text-[15px] font-bold text-[#0d1f08] shadow-plateSm shadow-white/25">
+            TAKIMINLA ÖN BAŞVURU YAP
+          </Link>
         </div>
       </section>
 
@@ -53,6 +53,7 @@ export default function MentorPage() {
           ))}
         </div>
 
+        <p className="mt-6 text-sm leading-relaxed text-ink/60">Takım formu ön başvuru içindir. Mentor eğitimi, resmî takım kaydı veya sertifika kaydı yerine geçmez. <Link href="/rehber/takim-kaydi" className="font-semibold text-cyan-deep underline">Kayıt adımlarını incele</Link>.</p>
         <h2 className="mt-14 font-display text-[26px] font-bold text-ink">BAŞVURU SÜRECİ</h2>
         <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           {proc.map((s, i) => (
@@ -65,7 +66,7 @@ export default function MentorPage() {
           ))}
         </div>
         <p className="mt-6 text-[14px] text-ink/55">
-          Sorular için: <a href="mailto:mentor@recfturkiye.org" className="font-semibold text-cyan-deep underline">mentor@recfturkiye.org</a> · Bir sonraki mentor eğitim dönemi: Eylül 2026
+          Sorular için: <a href="mailto:mentor@recfturkiye.org" className="font-semibold text-cyan-deep underline">mentor@recfturkiye.org</a> · Yeni eğitim tarihi henüz duyurulmadı. <Link href="/duyurular" className="font-semibold text-cyan-deep underline">Duyuruları takip et</Link>.
         </p>
       </div>
     </div>

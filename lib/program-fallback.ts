@@ -21,7 +21,7 @@ export const FALLBACK_PROGRAMS = [
       { label: "Maç Süresi", value: "60 sn" },
       { label: "Resmî Kaynak", value: "games.recf.org/engage" },
     ],
-    source: "https://games.recf.org/engage/1.1", cover_url: "", active: true, sort_order: 1,
+    source: "https://games.recf.org/engage/2.0", cover_url: "", active: true, sort_order: 1,
   },
   {
     slug: "achieve", code: "ACH", name: "RECF Achieve", game: "Pinnacle",
@@ -43,7 +43,7 @@ export const FALLBACK_PROGRAMS = [
       { label: "Maç Süresi", value: "60 sn" },
       { label: "Resmî Kaynak", value: "games.recf.org/achieve" },
     ],
-    source: "https://games.recf.org/achieve/1.2", cover_url: "", active: true, sort_order: 2,
+    source: "https://games.recf.org/achieve/2.0", cover_url: "", active: true, sort_order: 2,
   },
   {
     slug: "inspire", code: "INS", name: "RECF Inspire", game: "Pinnacle",
@@ -65,7 +65,7 @@ export const FALLBACK_PROGRAMS = [
       { label: "Maç Süresi", value: "60 sn" },
       { label: "Resmî Kaynak", value: "games.recf.org/inspire" },
     ],
-    source: "https://games.recf.org/inspire/1.2", cover_url: "", active: true, sort_order: 3,
+    source: "https://games.recf.org/inspire/2.0", cover_url: "", active: true, sort_order: 3,
   },
   {
     slug: "adc", code: "ADC", name: "Aerial Drone Competition", game: "Mission 2027: Fast Track",

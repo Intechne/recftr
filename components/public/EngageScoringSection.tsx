@@ -71,7 +71,7 @@ export function EngageScoringSection({facts=[],source="",live=null}:Props){
   const [counts,setCounts]=useState<ScoreMap>(OFFICIAL_INITIAL);
   const bagCount=counts.floor+counts.l1+counts.l2+counts.l3+counts.l4;
   const total=ITEMS.reduce((sum,item)=>sum+counts[item.key]*scores[item.key],0);
-  const version=live?.versionLabel||"1.1";
+  const version=live?.versionLabel||"2.0";
   const gameName=live?.gameName||"Tier Takeover";
   const sourceHref=live?.manualUrl||(source?(source.startsWith("http")?source:`https://${source}`):`https://games.recf.org/engage/${version}`);
   const calculatorHref=live?.calculatorUrl||"https://games.recf.org/engage/calculator";
@@ -112,6 +112,7 @@ export function EngageScoringSection({facts=[],source="",live=null}:Props){
         </div>
       </div>
 
+      <p className="mt-4 text-xs leading-relaxed text-ink/55">Bu sınırlı puan özeti v2.0 kılavuzuna göre 5 Ekim 2026’da kontrol edildi. Güncel koşullar için resmî kılavuz ve Q&A geçerlidir.</p>
       <div className="mt-8 grid gap-3 sm:grid-cols-2 lg:grid-cols-3 lg:gap-4">
         {ITEMS.map(item=><article key={item.key} className="group rounded-2xl border border-[#DFE6F1] bg-white p-5 transition duration-200 hover:-translate-y-0.5 hover:shadow-[0_14px_34px_rgba(16,25,47,.08)] sm:p-6">
           <div className="flex items-start justify-between gap-4">
