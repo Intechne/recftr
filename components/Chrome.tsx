@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import {usePathname} from "next/navigation";
-import {useEffect,useState} from "react";
+import {useEffect,useRef,useState} from "react";
 import {FigmaIcon, type FigmaIconName} from "@/components/FigmaIcon";
 import { FALLBACK_TICKER } from "@/lib/public-announcements";
 
@@ -21,9 +21,22 @@ function tickerItems(raw?:string){
 
 export function Ticker({settings}:{settings:PublicSettings}){
   const items=tickerItems(settings.ticker);
-  const [paused,setPaused]=useState(false);
-  const row=(duplicate=false)=><div aria-hidden={duplicate||undefined} className="flex items-center gap-6 pr-6 sm:gap-9 sm:pr-9">{items.map((message,index)=><span key={`${message}-${index}`} className="flex items-center gap-6 whitespace-nowrap sm:gap-9"><span className="font-display text-[11px] font-medium text-white sm:text-[12.5px] 2xl:text-[13px]">{message}</span><span className="text-cyan-brand">•</span></span>)}</div>;
-  return <div className="safe-x flex min-h-9 items-center gap-3 overflow-hidden bg-ink py-2 sm:gap-6 sm:py-[9px]"><span className="z-10 flex shrink-0 items-center gap-1.5 rounded-[3px] bg-cyan-brand px-2 py-[3px] font-display text-[10px] font-bold tracking-wider text-ink sm:gap-2 sm:px-2.5 sm:text-[11px]"><FigmaIcon name="news" className="h-3.5 w-3.5"/><span className="hidden min-[390px]:inline">DUYURU</span></span><div className="relative min-w-0 flex-1 overflow-hidden"><div className="marquee-track flex w-max" style={paused?{animationPlayState:"paused"}:undefined}>{row()}{row(true)}</div></div><button type="button" onClick={()=>setPaused(value=>!value)} aria-label={paused?"Duyuru hareketini devam ettir":"Duyuru hareketini durdur"} aria-pressed={paused} className="flex min-h-9 min-w-9 shrink-0 items-center justify-center rounded border border-white/30 px-2 text-sm text-white hover:bg-white/10"><span aria-hidden="true">{paused?"▶":"Ⅱ"}</span></button></div>;
+  const viewport=useRef<HTMLDivElement>(null);
+  const firstRow=useRef<HTMLDivElement>(null);
+  const [copies,setCopies]=useState(1);
+  useEffect(()=>{
+    const container=viewport.current, row=firstRow.current;
+    if(!container||!row)return;
+    const measure=()=>{
+      const width=row.getBoundingClientRect().width;
+      if(width>0)setCopies(Math.max(1,Math.ceil(container.clientWidth/width)));
+    };
+    const observer=new ResizeObserver(measure);
+    observer.observe(container);observer.observe(row);measure();
+    return ()=>observer.disconnect();
+  },[settings.ticker]);
+  const row=(duplicate:boolean,copy:number)=><div ref={!duplicate&&copy===0?firstRow:undefined} aria-hidden={duplicate||copy>0||undefined} key={copy} className="flex shrink-0 items-center gap-6 pr-6 sm:gap-9 sm:pr-9">{items.map((message,index)=><span key={`${message}-${index}`} className="flex shrink-0 items-center gap-6 whitespace-nowrap sm:gap-9"><span className="font-display text-[11px] font-medium text-white sm:text-[12.5px] 2xl:text-[13px]">{message}</span><span className="text-cyan-brand">•</span></span>)}</div>;
+  return <div className="safe-x flex min-h-9 items-center gap-3 overflow-hidden bg-ink py-2 sm:gap-6 sm:py-[9px]"><span className="z-10 flex shrink-0 items-center gap-1.5 rounded-[3px] bg-cyan-brand px-2 py-[3px] font-display text-[10px] font-bold tracking-wider text-ink sm:gap-2 sm:px-2.5 sm:text-[11px]"><FigmaIcon name="news" className="h-3.5 w-3.5"/><span className="hidden min-[390px]:inline">DUYURU</span></span><div ref={viewport} className="relative min-w-0 flex-1 overflow-hidden"><div className="marquee-track flex w-max">{[false,true].map(duplicate=><div key={String(duplicate)} aria-hidden={duplicate||undefined} className="flex shrink-0">{Array.from({length:copies},(_,copy)=>row(duplicate,copy))}</div>)}</div></div></div>;
 }
 
 const links:{href:string;label:string;icon:FigmaIconName}[]=[{href:"/programlar",label:"Programlar",icon:"programs"},{href:"/etkinlikler",label:"Etkinlikler",icon:"events"},{href:"/duyurular",label:"Duyurular",icon:"news"},{href:"/dokumanlar",label:"Dokümanlar",icon:"documents"},{href:"/takimlar",label:"Takımlar",icon:"teams"},{href:"/galeri",label:"Galeri",icon:"gallery"},{href:"/hakkimizda",label:"Hakkımızda",icon:"about"}];

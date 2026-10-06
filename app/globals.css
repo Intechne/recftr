@@ -33,7 +33,6 @@ input, select, textarea { max-width: 100%; }
 /* Duyuru şeridi marquee */
 @keyframes marquee { from { transform: translateX(0); } to { transform: translateX(-50%); } }
 .marquee-track { animation: marquee 40s linear infinite; will-change: transform; }
-@media (hover:hover) and (pointer:fine) { .marquee-track:hover { animation-play-state: paused; } }
 
 /* Hero satır giriş animasyonu */
 @keyframes rise { from { opacity: 0; transform: translateY(18px); } to { opacity: 1; transform: translateY(0); } }
@@ -108,7 +107,7 @@ input, select, textarea { max-width: 100%; }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .marquee-track, .rise, .pulse-soft { animation: none !important; }
+  .rise, .pulse-soft { animation: none !important; }
   .reveal, .route-draw, .plate-hover { transition: none !important; }
   .reveal { opacity: 1; transform: none; }
   .route-draw { stroke-dashoffset: 0; }

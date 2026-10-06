@@ -17,7 +17,8 @@
     "content:regression": "node scripts/public-content-check.mjs",
     "content:smoke": "node scripts/content-smoke.mjs",
     "stability:smoke": "node scripts/stability-smoke.mjs",
-    "forms:check": "node scripts/submission-flow-check.mjs"
+    "forms:check": "node scripts/submission-flow-check.mjs",
+    "password:check": "node scripts/password-flow-check.mjs"
   },
   "dependencies": {
     "@halilertekin/turkey_province_image": "^3.3.3",
