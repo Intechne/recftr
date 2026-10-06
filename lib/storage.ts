@@ -98,6 +98,61 @@ export function publicUrlMatchesPath(url: string, path: string) {
   try { return pathFromPublicUrl(url) === path; } catch { return false; }
 }
 
+export async function verifyPublicImageReference(url: string) {
+  const path = pathFromPublicUrl(url);
+  if (!path) return null; // External HTTPS images are controlled separately by URL validation.
+  if (!safeStoragePath(path, "media")) return "Görsel Storage yolu geçersiz.";
+  const result = await verifyStoredObject(PUBLIC_BUCKET, path, IMAGE_MIME, 25 * 1024 * 1024);
+  return result.ok ? null : result.error;
+}
+
+export function matchesFileSignature(mime: string, bytes: Uint8Array) {
+  const hex = (length: number) => Array.from(bytes.slice(0, length), byte => byte.toString(16).padStart(2, "0")).join("");
+  const ascii = (start: number, length: number) => new TextDecoder().decode(bytes.slice(start, start + length));
+  if (mime === "image/jpeg") return hex(3) === "ffd8ff";
+  if (mime === "image/png") return hex(8) === "89504e470d0a1a0a";
+  if (mime === "image/webp") return ascii(0, 4) === "RIFF" && ascii(8, 4) === "WEBP";
+  if (mime === "image/gif") return ["GIF87a", "GIF89a"].includes(ascii(0, 6));
+  if (mime === "image/avif") return ascii(4, 4) === "ftyp" && ["avif", "avis"].includes(ascii(8, 4));
+  if (["image/x-icon", "image/vnd.microsoft.icon"].includes(mime)) return hex(4) === "00000100";
+  if (mime === "video/webm") return hex(4) === "1a45dfa3";
+  if (mime === "video/mp4") return ascii(4, 4) === "ftyp" && ascii(8, 4) !== "qt  ";
+  if (mime === "video/quicktime") return ascii(4, 4) === "ftyp" && ascii(8, 4) === "qt  ";
+  if (mime === "application/pdf") return ascii(0, 5) === "%PDF-";
+  if (["application/msword", "application/vnd.ms-excel"].includes(mime)) return hex(8) === "d0cf11e0a1b11ae1";
+  if (["application/vnd.openxmlformats-officedocument.wordprocessingml.document", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"].includes(mime)) return hex(4) === "504b0304";
+  if (mime === "text/plain") {
+    try { new TextDecoder("utf-8", { fatal: true }).decode(bytes, { stream: true }); return !bytes.some(byte => byte === 0); }
+    catch { return false; }
+  }
+  return false;
+}
+
+async function readObjectPrefix(bucket: string, path: string) {
+  const { data, error } = await client().storage.from(bucket).createSignedUrl(path, 60);
+  if (error || !data?.signedUrl) throw new Error("Dosya bağlantısı oluşturulamadı.");
+  const response = await fetch(data.signedUrl, {
+    headers: { Range: "bytes=0-4095" },
+    cache: "no-store",
+  });
+  if (!response.ok || !response.body) throw new Error("Dosya içeriği okunamadı.");
+  const reader = response.body.getReader();
+  const chunks: Uint8Array[] = [];
+  let length = 0;
+  try {
+    while (length < 4096) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      chunks.push(value);
+      length += value.length;
+    }
+  } finally { await reader.cancel().catch(() => {}); }
+  const prefix = new Uint8Array(Math.min(length, 4096));
+  let offset = 0;
+  for (const chunk of chunks) { const part = chunk.slice(0, prefix.length - offset); prefix.set(part, offset); offset += part.length; }
+  return prefix;
+}
+
 export async function verifyStoredObject(bucket: string, path: string, allowedMimeTypes: string[], maxBytes: number): Promise<{ ok: true; size: number; mime: string } | { ok: false; error: string }> {
   if (!path || path.includes("..") || path.includes("\\")) return { ok:false, error:"Geçersiz dosya yolu." };
   const slash = path.lastIndexOf("/");
@@ -111,6 +166,9 @@ export async function verifyStoredObject(bucket: string, path: string, allowedMi
   const mime = String(item.metadata?.mimetype || item.metadata?.contentType || "").toLowerCase();
   if (!size || size > maxBytes) return { ok:false, error:"Yüklenen dosya boyutu geçersiz." };
   if (!mime || !allowedMimeTypes.includes(mime)) return { ok:false, error:"Yüklenen dosyanın MIME türü izinli değil." };
+  try {
+    if (!matchesFileSignature(mime, await readObjectPrefix(bucket, path))) return { ok:false, error:"Dosya içeriği MIME türüyle eşleşmiyor." };
+  } catch { return { ok:false, error:"Dosya içeriği doğrulanamadı." }; }
   return { ok:true, size, mime };
 }
 

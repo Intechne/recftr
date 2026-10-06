@@ -4,7 +4,7 @@ import {getCachedPublicSettings} from "@/lib/public-cache";
 import {SITE_URL, organizationLd, websiteLd} from "@/lib/seo";
 import JsonLd from "@/components/seo/JsonLd";
 
-export const revalidate=300;
+export const dynamic="force-dynamic";
 
 export const viewport:Viewport={
   width:"device-width",

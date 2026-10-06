@@ -42,10 +42,15 @@ async function main(){
   });
   pass('Cross-site mutation guard rejects request',cross.status===403,`HTTP ${cross.status}`);
 
+  const missingOrigin=await fetch(`${base}/api/uploads/sign`,{
+    method:'POST',headers:{'Content-Type':'application/json'},body:'{}'
+  });
+  pass('Mutation without origin evidence is rejected',missingOrigin.status===403,`HTTP ${missingOrigin.status}`);
+
   if(active){
     let got429=false; let last=0;
     for(let i=0;i<10;i++){
-      const r=await fetch(`${base}/api/auth`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email:'security-smoke-invalid@example.invalid',pass:'not-a-real-password',scope:'cms'})});
+      const r=await fetch(`${base}/api/auth`,{method:'POST',headers:{'Content-Type':'application/json','Origin':new URL(base).origin},body:JSON.stringify({email:'security-smoke-invalid@example.invalid',pass:'not-a-real-password',scope:'cms'})});
       last=r.status;
       if(r.status===429){got429=true;break;}
     }
