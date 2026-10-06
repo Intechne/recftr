@@ -17,7 +17,7 @@ const steps = [
   { title: "EKİBİNİ TOPLA", link: { t: "Mentor rehberi", h: "/rehber/mentor" },
     desc: "Engage için en az 2 öğrenci, Achieve için 1+ öğrenci yeterli; ideal ekip 4–6 kişidir. Her takımın 18 yaş üstü bir yetişkin mentoru (öğretmen, veli veya gönüllü) olmalı. Okul zorunlu değil — kulüp ve bağımsız topluluklar da kaydolabilir." },
   { title: "TÜRKİYE ÖN BAŞVURUNU YAP", link: { t: "Ön kayıt formu", h: "/kayit" },
-    desc: "Mentor ve takım bilgilerinle Türkiye ön başvuru formunu doldur. Resmî sezon kaydı ve takım numarası için RECFevents sürecini ayrıca tamamla. Yerel ön başvuru, resmî lisans veya etkinlik kaydı yerine geçmez." },
+    desc: "Mentor ve takım bilgilerinle Türkiye ön başvuru formunu doldur. Başvurun kaydedildiğinde e-posta adresine otomatik alındı bilgilendirmesi gönderilir; ekibimiz sonraki adımlar için seninle iletişime geçer. Resmî sezon kaydı ve takım numarası için RECFevents sürecini ayrıca tamamla. Yerel ön başvuru, resmî lisans veya etkinlik kaydı yerine geçmez." },
   { title: "DONANIMINI EDİN", link: { t: "Donanım rehberi", h: "/dokumanlar" },
     desc: "Engage: VEX IQ® veya LEGO® SPIKE/Mindstorms. Achieve: VEX V5® elektronik + Robits®/TETRIX® MAX yapı. ADC/ADC Pro: onaylı drone kitleri. Programına uygun donanımı satın almadan önce resmî kılavuzdaki onaylı bileşenleri ve teknik sınırları kontrol et." },
   { title: "İLK ETKİNLİĞİNE BAŞVUR", link: { t: "Etkinlik takvimi", h: "/etkinlikler" },

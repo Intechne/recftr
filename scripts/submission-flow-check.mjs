@@ -10,8 +10,9 @@ const moduleUrl=(path,imports={})=>{
  for(const [specifier,target] of Object.entries(imports))code=code.replaceAll(JSON.stringify(specifier),JSON.stringify(target));
  return uri(code);
 };
-const notificationUrl=moduleUrl('lib/submission-notifications.ts');
-const {notificationConfiguration,submissionNotification,notifySubmission}=await import(notificationUrl);
+const contactInfoUrl=moduleUrl('lib/public-contact.ts');
+const notificationUrl=moduleUrl('lib/submission-notifications.ts',{'@/lib/public-contact':contactInfoUrl});
+const {notificationConfiguration,submissionNotification,notifySubmission,applicationReceipt,notifyApplicationReceipt}=await import(notificationUrl);
 const config={RECF_NOTIFICATIONS_ENABLED:'1',RESEND_API_KEY:'test-key',RECF_NOTIFICATION_FROM:'notify@example.org',RECF_NOTIFICATION_TO:'admin@example.net'};
 let requests=0;
 assert.equal(notificationConfiguration({}).ready,false);
@@ -32,11 +33,42 @@ assert.equal(await notifySubmission('application',123,config,async(url,options)=
 assert.equal(await notifySubmission('contact',12,config,async()=>({ok:false,status:503})), 'failed');
 assert.equal(await notifySubmission('contact',12,config,async()=>{throw new Error('simulated network failure')}), 'failed');
 assert.equal(await notifySubmission('contact',12,config,async()=>({ok:true,status:200,json:async()=>({})})), 'failed');
+const receipt=applicationReceipt(123);
+assert.equal(receipt.idempotencyKey,'recf-application-receipt-123');
+assert.ok(receipt.text.includes('#0123'));
+assert.ok(receipt.text.includes('destek@recfturkiye.com'));
+assert.ok(!receipt.html.includes('/admin/'));
+assert.ok(!receipt.text.includes('₺'));
+assert.throws(()=>applicationReceipt(0));
+let receiptRequests=0;
+const receiptSend=async(url,options)=>{
+ receiptRequests++;
+ assert.equal(url,'https://api.resend.com/emails');
+ assert.equal(options.headers['Idempotency-Key'],receipt.idempotencyKey);
+ const body=JSON.parse(options.body);
+ assert.deepEqual(body.to,['mentor@example.net']);
+ assert.equal(body.reply_to,'destek@recfturkiye.com');
+ assert.equal(body.text,receipt.text);assert.equal(body.html,receipt.html);
+ return {ok:true,status:200,json:async()=>({id:'receipt-test-id'})};
+};
+assert.equal(await notifyApplicationReceipt(123,'mentor@example.net',{...config,VERCEL_ENV:'preview'},receiptSend),'disabled');
+assert.equal(await notifyApplicationReceipt(123,'mentor@example.net\r\nBcc: other@example.net',config,receiptSend),'failed');
+assert.equal(receiptRequests,0);
+assert.equal(await notifyApplicationReceipt(123,'mentor@example.net',config,receiptSend),'accepted');
+assert.equal(receiptRequests,1);
+let retryRequests=0;let retryBody;
+assert.equal(await notifyApplicationReceipt(123,'mentor@example.net',config,async(url,options)=>{
+ retryRequests++;if(retryRequests===1){retryBody=options.body;return {ok:false,status:429};}
+ assert.equal(options.body,retryBody);assert.equal(options.headers['Idempotency-Key'],receipt.idempotencyKey);
+ return {ok:true,status:200,json:async()=>({id:'receipt-test-id'})};
+}),'accepted');
+assert.equal(retryRequests,2);
+assert.equal(await notifyApplicationReceipt(123,'mentor@example.net',config,async()=>({ok:false,status:422})),'failed');
 
 // Execute the actual handlers with isolated database/auth/rate-limit boundaries.
 // No live records, users, SMTP or network are used.
 const fixture={order:[],contact:null,application:null};globalThis.__recfSubmissionFixture=fixture;
-const db=uri(`export async function createContact(record){globalThis.__recfSubmissionFixture.order.push('persist-contact');globalThis.__recfSubmissionFixture.contact=record;return {id:201};} export async function createApplication(record){globalThis.__recfSubmissionFixture.order.push('persist-application');globalThis.__recfSubmissionFixture.application=record;return {id:202,updated:false};} export async function getSettings(){return {registration_fee_achieve:'6000',field_kit_fee:'1000',registration_discount:'0'};} export async function listApplications(){return [];}export async function listContacts(){return [];}export async function updateContact(){}`);
+const db=uri(`export async function createContact(record){globalThis.__recfSubmissionFixture.order.push('persist-contact');globalThis.__recfSubmissionFixture.contact=record;return {id:201};} export async function createApplication(record){globalThis.__recfSubmissionFixture.order.push('persist-application');globalThis.__recfSubmissionFixture.application=record;return {id:202,updated:false};} export async function getSettings(){throw new Error('Registration must not depend on pricing');} export async function listApplications(){return [];}export async function listContacts(){return [];}export async function updateContact(){}`);
 const auth=uri('export async function approvalsSession(){return null;}export async function contactSession(){return null;}');
 const security=uri(String.raw`export const cleanText=(value,max)=>String(value||'').trim().slice(0,max);export const clientIp=()=> 'test';export const enforceRateLimit=async()=>({ok:true});export const rateLimitResponse=()=>{};export const validEmail=value=>/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);`);
 const locations=uri(`export const isValidProvinceDistrict=(city,district)=>city==='İstanbul'&&district==='Kadıköy';`);
@@ -55,12 +87,22 @@ try{
  assert.equal(result.status,201);assert.deepEqual(await result.json(),{id:201,ok:true});assert.deepEqual(fixture.order,['persist-contact','email-attempt']);
  fixture.order=[];
  const invalidApplication=await application.POST(request({}));assert.equal(invalidApplication.status,400);assert.equal(fixture.application,null);
- const result2=await application.POST(request({num:'TEST2026',team:'Test team',org:'Test org',city:'İstanbul',district:'Kadıköy',type:'Okul Takımı',program:'achieve',mentor:'Test Mentor',email:'test@example.net',phone:'0000000000',kit:false,kvkk:true,total:1}));
- assert.equal(result2.status,201);assert.equal((await result2.json()).id,202);assert.equal(fixture.application.total,6000);assert.deepEqual(fixture.order,['persist-application','email-attempt']);
+ const validApplication={num:'TEST2026',team:'Test team',org:'Test org',city:'İstanbul',district:'Kadıköy',type:'Okul Takımı',program:'achieve',mentor:'Test Mentor',email:'test@example.net',phone:'0000000000',kvkk:true};
+ const result2=await application.POST(request({...validApplication,kit:true,total:123456}));
+ assert.equal(result2.status,201);const failedReceipt=await result2.json();assert.equal(failedReceipt.id,202);assert.equal(failedReceipt.confirmationEmail,'failed');
+ assert.equal('total' in fixture.application,false);assert.equal('kit' in fixture.application,false);
+ assert.deepEqual(fixture.order,['persist-application','email-attempt','email-attempt','email-attempt']);
+ fixture.order=[];const recipients=[];
+ globalThis.fetch=async(url,options)=>{fixture.order.push('email-attempt');recipients.push(JSON.parse(options.body).to);return {ok:true,status:200,json:async()=>({id:'test-provider-id'})};};
+ const result3=await application.POST(request(validApplication));
+ assert.equal(result3.status,201);assert.equal((await result3.json()).confirmationEmail,'accepted');
+ assert.deepEqual(recipients,[['admin@example.net'],['test@example.net']]);
+ assert.deepEqual(fixture.order,['persist-application','email-attempt','email-attempt']);
+ fixture.order=[];await application.POST(request({...validApplication,website:'bot'}));assert.deepEqual(fixture.order,[]);
  const attempts=fixture.order.length;
  await application.GET(request({}));await contact.GET(request({}));assert.equal(fixture.order.length,attempts);
 }finally{
  globalThis.fetch=oldFetch;delete globalThis.__recfSubmissionFixture;
  for(const [key,value] of Object.entries(saved)){if(value===undefined)delete process.env[key];else process.env[key]=value;}
 }
-console.log('PASS notification configuration/privacy/idempotency/provider failure and submission handlers: persistence precedes email; email failure retains successful record; invalid/bot submissions do not persist. Live database delivery is not covered.');
+console.log('PASS notification privacy, applicant receipt HTML/text/reply-to/idempotency/retry, preview mail blocking and submission handlers: no pricing dependency, injected total/kit ignored, persistence precedes both emails, provider failure retains successful application, invalid/bot submissions do not persist. Live database delivery is not covered.');

@@ -77,18 +77,3 @@ export async function getCachedStaff(){ try{return await staffData();}catch{retu
 
 const pageData = unstable_cache(async (slug:string) => getPage(slug), ["public-page-v314"], { revalidate: TTL, tags: [TAG] });
 export async function getCachedPage(slug:string){ try{const page=await pageData(slug);return page?{...page,body:currentContactEmails(String(page.body||""))}:null;}catch{return null;} }
-
-const registrationPricingData = unstable_cache(
-  async () => getSettings([
-    "registration_fee_engage",
-    "registration_fee_achieve",
-    "registration_fee_inspire",
-    "registration_fee_adc",
-    "registration_fee_adc-pro",
-    "field_kit_fee",
-    "registration_discount",
-  ]),
-  ["public-registration-pricing-v314"],
-  { revalidate: TTL, tags: [TAG] },
-);
-export async function getCachedRegistrationPricing(){ try{return await registrationPricingData();}catch{return {};} }
