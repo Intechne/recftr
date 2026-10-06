@@ -7,13 +7,14 @@ export type SubmissionKind = "application" | "contact";
 export type NotificationResult = "disabled" | "accepted" | "failed";
 
 const email = /^[^\s<>@,;]+@[^\s<>@,;]+\.[^\s<>@,;]+$/;
+export const NOTIFICATION_SENDER_NAME = "RECF Türkiye · Takım Destek";
 export function notificationConfiguration(env: Environment = process.env) {
   const enabled = env.RECF_NOTIFICATIONS_ENABLED === "1";
   const from = (env.RECF_NOTIFICATION_FROM || "").trim();
   const to = (env.RECF_NOTIFICATION_TO || "").trim();
   const key = (env.RESEND_API_KEY || "").trim();
   const environmentAllowed = !env.VERCEL_ENV || env.VERCEL_ENV === "production";
-  return { enabled, ready: enabled && environmentAllowed && email.test(from) && email.test(to) && !!key };
+  return { enabled, ready: enabled && environmentAllowed && email.test(from) && email.test(to) && !!key, sender: `${NOTIFICATION_SENDER_NAME} <${from}>` };
 }
 
 export function submissionNotification(kind: SubmissionKind, id: number) {
@@ -36,7 +37,7 @@ export async function notifySubmission(kind: SubmissionKind, id: number, env: En
     const response = await send("https://api.resend.com/emails", {
       method: "POST",
       headers: { Authorization: `Bearer ${env.RESEND_API_KEY!.trim()}`, "Content-Type": "application/json", "Idempotency-Key": notification.idempotencyKey },
-      body: JSON.stringify({ from: env.RECF_NOTIFICATION_FROM!.trim(), to: [env.RECF_NOTIFICATION_TO!.trim()], subject: notification.subject, text: notification.text }),
+      body: JSON.stringify({ from: config.sender, to: [env.RECF_NOTIFICATION_TO!.trim()], subject: notification.subject, text: notification.text }),
       signal: AbortSignal.timeout(5000),
     });
     if (response.ok) {
@@ -66,11 +67,12 @@ export function applicationReceipt(id: number) {
 }
 
 export async function notifyApplicationReceipt(id: number, recipient: string, env: Environment = process.env, send: typeof fetch = fetch): Promise<NotificationResult> {
-  if (!notificationConfiguration(env).ready) return "disabled";
+  const config=notificationConfiguration(env);
+  if (!config.ready) return "disabled";
   if (!email.test(recipient)) return "failed";
   try {
     const receipt = applicationReceipt(id);
-    const body = JSON.stringify({from:env.RECF_NOTIFICATION_FROM!.trim(),to:[recipient],reply_to:PUBLIC_CONTACT.support,subject:receipt.subject,text:receipt.text,html:receipt.html});
+    const body = JSON.stringify({from:config.sender,to:[recipient],reply_to:PUBLIC_CONTACT.support,subject:receipt.subject,text:receipt.text,html:receipt.html});
     // The same key/body is reused after a transient failure, so an ambiguous
     // timeout cannot produce another receipt within Resend's idempotency window.
     for (let attempt=0;attempt<2;attempt++) {

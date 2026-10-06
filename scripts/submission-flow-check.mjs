@@ -18,6 +18,8 @@ let requests=0;
 assert.equal(notificationConfiguration({}).ready,false);
 assert.equal(notificationConfiguration({...config,VERCEL_ENV:'preview'}).ready,false);
 assert.equal(notificationConfiguration({...config,RECF_NOTIFICATION_TO:'injected\n@example.net'}).ready,false);
+assert.equal(notificationConfiguration({...config,RECF_NOTIFICATION_FROM:'notify@example.org\r\nBcc:other@example.net'}).ready,false);
+assert.equal(notificationConfiguration(config).sender,'RECF Türkiye · Takım Destek <notify@example.org>');
 assert.equal(await notifySubmission('contact',1,{...config,RECF_NOTIFICATIONS_ENABLED:'0'},async()=>{requests++;}), 'disabled');
 assert.equal(requests,0);
 assert.throws(()=>submissionNotification('contact',0));
@@ -27,7 +29,7 @@ assert.ok(payload.text.includes('/admin/onaylar#basvuru-123'));
 assert.equal(payload.idempotencyKey,'recf-application-123');
 assert.equal(await notifySubmission('application',123,config,async(url,options)=>{
  assert.equal(url,'https://api.resend.com/emails');assert.equal(options.headers['Idempotency-Key'],payload.idempotencyKey);
- const body=JSON.parse(options.body);assert.deepEqual(body.to,['admin@example.net']);assert.equal(body.from,'notify@example.org');assert.equal(body.text,payload.text);
+ const body=JSON.parse(options.body);assert.deepEqual(body.to,['admin@example.net']);assert.equal(body.from,'RECF Türkiye · Takım Destek <notify@example.org>');assert.equal(body.text,payload.text);
  return {ok:true,status:200,json:async()=>({id:'provider-test-id'})};
 }), 'accepted');
 assert.equal(await notifySubmission('contact',12,config,async()=>({ok:false,status:503})), 'failed');
@@ -46,6 +48,7 @@ const receiptSend=async(url,options)=>{
  assert.equal(url,'https://api.resend.com/emails');
  assert.equal(options.headers['Idempotency-Key'],receipt.idempotencyKey);
  const body=JSON.parse(options.body);
+ assert.equal(body.from,'RECF Türkiye · Takım Destek <notify@example.org>');
  assert.deepEqual(body.to,['mentor@example.net']);
  assert.equal(body.reply_to,'destek@recfturkiye.com');
  assert.equal(body.text,receipt.text);assert.equal(body.html,receipt.html);
