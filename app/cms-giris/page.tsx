@@ -32,6 +32,7 @@ function CmsForm() {
       <p className="flex items-center gap-2 font-display text-[15px] font-bold tracking-[2px] text-cyan-brand"><FigmaIcon name="ayarlar" className="h-5 w-5"/> RECF TÜRKİYE</p>
       <h1 className="mt-3 font-display text-[26px] font-bold text-white sm:text-[28px] 2xl:text-[34px]">İÇERİK YÖNETİM SİSTEMİ</h1>
       <p className="mt-2 text-[13.5px] text-white/50">Yalnızca yetkili ekip üyeleri. Tüm oturumlar kayıt altındadır.</p>
+      {params.get("password")==="changed"&&<p role="status" className="mt-4 rounded-md border border-cyan-brand/40 bg-cyan-brand/10 p-3 text-sm text-cyan-brand">Şifreniz değiştirildi. Yeni şifrenizle tekrar giriş yapın.</p>}
       <form onSubmit={login} className="mt-7">
         <label className="block font-display text-[11.5px] font-semibold tracking-[1px] text-white/60">KURUMSAL E-POSTA
           <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="ad@recfturkiye.com" className={input} required />
