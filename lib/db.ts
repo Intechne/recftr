@@ -33,7 +33,7 @@ export function tempPassword() {
   return `RECF-${randomBytes(12).toString("base64url").replace(/[-_]/g,"A")}!`;
 }
 
-export type NewApplication = { num:string; team:string; org:string; city:string; district:string; type:string; program:string; mentor:string; email:string; phone:string; kit:boolean; kvkkAccepted:boolean; total:number };
+export type NewApplication = { num:string; team:string; org:string; city:string; district:string; type:string; program:string; mentor:string; email:string; phone:string; kvkkAccepted:boolean };
 export async function createApplication(a: NewApplication) {
   const sql = await db();
   return sql.begin(async(tx:any)=>{
@@ -43,10 +43,12 @@ export async function createApplication(a: NewApplication) {
     // anonymous team-number squatting. Re-submitting the same number+email refreshes the draft.
     const [recent]=await tx`SELECT id FROM applications WHERE num=${a.num} AND lower(email)=lower(${a.email}) AND status='BAŞVURU ALINDI' AND created_at > now() - interval '24 hours' ORDER BY id DESC LIMIT 1`;
     if(recent){
-      const [row]=await tx`UPDATE applications SET team=${a.team},org=${a.org},city=${a.city},district=${a.district},type=${a.type},program=${a.program},mentor=${a.mentor},phone=${a.phone},kit=${a.kit},kvkk_accepted=${a.kvkkAccepted},kvkk_accepted_at=CASE WHEN ${a.kvkkAccepted} THEN now() ELSE kvkk_accepted_at END,total=${a.total} WHERE id=${recent.id} RETURNING id`;
+      const [row]=await tx`UPDATE applications SET team=${a.team},org=${a.org},city=${a.city},district=${a.district},type=${a.type},program=${a.program},mentor=${a.mentor},phone=${a.phone},kit=false,kvkk_accepted=${a.kvkkAccepted},kvkk_accepted_at=CASE WHEN ${a.kvkkAccepted} THEN now() ELSE kvkk_accepted_at END,total=0 WHERE id=${recent.id} RETURNING id`;
       return {id:Number(row.id),updated:true};
     }
-    const [row] = await tx`INSERT INTO applications (num,team,org,city,district,type,program,mentor,email,phone,kit,kvkk_accepted,kvkk_accepted_at,total,status) VALUES (${a.num},${a.team},${a.org},${a.city},${a.district},${a.type},${a.program},${a.mentor},${a.email},${a.phone},${a.kit},${a.kvkkAccepted},CASE WHEN ${a.kvkkAccepted} THEN now() ELSE NULL END,${a.total},'BAŞVURU ALINDI') RETURNING id`;
+    // Legacy non-null financial columns remain compatible; a preliminary
+    // application records no quote or kit purchase. No pricing is calculated.
+    const [row] = await tx`INSERT INTO applications (num,team,org,city,district,type,program,mentor,email,phone,kit,kvkk_accepted,kvkk_accepted_at,total,status) VALUES (${a.num},${a.team},${a.org},${a.city},${a.district},${a.type},${a.program},${a.mentor},${a.email},${a.phone},false,${a.kvkkAccepted},CASE WHEN ${a.kvkkAccepted} THEN now() ELSE NULL END,0,'BAŞVURU ALINDI') RETURNING id`;
     return {id:Number(row.id),updated:false};
   });
 }

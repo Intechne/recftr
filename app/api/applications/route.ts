@@ -1,10 +1,10 @@
 import {NextRequest,NextResponse} from "next/server";
 import {approvalsSession} from "@/lib/auth";
-import {createApplication,getSettings,listApplications} from "@/lib/db";
+import {createApplication,listApplications} from "@/lib/db";
 import {isValidProvinceDistrict} from "@/lib/locations";
 import {apiError} from "@/lib/api-server";
 import {cleanText,clientIp,enforceRateLimit,rateLimitResponse,validEmail} from "@/lib/security";
-import {notifySubmission} from "@/lib/submission-notifications";
+import {notifySubmission,notifyApplicationReceipt} from "@/lib/submission-notifications";
 export const dynamic="force-dynamic";
 const PROGRAMS=['engage','achieve','inspire','adc','adc-pro'];
 export async function GET(req:NextRequest){try{if(!(await approvalsSession(req)))return NextResponse.json({error:'Yetkisiz'},{status:403});return NextResponse.json(await listApplications());}catch(e){return apiError(e,'Başvurular alınamadı.');}}
@@ -22,10 +22,8 @@ export async function POST(req:NextRequest){
     if(!PROGRAMS.includes(program))return NextResponse.json({error:'Geçersiz program.'},{status:400});
     if(b.kvkk!==true)return NextResponse.json({error:'KVKK Aydınlatma Metni için okuma bildirimi zorunludur.'},{status:400});
     const emailLimit=await enforceRateLimit(req,'application-email',email,3,24*60*60);if(!emailLimit.ok)return rateLimitResponse(emailLimit.retryAfter);
-    const s=await getSettings([`registration_fee_${program}`,'field_kit_fee','registration_discount']);const base=Number(s[`registration_fee_${program}`]);if(!Number.isFinite(base))return NextResponse.json({error:'Geçersiz program veya kayıt ücreti tanımsız.'},{status:400});
-    const total=Math.max(0,base+(b.kit?Number(s.field_kit_fee)||0:0)-(Number(s.registration_discount)||0));
-    const out=await createApplication({num,team,org,city,district,type,program,mentor,email,phone,kit:!!b.kit,kvkkAccepted:true,total});
-    await notifySubmission('application',out.id);
-    return NextResponse.json({ok:true,...out,note:'Takım numarası başvuru onaylanana kadar kesin olarak rezerve edilmez.'},{status:201});
+    const out=await createApplication({num,team,org,city,district,type,program,mentor,email,phone,kvkkAccepted:true});
+    const [,confirmationEmail]=await Promise.all([notifySubmission('application',out.id),notifyApplicationReceipt(out.id,email)]);
+    return NextResponse.json({ok:true,...out,confirmationEmail,note:'Bu ön başvuru resmî takım numarası tahsisi veya rezervasyon değildir.'},{status:201});
   }catch(e:any){const msg=String(e?.message||'');if(msg.includes('TEAM_NUM_USED')||msg.includes('unique')||msg.includes('duplicate'))return NextResponse.json({error:'Bu takım numarası onaylı bir takım tarafından kullanılıyor.'},{status:409});return apiError(e,'Başvuru kaydedilemedi.');}
 }
