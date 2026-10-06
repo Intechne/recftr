@@ -1,13 +1,16 @@
 import { NextRequest } from "next/server";
 import { SESSION_COOKIE, verifySessionToken, type SessionPayload, type SessionRole } from "@/lib/session";
-import { findUserByEmail } from "@/lib/db";
+import { findUserByEmail, isSessionRevoked } from "@/lib/db";
+import { createHash } from "crypto";
 import { bootstrapSessionVersion } from "@/lib/security";
 
 export const CMS_ROLES: SessionRole[] = ["admin", "editor", "approvals", "technical"];
 
 export async function sessionFromRequest(req: NextRequest): Promise<SessionPayload | null> {
-  const token = await verifySessionToken(req.cookies.get(SESSION_COOKIE)?.value);
+  const raw = req.cookies.get(SESSION_COOKIE)?.value;
+  const token = await verifySessionToken(raw);
   if (!token) return null;
+  if (await isSessionRevoked(createHash("sha256").update(raw!).digest("hex"))) return null;
 
   // Bootstrap administrator is controlled by Vercel environment variables, not cms_users.
   const bootstrapEmail = String(process.env.ADMIN_EMAIL || "").trim().toLowerCase();
@@ -31,7 +34,7 @@ export async function sessionFromRequest(req: NextRequest): Promise<SessionPaylo
 
 export async function hasRole(req: NextRequest, roles: SessionRole[]) {
   const session = await sessionFromRequest(req);
-  return session && roles.includes(session.role) ? session : null;
+  return session && !session.mustChangePassword && roles.includes(session.role) ? session : null;
 }
 export async function cmsSession(req: NextRequest) { return hasRole(req, CMS_ROLES); }
 export async function adminSession(req: NextRequest) { return hasRole(req, ["admin"]); }

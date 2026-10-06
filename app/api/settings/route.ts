@@ -4,6 +4,7 @@ import { getSettings, setSettingsAtomic } from "@/lib/db";
 import { apiError } from "@/lib/api-server";
 import { currentContactSettings } from "@/lib/public-contact";
 import { cleanText, validHttpUrl } from "@/lib/security";
+import { verifyPublicImageReference } from "@/lib/storage";
 import { currentContentRevision, publishContentChange, PUBLIC_SETTING_KEYS } from "@/lib/content-consistency";
 
 export const dynamic="force-dynamic";
@@ -14,6 +15,7 @@ const CONTENT=[...PUBLIC];
 const FINANCIAL=["registration_fee_engage","registration_fee_achieve","registration_fee_inspire","registration_fee_adc","registration_fee_adc-pro","field_kit_fee","registration_discount","registration_enabled"];
 const ALL=new Set([...CONTENT,...FINANCIAL]);
 const URL_KEYS=new Set(["instagram","youtube","linkedin","hero_image","site_logo","site_mark","favicon_url","apple_touch_icon_url","og_image"]);
+const IMAGE_KEYS=new Set(["hero_image","site_logo","site_mark","favicon_url","apple_touch_icon_url","og_image"]);
 const NO_STORE={"Cache-Control":"private, no-store, max-age=0","Pragma":"no-cache"};
 
 export async function GET(req:NextRequest){
@@ -49,6 +51,7 @@ export async function PUT(req:NextRequest){
       const raw=String(v??'').trim();
       if(raw.length>20000)return NextResponse.json({error:`${k} değeri çok uzun.`},{status:400});
       if(URL_KEYS.has(k)&&raw&&!validHttpUrl(raw))return NextResponse.json({error:`${k} için yalnız güvenli HTTPS URL kullanılabilir.`},{status:400});
+      if(IMAGE_KEYS.has(k)&&raw){const imageError=await verifyPublicImageReference(raw);if(imageError)return NextResponse.json({error:imageError},{status:400});}
       normalized.push([k,raw]);
     }
 

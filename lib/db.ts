@@ -213,6 +213,18 @@ export async function saveUser(b:any){
 export async function deleteUser(id:number){ const sql=await db(); await sql`DELETE FROM cms_users WHERE id=${id}`; }
 export async function changeOwnPassword(email:string,current:string,next:string){ const u=await findUserByEmail(email); if(!u||!verifyPassword(current,u.password_hash)) return false; const sql=await db(); await sql`UPDATE cms_users SET password_hash=${hashPassword(next)},must_change_password=false,session_version=session_version+1,updated_at=now() WHERE id=${u.id}`; return true; }
 
+export async function revokeSession(tokenHash: string, expiresAt: Date) {
+  const sql = await db();
+  await sql`INSERT INTO security_revoked_sessions(token_hash, expires_at) VALUES(${tokenHash}, ${expiresAt}) ON CONFLICT(token_hash) DO NOTHING`;
+  if (Math.random() < 0.02) await sql`DELETE FROM security_revoked_sessions WHERE expires_at < now()`;
+}
+
+export async function isSessionRevoked(tokenHash: string) {
+  const sql = await db();
+  const [row] = await sql`SELECT 1 FROM security_revoked_sessions WHERE token_hash=${tokenHash} AND expires_at > now() LIMIT 1`;
+  return !!row;
+}
+
 export async function createContact(b:any){ const sql=await db(); const [r]=await sql`INSERT INTO contacts(name,email,phone,subject,message,status) VALUES(${b.name},${b.email},${b.phone??''},${b.subject??''},${b.message},'YENİ') RETURNING id`; return r; }
 export async function listContacts(){ const sql=await db(); return sql`SELECT * FROM contacts ORDER BY created_at DESC`; }
 export async function updateContact(id:number,status:string){ const sql=await db(); await sql`UPDATE contacts SET status=${status},updated_at=now() WHERE id=${id}`; }
@@ -268,7 +280,7 @@ export async function dbDiagnostics(){
   try{
     const sql=await db();
     const [who]=await sql`SELECT current_database() database,current_user db_user,now() time`;
-    const expected=["applications","teams","members","news","program_content","events","documents","pages","settings","team_docs","document_requirements","payments","cms_users","event_registrations","media","contacts","audit_logs","security_rate_limits"];
+    const expected=["applications","teams","members","news","program_content","events","documents","pages","settings","team_docs","document_requirements","payments","cms_users","event_registrations","media","contacts","audit_logs","security_rate_limits","security_revoked_sessions"];
     const rows=await sql`SELECT table_name FROM information_schema.tables WHERE table_schema='public' AND table_name IN ${sql(expected)}`;
     const tables=rows.map((r:any)=>r.table_name);
     const missingTables=expected.filter(x=>!tables.includes(x));

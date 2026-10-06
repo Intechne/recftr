@@ -19,6 +19,8 @@ function CmsForm() {
     const r = await fetch("/api/auth", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ email, pass, otp, scope: "cms" }) });
     setBusy(false);
     if (!r.ok) { setErr((await r.json()).error ?? "Giriş başarısız."); return; }
+    const session = await r.json();
+    if (session.mustChangePassword) { router.push("/admin/sifre-degistir"); router.refresh(); return; }
     const next = params.get("next");
     router.push(safeInternalPath(next, "/admin"));
     router.refresh();

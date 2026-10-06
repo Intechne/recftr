@@ -3,12 +3,11 @@ import { NextRequest, NextResponse } from "next/server";
 import { audit, consumeRateLimit } from "@/lib/db";
 
 export function clientIp(req: NextRequest) {
-  // Vercel sets x-vercel-forwarded-for / x-forwarded-for at the edge. Prefer the
-  // platform header so a user-supplied x-real-ip value cannot become the primary key.
-  const vercel = req.headers.get("x-vercel-forwarded-for")?.split(",")[0]?.trim();
-  const forwarded = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim();
-  const real = req.headers.get("x-real-ip")?.trim();
-  return (vercel || forwarded || real || "unknown").slice(0, 80);
+  // Vercel overwrites this header at its edge. Other deployments must explicitly
+  // configure a proxy that strips client-supplied copies of their chosen header.
+  const header = process.env.VERCEL === "1" ? "x-vercel-forwarded-for" : process.env.TRUSTED_CLIENT_IP_HEADER;
+  const value = header && /^[a-z0-9-]+$/i.test(header) ? req.headers.get(header)?.split(",")[0]?.trim() : "";
+  return value && /^(?:[a-f0-9:.]+)$/i.test(value) ? value.slice(0, 80) : "unknown";
 }
 
 export function securityHash(value: string) {

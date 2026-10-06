@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createSessionToken, SESSION_COOKIE, type SessionRole } from "@/lib/session";
-import { audit, findUserByEmail, hashPassword, verifyPassword } from "@/lib/db";
+import { audit, findUserByEmail, hashPassword, verifyPassword, revokeSession } from "@/lib/db";
+import { createHash } from "crypto";
+import { verifySessionToken } from "@/lib/session";
 import { bootstrapSessionVersion, clientIp, enforceRateLimit, rateLimitResponse, safeEqual, securityHash } from "@/lib/security";
 import { verifyTotp } from "@/lib/totp";
 
@@ -75,6 +77,15 @@ export async function POST(req: NextRequest) {
   }
 }
 export async function DELETE(req:NextRequest){
+  const raw = req.cookies.get(SESSION_COOKIE)?.value;
+  const token = await verifySessionToken(raw);
+  if (raw && token) {
+    try {
+      await revokeSession(createHash("sha256").update(raw).digest("hex"), new Date(token.exp * 1000));
+    } catch {
+      return noStoreJson({error:"Oturum sunucuda sonlandırılamadı. Lütfen yeniden deneyin."},{status:503});
+    }
+  }
   const res=noStoreJson({ok:true});
   res.cookies.set(SESSION_COOKIE,"",{httpOnly:true,sameSite:"lax",secure:process.env.NODE_ENV==="production",path:"/",maxAge:0,priority:"high"});
   return res;
