@@ -236,7 +236,7 @@ export async function createCommitteeApplication(data:CommitteeApplicationInput)
   const sql=await db();
   return sql.begin(async(tx:any)=>{
     const [created]=await tx`INSERT INTO planning_committee_applications(submission_key,payload_fingerprint,name,email,phone,city,district,organization,occupation,areas,availability,experience,motivation,adult_confirmed,kvkk_acknowledged,kvkk_acknowledged_at)
-      VALUES(${data.submissionKey}::uuid,${data.fingerprint},${data.name},${data.email},${data.phone},${data.city},${data.district},${data.organization},${data.occupation},${JSON.stringify(data.areas)}::jsonb,${data.availability},${data.experience},${data.motivation},true,true,now())
+      VALUES(${data.submissionKey}::uuid,${data.fingerprint},${data.name},${data.email},${data.phone},${data.city},${data.district},${data.organization},${data.occupation},${tx.json(data.areas)},${data.availability},${data.experience},${data.motivation},true,true,now())
       ON CONFLICT(submission_key) DO NOTHING RETURNING id`;
     if(created)return {id:Number(created.id)};
     const [existing]=await tx`SELECT id FROM planning_committee_applications WHERE submission_key=${data.submissionKey}::uuid AND payload_fingerprint=${data.fingerprint}`;
