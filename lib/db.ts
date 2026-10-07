@@ -1,5 +1,6 @@
 import { randomBytes, scryptSync, timingSafeEqual } from "crypto";
 import {correctAchieveContent,eventPhase,publicEvent} from "@/lib/public-content";
+import type {CommitteeApplicationInput,CommitteeStatus} from "@/lib/planning-committee";
 
 const PG_URL = process.env.DATABASE_URL ?? process.env.POSTGRES_URL;
 let _sql: any;
@@ -231,6 +232,33 @@ export async function createContact(b:any){ const sql=await db(); const [r]=awai
 export async function listContacts(){ const sql=await db(); return sql`SELECT * FROM contacts ORDER BY created_at DESC`; }
 export async function updateContact(id:number,status:string){ const sql=await db(); await sql`UPDATE contacts SET status=${status},updated_at=now() WHERE id=${id}`; }
 
+export async function createCommitteeApplication(data:CommitteeApplicationInput){
+  const sql=await db();
+  return sql.begin(async(tx:any)=>{
+    const [created]=await tx`INSERT INTO planning_committee_applications(submission_key,payload_fingerprint,name,email,phone,city,district,organization,occupation,areas,availability,experience,motivation,adult_confirmed,kvkk_acknowledged,kvkk_acknowledged_at)
+      VALUES(${data.submissionKey}::uuid,${data.fingerprint},${data.name},${data.email},${data.phone},${data.city},${data.district},${data.organization},${data.occupation},${JSON.stringify(data.areas)}::jsonb,${data.availability},${data.experience},${data.motivation},true,true,now())
+      ON CONFLICT(submission_key) DO NOTHING RETURNING id`;
+    if(created)return {id:Number(created.id)};
+    const [existing]=await tx`SELECT id FROM planning_committee_applications WHERE submission_key=${data.submissionKey}::uuid AND payload_fingerprint=${data.fingerprint}`;
+    return existing?{id:Number(existing.id)}:null;
+  });
+}
+export async function listCommitteeApplications({cursor,status,search}:{cursor?:number;status:CommitteeStatus|"";search:string}){
+  const sql=await db();
+  const after=cursor?sql`AND id<${cursor}`:sql``;
+  const state=status?sql`AND status=${status}`:sql``;
+  const pattern=`%${search.replace(/[\\%_]/g,"\\$&")}%`;
+  const query=search?sql`AND (name ILIKE ${pattern} OR email ILIKE ${pattern} OR city ILIKE ${pattern} OR organization ILIKE ${pattern})`:sql``;
+  const rows=await sql`SELECT id,name,email,phone,city,district,organization,occupation,areas,availability,experience,motivation,status,review_notes,version,created_at,updated_at FROM planning_committee_applications WHERE true ${after} ${state} ${query} ORDER BY id DESC LIMIT 101`;
+  const items=rows.slice(0,100).map((row:any)=>({...row,id:Number(row.id)}));
+  return {items,nextCursor:rows.length>100?Number(items[items.length-1].id):null};
+}
+export async function updateCommitteeApplication(id:number,status:CommitteeStatus,notes:string,version:number){
+  const sql=await db();
+  const [record]=await sql`UPDATE planning_committee_applications SET status=${status},review_notes=${notes},version=version+1,updated_at=now() WHERE id=${id} AND version=${version} RETURNING id,status,review_notes,version,updated_at`;
+  return record?{...record,id:Number(record.id)}:null;
+}
+
 export async function consumeRateLimit(key:string,limit:number,windowSeconds:number){
   const sql=await db();
   const windowMs=Math.max(1,windowSeconds)*1000;
@@ -282,7 +310,7 @@ export async function dbDiagnostics(){
   try{
     const sql=await db();
     const [who]=await sql`SELECT current_database() database,current_user db_user,now() time`;
-    const expected=["applications","teams","members","news","program_content","events","documents","pages","settings","team_docs","document_requirements","payments","cms_users","event_registrations","media","contacts","audit_logs","security_rate_limits","security_revoked_sessions"];
+    const expected=["applications","teams","members","news","program_content","events","documents","pages","settings","team_docs","document_requirements","payments","cms_users","event_registrations","media","contacts","audit_logs","security_rate_limits","security_revoked_sessions","planning_committee_applications"];
     const rows=await sql`SELECT table_name FROM information_schema.tables WHERE table_schema='public' AND table_name IN ${sql(expected)}`;
     const tables=rows.map((r:any)=>r.table_name);
     const missingTables=expected.filter(x=>!tables.includes(x));

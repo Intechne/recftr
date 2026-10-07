@@ -217,6 +217,8 @@ export default async function Home() {
       </div>
     </section>}
 
+    <section className="border-t-2 border-ink bg-cyan-brand/10"><div className="safe-x mx-auto flex max-w-7xl flex-col gap-6 py-12 sm:flex-row sm:items-center sm:justify-between lg:px-10"><div><p className="font-display text-xs font-bold tracking-[2px] text-cyan-deep">PLANLAMA KOMİTESİ</p><h2 className="mt-2 font-display text-3xl font-bold">SAHAYI BİRLİKTE HAZIRLAYALIM.</h2><p className="mt-3 max-w-2xl text-sm leading-relaxed text-ink/65">Etkinlik hazırlığı, eğitim, teknik destek ve iletişim süreçlerine katkı sunmak isteyen yetişkin gönüllüler için komite başvuruları.</p></div><Link href="/planlama-komitesi" className="inline-flex min-h-12 shrink-0 items-center justify-center rounded-md border-2 border-ink bg-ink px-5 py-3 font-display text-sm font-bold text-white shadow-plateSm shadow-cyan-brand">KOMİTEYİ TANI & BAŞVUR →</Link></div></section>
+
     {/* TAKIM PLAKASI CTA */}
     {enabled(settings,"home_show_cta")&&<section className="field-grid-dark relative overflow-hidden bg-ink">
       <div aria-hidden className="home-orbit home-orbit-red absolute -left-20 -top-20 h-40 w-40 rotate-45 bg-alliance-red sm:h-44 sm:w-44"/>
