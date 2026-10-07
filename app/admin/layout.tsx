@@ -15,6 +15,7 @@ const ALL:[string,string,FigmaIconName,readonly string[]][]=[
 ["/admin/medya","Medya Kütüphanesi","media",["admin","editor"]],
 ["/admin/sayfalar","Sayfalar","pages",["admin","editor"]],
 ["/admin/onaylar","Takım Başvuruları","applications",["admin","approvals"]],
+["/admin/planlama-komitesi","Komite Başvuruları","users",["admin","approvals"]],
 ["/admin/takimlar","Takımlar","teams",["admin","approvals"]],
 ["/admin/etkinlik-kayitlari","Etkinlik Kayıtları","registrations",["admin","approvals"]],
 ["/admin/belge-gereksinimleri","Belge Gereksinimleri","requirements",["admin","approvals","technical"]],
