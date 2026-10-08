@@ -1,4 +1,4 @@
-import { randomBytes, scryptSync, timingSafeEqual } from "crypto";
+import { randomBytes, randomUUID, scryptSync, timingSafeEqual } from "crypto";
 import {correctAchieveContent,eventPhase,publicEvent} from "@/lib/public-content";
 import type {CommitteeApplicationInput,CommitteeStatus} from "@/lib/planning-committee";
 
@@ -59,7 +59,12 @@ export async function resolveApplication(id:number, action:"approve"|"reject") {
   return sql.begin(async (tx:any) => {
     const [app] = await tx`SELECT * FROM applications WHERE id=${id} FOR UPDATE`;
     if (!app) return null;
-    if (action === "reject") { await tx`UPDATE applications SET status='REDDEDİLDİ', reviewed_at=now() WHERE id=${id}`; return { app, action }; }
+    if (app.status === 'ONAYLANDI') {
+      if (action !== 'approve') throw new Error('APPLICATION_ALREADY_RESOLVED');
+      return { app, action, alreadyResolved:true };
+    }
+    if (app.status === 'REDDEDİLDİ') throw new Error('APPLICATION_ALREADY_RESOLVED');
+    if (action === "reject") { await tx`UPDATE applications SET status='REDDEDİLDİ', reviewed_at=now() WHERE id=${id}`; return { app, action, alreadyResolved:false }; }
     const [numberUsed] = await tx`SELECT 1 FROM teams WHERE num=${app.num} LIMIT 1`;
     if (numberUsed) throw new Error('TEAM_NUM_USED');
     const [existing] = await tx`SELECT id,role FROM cms_users WHERE lower(email)=lower(${app.email})`;
@@ -77,8 +82,29 @@ export async function resolveApplication(id:number, action:"approve"|"reject") {
     const [mentorMember] = await tx`SELECT id FROM members WHERE team_num=${app.num} AND lower(coalesce(email,''))=lower(${app.email}) LIMIT 1`;
     if (!mentorMember) await tx`INSERT INTO members (team_num,name,email,role,cat,consent,status) VALUES (${app.num},${app.mentor},${app.email},'MENTOR','—','—','AKTİF')`;
     await tx`UPDATE applications SET status='ONAYLANDI', reviewed_at=now() WHERE id=${id}`;
-    return { app, action, temporaryPassword: password };
+    return { app, action, temporaryPassword: password, alreadyResolved:false };
   });
+}
+
+export async function claimApplicationApprovalEmail(id:number) {
+  const sql=await db(),claim=randomUUID();
+  // UPDATE is the claim: concurrent requests cannot both send. Recover a worker
+  // that terminated without saving its result after five minutes.
+  const [app]=await sql`UPDATE applications a SET approval_email_status='sending',approval_email_claim=${claim}::uuid,approval_email_attempted_at=now()
+    WHERE a.id=${id} AND a.status='ONAYLANDI' AND a.approval_email_sent_at IS NULL
+      AND (a.approval_email_status IN ('pending','failed','disabled') OR (a.approval_email_status='sending' AND a.approval_email_attempted_at < now()-interval '5 minutes'))
+      AND EXISTS (SELECT 1 FROM teams t WHERE t.num=a.num AND t.status='AKTİF' AND lower(t.mentor_email)=lower(a.email))
+    RETURNING a.id,a.num,a.team,a.program,a.email`;
+  if(app)return {app:{...app,id:Number(app.id)},claim};
+  const [existing]=await sql`SELECT approval_email_status,status FROM applications WHERE id=${id}`;
+  return {app:null,claim:null,status:existing?.approval_email_status==='accepted'?'accepted':existing?.approval_email_status==='sending'?'sending':'unavailable'};
+}
+export async function finishApplicationApprovalEmail(id:number,claim:string,status:'accepted'|'failed'|'disabled',providerId?:string) {
+  const sql=await db();
+  const [row]=await sql`UPDATE applications SET approval_email_status=${status},approval_email_sent_at=CASE WHEN ${status}='accepted' THEN now() ELSE NULL END,
+    approval_email_provider_id=${providerId||null},approval_email_claim=NULL
+    WHERE id=${id} AND approval_email_claim=${claim}::uuid AND approval_email_status='sending' RETURNING id`;
+  return !!row;
 }
 
 export async function listTeams(all=true) {
