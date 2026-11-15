@@ -46,5 +46,7 @@ export function settingFlag(raw: unknown) {
 
 /** Bir metinde production'a çıkmaması gereken yer tutucu var mı? */
 export function hasPlaceholder(text: unknown) {
-  return /\[(?:\s*TEY[İI]T|\s*TBD|\s*TODO)[^\]]*\]|\bTEY[İI]T\b|lorem ipsum/i.test(String(text ?? ""));
+  const value = String(text ?? "");
+  // Köşeli parantezli işaretler ve büyük harfli "TEYİT" yer tutucudur; cümle içindeki "teyit" değildir.
+  return /\[[^\]]*(?:TEY[İI]T|TBD|TODO)[^\]]*\]|lorem ipsum/i.test(value) || /(?:^|[^A-Za-zÇĞİÖŞÜçğıöşü])TEY[İI]T(?![A-Za-zÇĞİÖŞÜçğıöşü])/.test(value);
 }

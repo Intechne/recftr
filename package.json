@@ -21,7 +21,10 @@
     "forms:check": "node scripts/submission-flow-check.mjs",
     "password:check": "node scripts/password-flow-check.mjs",
     "committee:check": "node scripts/committee-flow-check.mjs && node scripts/committee-db-check.mjs",
-    "approval:check": "node scripts/approval-flow-check.mjs && node scripts/approval-db-check.mjs"
+    "approval:check": "node scripts/approval-flow-check.mjs && node scripts/approval-db-check.mjs",
+    "forms:leads": "node scripts/leads-flow-check.mjs",
+    "content:pages": "node scripts/site-content-check.mjs",
+    "test": "node scripts/leads-flow-check.mjs && node scripts/site-content-check.mjs && node scripts/submission-flow-check.mjs && node scripts/approval-flow-check.mjs && node scripts/committee-flow-check.mjs && node scripts/password-flow-check.mjs && node scripts/content-consistency-check.mjs && node scripts/public-content-check.mjs && node scripts/security-static-check.mjs"
   },
   "dependencies": {
     "@halilertekin/turkey_province_image": "^3.3.3",
