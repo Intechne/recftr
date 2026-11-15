@@ -12,6 +12,7 @@ export default function LeadForm({ kind, title, intro, provinces = [], submitLab
   const blankChoices = Object.fromEntries(config.choices.map(choice => [choice.field, choice.multiple ? [] : ""])) as Record<string, string | string[]>;
   const [form, setForm] = useState({ name: "", email: "", phone: "", organization: "", role: "", city: "", message: "", kvkk: false, website: "" });
   const [choices, setChoices] = useState(blankChoices);
+  const [consents, setConsents] = useState<Record<string, boolean>>(Object.fromEntries((config.consents || []).map(c => [c.field, false])));
   const [busy, setBusy] = useState(false), [error, setError] = useState("");
   const [result, setResult] = useState<{ id: number; confirmationEmail: string } | null>(null);
   const submissionKey = useRef("");
@@ -24,10 +25,11 @@ export default function LeadForm({ kind, title, intro, provinces = [], submitLab
   async function submit(event: React.FormEvent) {
     event.preventDefault(); setError("");
     if (!form.kvkk) { setError("Göndermek için KVKK Aydınlatma Metni'ni okuduğunuzu onaylayın."); return; }
+    if ((config.consents || []).some(c => !consents[c.field])) { setError("Göndermek için zorunlu onay kutularını işaretleyin."); return; }
     setBusy(true);
     try {
       if (!submissionKey.current) submissionKey.current = crypto.randomUUID();
-      const response = await fetch("/api/leads", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ ...form, ...choices, kind, submissionKey: submissionKey.current }) });
+      const response = await fetch("/api/leads", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ ...form, ...choices, ...consents, kind, submissionKey: submissionKey.current }) });
       const data = await response.json().catch(() => ({}));
       if (!response.ok) { setError(response.status === 429 ? "Çok fazla deneme yapıldı. Lütfen biraz sonra tekrar deneyin." : data.error || "Form gönderilemedi. Bilgilerinizi kontrol edip tekrar deneyin."); return; }
       if (!Number.isSafeInteger(data.id) || data.id < 1) { setError("Gönderim sonucu doğrulanamadı. Tekrar göndermeden önce bizimle iletişime geçin."); return; }
@@ -64,6 +66,7 @@ export default function LeadForm({ kind, title, intro, provinces = [], submitLab
         : <label key={choice.field} htmlFor={fid(choice.field)} className={label}>{choice.label}{choice.required ? "*" : ""}<select id={fid(choice.field)} required={choice.required} className={input} value={choices[choice.field] as string} onChange={event => setChoice(choice.field, event.target.value)}><option value="">Seçin</option>{choice.options.map(option => <option key={option}>{option}</option>)}</select></label>)}
       <label htmlFor={fid("message")} className={label}>{config.message.label}{config.message.required ? "*" : ""}<textarea id={fid("message")} required={config.message.required} rows={4} maxLength={3000} placeholder={config.message.placeholder} className={input} value={form.message} onChange={event => set("message", event.target.value)} /></label>
       <div className="space-y-3 border-t border-ink/15 pt-5">
+        {(config.consents || []).map(c => <label key={c.field} className="flex items-start gap-3 text-sm"><input type="checkbox" required className="mt-0.5 h-4 w-4 shrink-0 accent-cyan-deep" checked={!!consents[c.field]} onChange={event => { submissionKey.current = ""; setConsents(previous => ({ ...previous, [c.field]: event.target.checked })); }} /><span>{c.label}*{c.link && <> <a href={c.link.href} target="_blank" rel="noopener noreferrer" className="font-semibold text-cyan-deep underline">{c.link.text}</a></>}</span></label>)}
         <label className="flex items-start gap-3 text-sm"><input type="checkbox" required className="mt-0.5 h-4 w-4 shrink-0 accent-cyan-deep" checked={form.kvkk} onChange={event => set("kvkk", event.target.checked)} /><span><Link href="/kvkk" target="_blank" className="font-semibold text-cyan-deep underline">KVKK Aydınlatma Metni</Link>’ni okudum ve bilgi edindim.*</span></label>
         <p className="text-xs leading-relaxed text-ink/65">Bilgilerin yalnız bu talebin değerlendirilmesi ve seninle iletişime geçilmesi için kullanılır.</p>
       </div>

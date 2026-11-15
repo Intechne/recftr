@@ -9,7 +9,7 @@ const STATIC: Array<[path: string, priority: number, frequency: MetadataRoute.Si
   ["/okullar", 0.85, "monthly"], ["/veliler", 0.85, "monthly"], ["/sss", 0.8, "monthly"], ["/is-birlikleri", 0.7, "monthly"],
   ["/duyurular", 0.8, "daily"], ["/takimlar", 0.7, "weekly"], ["/dokumanlar", 0.7, "weekly"], ["/hakkimizda", 0.6, "monthly"],
   ["/rehber/takim-kaydi", 0.8, "monthly"], ["/rehber/mentor", 0.6, "monthly"], ["/galeri", 0.5, "weekly"], ["/planlama-komitesi", 0.6, "monthly"],
-  ["/en", 0.6, "monthly"], ["/en/about", 0.5, "monthly"], ["/en/faq", 0.5, "monthly"],
+  ["/en", 0.6, "monthly"], ["/en/programs", 0.5, "monthly"], ["/en/about", 0.5, "monthly"], ["/en/faq", 0.5, "monthly"], ["/gonullu", 0.6, "monthly"],
   ["/hukuki-belgeler", 0.4, "yearly"], ["/acik-riza", 0.3, "yearly"], ["/katilim-onami", 0.3, "yearly"], ["/kvkk", 0.3, "yearly"], ["/gizlilik", 0.3, "yearly"], ["/kullanim-kosullari", 0.3, "yearly"], ["/cerez-politikasi", 0.3, "yearly"],
 ];
 

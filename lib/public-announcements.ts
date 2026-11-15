@@ -4,7 +4,11 @@ export const FALLBACK_TICKER = [
   "Güncel etkinlik ve eğitim bilgileri için duyuruları takip edin",
 ];
 
-export function publicTickerMessages(raw?: string, now = Date.now()): string[] {
+/**
+ * Duyuru şeridi CMS'ten (Site Ayarları → Duyuru şeridi) yönetilir.
+ * {{founding_count}} belirteci güncel Founding 100 sayısıyla değiştirilir; sayı alınamazsa o mesaj gösterilmez.
+ */
+export function publicTickerMessages(raw?: string, now = Date.now(), foundingCount: number | null = null): string[] {
   let messages: string[] = [];
   try {
     const parsed: unknown = JSON.parse(raw || "[]");
@@ -16,5 +20,9 @@ export function publicTickerMessages(raw?: string, now = Date.now()): string[] {
   if (now >= Date.parse("2026-09-30T21:00:00Z")) {
     messages = messages.filter(message => !/^Coach Academy Eylül dönemi başvuruları başlıyor!?$/i.test(message));
   }
+  messages = messages.flatMap(message => {
+    if (!/\{\{\s*founding_count\s*\}\}/.test(message)) return [message];
+    return foundingCount && foundingCount > 0 ? [message.replace(/\{\{\s*founding_count\s*\}\}/g, String(foundingCount))] : [];
+  });
   return messages.length ? messages : [...FALLBACK_TICKER];
 }

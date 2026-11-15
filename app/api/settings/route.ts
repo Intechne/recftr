@@ -18,7 +18,7 @@ const ADMIN_ONLY=[...FINANCIAL,"recf_representation_approved"];
 const ALL=new Set([...CONTENT,...FINANCIAL]);
 const NUMERIC=new Set(["founding100_min_display","team_map_min_teams"]);
 const FLAGS=new Set(["home_show_programs","home_show_route","home_show_stats","home_show_events","home_show_news","home_show_gallery","home_show_cta","home_show_team_map","home_show_recf_news","recf_representation_approved"]);
-const URL_KEYS=new Set(["instagram","youtube","linkedin","hero_image","site_logo","site_mark","favicon_url","apple_touch_icon_url","og_image"]);
+const URL_KEYS=new Set(["recf_message_url","instagram","youtube","linkedin","hero_image","site_logo","site_mark","favicon_url","apple_touch_icon_url","og_image"]);
 const IMAGE_KEYS=new Set(["hero_image","site_logo","site_mark","favicon_url","apple_touch_icon_url","og_image"]);
 const NO_STORE={"Cache-Control":"private, no-store, max-age=0","Pragma":"no-cache"};
 
@@ -55,6 +55,7 @@ export async function PUT(req:NextRequest){
       const raw=String(v??'').trim();
       if(raw.length>20000)return NextResponse.json({error:`${k} değeri çok uzun.`},{status:400});
       if(URL_KEYS.has(k)&&raw&&!validHttpUrl(raw))return NextResponse.json({error:`${k} için yalnız güvenli HTTPS URL kullanılabilir.`},{status:400});
+      if(k==="recf_message_kind"&&raw&&!["video","link"].includes(raw))return NextResponse.json({error:"RECF'ten bloğu türü video veya link olmalı."},{status:400});
       if(NUMERIC.has(k)&&raw&&!/^\d{1,4}$/.test(raw))return NextResponse.json({error:`${k} için 0–9999 arası tam sayı girin.`},{status:400});
       if(FLAGS.has(k)&&raw&&!["true","false"].includes(raw))return NextResponse.json({error:`${k} yalnız true/false olabilir.`},{status:400});
       if(k==="season_route"&&raw){try{const route=JSON.parse(raw);if(!Array.isArray(route)||route.length>24)throw new Error();}catch{return NextResponse.json({error:"Sezon rotası geçersiz."},{status:400});}}

@@ -1,7 +1,7 @@
 import {NextRequest,NextResponse} from "next/server";
 import {contactSession} from "@/lib/auth";
 import {audit,listNewsletterSubscriptions,setNewsletterStatus,subscribeNewsletter,tableExists} from "@/lib/db";
-import {NEWSLETTER_CONSENT_TEXT} from "@/lib/newsletter";
+import {newsletterConsentText} from "@/lib/newsletter";
 import {cleanText,clientIp,enforceRateLimit,rateLimitResponse,validEmail} from "@/lib/security";
 import {apiError} from "@/lib/api-server";
 export const dynamic="force-dynamic";
@@ -20,7 +20,7 @@ export async function POST(req:NextRequest){
     if(!(await tableExists("newsletter_subscriptions")))return NextResponse.json({error:"Bülten kaydı çok yakında açılacak."},{status:503});
     const emailLimit=await enforceRateLimit(req,"newsletter-email",email,3,86400);
     if(!emailLimit.ok)return rateLimitResponse(emailLimit.retryAfter);
-    await subscribeNewsletter(email,NEWSLETTER_CONSENT_TEXT,source);
+    await subscribeNewsletter(email,newsletterConsentText(source),source);
     return NextResponse.json({ok:true},{status:201});
   }catch(error){return apiError(error,"Bülten kaydı yapılamadı.");}
 }

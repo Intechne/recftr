@@ -213,10 +213,11 @@ export async function registerEvent(teamNum:string,eventId:number){ const sql=aw
 export async function cancelEventRegistration(teamNum:string,eventId:number){ const sql=await db(); await sql`DELETE FROM event_registrations WHERE team_num=${teamNum} AND event_id=${eventId}`; }
 export async function updateEventRegistration(id:number,b:any){ const sql=await db(); const [r]=await sql`UPDATE event_registrations SET status=${b.status},pit=${b.pit??''},notes=${b.notes??''},updated_at=now() WHERE id=${id} RETURNING *`; return r??null; }
 
-export async function listDocuments(all=false){ const sql=await db(); return all ? sql`SELECT * FROM documents ORDER BY cat,name` : sql`SELECT * FROM documents WHERE published=true ORDER BY cat,name`; }
+export async function listDocuments(all=false){ const sql=await db(); const meta=await columnExists('documents','source'); if(meta) return all ? sql`SELECT * FROM documents ORDER BY source,sort_order,cat,name` : sql`SELECT * FROM documents WHERE published=true ORDER BY source,sort_order,cat,name`; return all ? sql`SELECT * FROM documents ORDER BY cat,name` : sql`SELECT * FROM documents WHERE published=true ORDER BY cat,name`; }
+async function saveDocumentMeta(sql:any,id:number,d:any){ if(!(await columnExists('documents','source')))return; await sql`UPDATE documents SET source=${d.source==='recf'?'recf':'recf_turkiye'},program=${d.program??''},version_label=${d.version_label??''},language=${d.language||'TR'},sort_order=${Number(d.sort_order)||0} WHERE id=${id}`; }
 export async function getDocument(id:number){ const sql=await db(); const [r]=await sql`SELECT * FROM documents WHERE id=${id}`; return r??null; }
-export async function addDocument(d:any){ const sql=await db(); const [r]=await sql`INSERT INTO documents(name,cat,size_label,url,file_path,mime_type,published,updated_label) VALUES(${d.name},${d.cat},${d.size_label??''},${d.url??''},${d.file_path??''},${d.mime_type??''},${d.published!==false},${d.updated_label??''}) RETURNING *`; return r; }
-export async function updateDocument(id:number,d:any){ const sql=await db(); const [r]=await sql`UPDATE documents SET name=${d.name},cat=${d.cat},size_label=${d.size_label??''},url=${d.url??''},file_path=${d.file_path??''},mime_type=${d.mime_type??''},published=${d.published!==false},updated_label=${d.updated_label??''},updated_at=now() WHERE id=${id} RETURNING *`; return r??null; }
+export async function addDocument(d:any){ const sql=await db(); const [r]=await sql`INSERT INTO documents(name,cat,size_label,url,file_path,mime_type,published,updated_label) VALUES(${d.name},${d.cat},${d.size_label??''},${d.url??''},${d.file_path??''},${d.mime_type??''},${d.published!==false},${d.updated_label??''}) RETURNING *`; await saveDocumentMeta(sql,Number(r.id),d); return (await getDocument(Number(r.id)))??r; }
+export async function updateDocument(id:number,d:any){ const sql=await db(); const [r]=await sql`UPDATE documents SET name=${d.name},cat=${d.cat},size_label=${d.size_label??''},url=${d.url??''},file_path=${d.file_path??''},mime_type=${d.mime_type??''},published=${d.published!==false},updated_label=${d.updated_label??''},updated_at=now() WHERE id=${id} RETURNING *`; if(r)await saveDocumentMeta(sql,id,d); return r?((await getDocument(id))??r):null; }
 export async function deleteDocument(id:number){ const sql=await db(); const [r]=await sql`DELETE FROM documents WHERE id=${id} RETURNING *`; return r??null; }
 export async function incrementDocumentDownload(id:number){ const sql=await db(); await sql`UPDATE documents SET downloads=downloads+1 WHERE id=${id}`; }
 
@@ -345,6 +346,7 @@ export async function consumeRateLimit(key:string,limit:number,windowSeconds:num
 export async function audit(actor:string,action:string,entity:string,entityId:string,details:any={}){ try{const sql=await db(); await sql`INSERT INTO audit_logs(actor,action,entity,entity_id,details) VALUES(${actor},${action},${entity},${entityId},${JSON.stringify(details)}::jsonb)`;}catch{} }
 export async function listAudit(limit=100){ const sql=await db(); return sql`SELECT * FROM audit_logs ORDER BY created_at DESC LIMIT ${limit}`; }
 export async function getStats(){ const sql=await db(); const [[t],[a],[e],[n],[m],[u],[c]]=await Promise.all([sql`SELECT COUNT(*)::int c FROM teams WHERE status='AKTİF'`,sql`SELECT COUNT(*)::int c FROM applications WHERE status='BAŞVURU ALINDI'`,sql`SELECT COUNT(*)::int c FROM events WHERE published=true`,sql`SELECT COUNT(*)::int c FROM news WHERE published=true`,sql`SELECT COUNT(*)::int c FROM media`,sql`SELECT COUNT(*)::int c FROM cms_users WHERE active=true`,sql`SELECT COUNT(*)::int c FROM contacts WHERE status='YENİ'`]); return {teams:t.c,pending:a.c,events:e.c,news:n.c,media:m.c,users:u.c,contacts:c.c}; }
+export async function getFoundingCount(){ const sql=await db(); const [r]=await sql`SELECT LEAST(100,COUNT(*))::int c FROM teams WHERE status='AKTİF'`; return Number(r?.c)||0; }
 export async function getPublicHomeStats(){ const sql=await db(); const [[t],[c],[e],[s],[p]]=await Promise.all([sql`SELECT COUNT(*)::int c FROM teams WHERE status='AKTİF' AND visible=true`,sql`SELECT COUNT(DISTINCT city)::int c FROM teams WHERE status='AKTİF' AND visible=true AND NULLIF(trim(city),'') IS NOT NULL`,sql`SELECT COUNT(*)::int c FROM events WHERE published=true`,sql`SELECT COUNT(*)::int c FROM members WHERE status='AKTİF' AND upper(coalesce(role,'')) <> 'MENTOR'`,sql`SELECT COUNT(*)::int c FROM program_content WHERE active=true`]); return {teams:Number(t.c)||0,cities:Number(c.c)||0,events:Number(e.c)||0,students:Number(s.c)||0,programs:Number(p.c)||0}; }
 
 export async function getPublicHomeSnapshot(keys:readonly string[]){
@@ -353,7 +355,7 @@ export async function getPublicHomeSnapshot(keys:readonly string[]){
     SELECT
       COALESCE((SELECT jsonb_agg(to_jsonb(p) ORDER BY p.sort_order,p.slug) FROM program_content p WHERE p.active=true),'[]'::jsonb) AS programs,
       COALESCE((SELECT jsonb_agg(to_jsonb(e) ORDER BY COALESCE(e.event_start,e.created_at),e.id) FROM (SELECT * FROM events WHERE published=true AND (event_start IS NULL OR COALESCE(event_end,event_start + interval '1 day') >= now()) ORDER BY COALESCE(event_start,created_at),id LIMIT 6) e),'[]'::jsonb) AS events,
-      COALESCE((SELECT jsonb_agg(to_jsonb(n) ORDER BY n.date DESC,n.id DESC) FROM (SELECT * FROM news WHERE published=true AND upper(tag)<>'RECF''TEN' ORDER BY date DESC,id DESC LIMIT 3) n),'[]'::jsonb) AS news,
+      COALESCE((SELECT jsonb_agg(to_jsonb(n) ORDER BY n.date DESC,n.id DESC) FROM (SELECT * FROM news WHERE published=true AND upper(tag) NOT IN ('RECF''TEN','ARŞİV') ORDER BY date DESC,id DESC LIMIT 3) n),'[]'::jsonb) AS news,
       COALESCE((SELECT jsonb_agg(to_jsonb(n) ORDER BY n.date DESC,n.id DESC) FROM (SELECT * FROM news WHERE published=true AND upper(tag)='RECF''TEN' ORDER BY date DESC,id DESC LIMIT 3) n),'[]'::jsonb) AS recf_news,
       COALESCE((SELECT jsonb_agg(jsonb_build_object('city',c.city,'count',c.count)) FROM (SELECT city,COUNT(*)::int count FROM teams WHERE status='AKTİF' AND NULLIF(trim(city),'') IS NOT NULL GROUP BY city) c),'[]'::jsonb) AS team_cities,
       COALESCE((SELECT jsonb_agg(to_jsonb(m) ORDER BY m.created_at DESC) FROM (SELECT * FROM media WHERE published=true ORDER BY created_at DESC LIMIT 7) m),'[]'::jsonb) AS media,
@@ -394,8 +396,8 @@ export async function dbDiagnostics(){
 }
 
 // ── Talepler (okul randevusu, destek randevusu, iş birliği, lansman katılımı) ──
-export type LeadKind = "okul_randevu"|"destek_randevu"|"isbirligi"|"lansman_katilim";
-export type LeadInput = { kind:LeadKind; submissionKey:string; fingerprint:string; name:string; email:string; phone:string; organization:string; role:string; city:string; message:string; details:Record<string,string|string[]> };
+export type LeadKind = "okul_randevu"|"destek_randevu"|"isbirligi"|"lansman_katilim"|"akademi_basvuru";
+export type LeadInput = { kind:LeadKind; submissionKey:string; fingerprint:string; name:string; email:string; phone:string; organization:string; role:string; city:string; message:string; details:Record<string,string|string[]|boolean> };
 export async function createLeadRequest(data:LeadInput){
   const sql=await db();
   const [created]=await sql`INSERT INTO lead_requests(kind,submission_key,payload_fingerprint,name,email,phone,organization,role,city,message,details,kvkk_acknowledged,kvkk_acknowledged_at)

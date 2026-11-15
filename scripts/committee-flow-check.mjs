@@ -25,7 +25,7 @@ assert.equal(await notifyCommitteeApplication(7,'test@example.net',{...config,VE
 assert.equal(await notifyCommitteeApplication(7,'test@example.net',config,sender),'accepted');
 assert.deepEqual(captured.map(item=>item.body.to),[['test@example.net'],['etkinlik@recfturkiye.com']]);
 assert.deepEqual(captured.map(item=>item.key),['recf-committee-receipt-7','recf-committee-notice-7']);
-for(const {body} of captured){assert.equal(body.from,'RECF Türkiye · Planlama Komitesi <notify@example.org>');assert.equal(body.reply_to,'etkinlik@recfturkiye.com');}
+for(const {body} of captured){assert.equal(body.from,'RECF Türkiye · Gönüllü Ağı <notify@example.org>');assert.equal(body.reply_to,'etkinlik@recfturkiye.com');}
 
 // Real handlers, signed session validation and security utilities; isolated DB/provider.
 const fixture={user:null,rows:new Map(),persistCalls:0,listCalls:0,reviewCalls:0,limitCalls:0,blockAt:0,order:[],version:1};

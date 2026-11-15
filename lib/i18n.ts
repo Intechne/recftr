@@ -3,6 +3,7 @@ export const LOCALE_PAIRS: Array<[tr: string, en: string]> = [
   ["/", "/en"],
   ["/hakkimizda", "/en/about"],
   ["/sss", "/en/faq"],
+  ["/programlar", "/en/programs"],
 ];
 
 export const isEnglishPath = (path: string | null | undefined) => !!path && (path === "/en" || path.startsWith("/en/"));

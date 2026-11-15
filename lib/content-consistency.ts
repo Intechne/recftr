@@ -8,7 +8,8 @@ export const PUBLIC_SETTING_KEYS = [
   "season_route_title","season_route","home_cta_title","home_cta_description","home_cta_plate",
   "home_show_programs","home_show_route","home_show_stats","home_show_events","home_show_news",
   "home_show_gallery","home_show_cta","home_show_team_map","home_show_recf_news","founding100_min_display",
-  "team_map_min_teams","recf_representation_approved"
+  "team_map_min_teams","recf_representation_approved","wc_date_label","wc_date_label_en",
+  "recf_message_kind","recf_message_url","recf_message_title","recf_message_text"
 ] as const;
 
 export async function publishContentChange(paths: string[] = [], existingRevision?: string) {

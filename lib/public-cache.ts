@@ -2,6 +2,7 @@ import { unstable_cache } from "next/cache";
 import { cache } from "react";
 import {
   getEvent,
+  getFoundingCount,
   getNews,
   getPage,
   getProgram,
@@ -17,6 +18,7 @@ import {
   listTeams,
 } from "@/lib/db";
 import { applyTokens, publishable, sitePage } from "@/lib/site-pages";
+import { worldChampionship } from "@/lib/site-config";
 import { PUBLIC_SETTING_KEYS } from "@/lib/content-consistency";
 import { FALLBACK_PROGRAMS, fallbackProgram } from "@/lib/program-fallback";
 import { publicTickerMessages } from "@/lib/public-announcements";
@@ -33,9 +35,16 @@ const publicSettingsData = unstable_cache(
   ["public-settings-v314"],
   { revalidate: TTL, tags: [TAG] },
 );
+const foundingCountData = unstable_cache(async () => getFoundingCount(), ["public-founding-count-v1"], { revalidate: TTL, tags: [TAG] });
+/** Founding 100 sayısı (aktif onaylı takım, en fazla 100). Hata durumunda null. */
+export const getCachedFoundingCount = cache(async () => { try { return await foundingCountData(); } catch { return null; } });
+
 export const getCachedPublicSettings = cache(async () => {
-  try { const settings=await publicSettingsData(); return {...currentContactSettings(settings),ticker:JSON.stringify(publicTickerMessages(settings.ticker))}; } catch { return {...currentContactSettings({}),ticker:JSON.stringify(publicTickerMessages())}; }
+  const founding = await getCachedFoundingCount();
+  try { const settings=await publicSettingsData(); return {...currentContactSettings(settings),ticker:JSON.stringify(publicTickerMessages(settings.ticker,Date.now(),founding))}; } catch { return {...currentContactSettings({}),ticker:JSON.stringify(publicTickerMessages(undefined,Date.now(),founding))}; }
 });
+/** World Championship bilgisi — tek kaynak: CMS ayarı, yoksa site-config ortak bilgisi. */
+export async function getWorldChampionship(){ try{return worldChampionship(await publicSettingsData());}catch{return worldChampionship({});} }
 
 const homeSnapshotData = unstable_cache(
   async () => getPublicHomeSnapshot(PUBLIC_SETTING_KEYS),
@@ -102,6 +111,6 @@ export async function getSitePage(slug:string){
   const title=record?.title?.trim()||def.title, rawBody=record?record.body:def.body;
   const published=record?record.published:def.defaultPublished;
   if(!published||!publishable(title,rawBody))return null;
-  const programAges=rawBody.includes("{{program_ages")?await programAgesSentence(def.lang):"";
-  return {...def,title,body:currentContactEmails(applyTokens(rawBody,{lang:def.lang,programAges})),fromCms:!!record};
+  const [programAges,wc,foundingCount]=await Promise.all([rawBody.includes("{{program_ages")?programAgesSentence(def.lang):Promise.resolve(""),getWorldChampionship(),getCachedFoundingCount()]);
+  return {...def,title,body:currentContactEmails(applyTokens(rawBody,{lang:def.lang,programAges,wc,foundingCount:foundingCount??undefined})),fromCms:!!record};
 }
