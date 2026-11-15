@@ -42,6 +42,7 @@ export async function middleware(req: NextRequest) {
   const policy = contentSecurityPolicy(nonce);
   const headers = new Headers(req.headers);
   headers.set("x-nonce", nonce);
+  headers.set("x-pathname", req.nextUrl.pathname);
   headers.set("Content-Security-Policy", policy);
   const finish = (response: NextResponse) => {
     response.headers.set("Content-Security-Policy", policy);
