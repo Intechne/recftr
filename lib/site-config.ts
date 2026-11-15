@@ -25,6 +25,9 @@ export const WORLD_CHAMPIONSHIP = {
   source: RECF_SOURCES.faq,
 } as const;
 
+/** RECF onayıyla gösterilen resmî temsilcilik ibaresi (CMS: recf_representation_approved). */
+export const REPRESENTATION_LINE = "Official RECF International Representative";
+
 export const FOUNDING_100 = { target: 100, defaultMinDisplay: 10 } as const;
 export const TEAM_MAP_DEFAULT_MIN_TEAMS = 25;
 

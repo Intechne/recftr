@@ -31,6 +31,8 @@ export type SitePageDefinition = {
   path: string;
   kicker: string;
   title: string;
+  /** <title> ve paylaşım başlığı (site adı şablonla eklenir). */
+  metaTitle: string;
   description: string;
   defaultPublished: boolean;
   lang: "tr" | "en";
@@ -301,14 +303,17 @@ It is the culminating event of the RECF season: {{wc_date}} · {{wc_city}}. Sour
 Participating in RECF events is the pathway to the RECF STEM World Championship. RECF has announced that competitions it organizes, promotes or manages qualify teams for the 2027 RECF STEM World Championship. Source: [RECF announcement]({{pathway_source}})`;
 
 export const SITE_PAGES: SitePageDefinition[] = [
-  { slug: "okullar", path: "/okullar", kicker: "OKULLAR İÇİN", title: "OKULUNUZ SAHAYA ÇIKSIN.", description: "Okul yöneticileri için RECF Türkiye: kampüs içi lig, öğretmen ve antrenör eğitimi, kurumsal paketler, sezon takvimi ve randevu talebi.", defaultPublished: true, lang: "tr", body: OKULLAR },
-  { slug: "veliler", path: "/veliler", kicker: "VELİLER İÇİN", title: "ÇOCUĞUNUZ SAHADA. SİZ YANINDASINIZ.", description: "Veliler için RECF Türkiye: öğrencinin kazanımları, güvenlik, KVKK ve katılım onamı, maliyet ve sık sorulan sorular.", defaultPublished: true, lang: "tr", body: VELILER },
-  { slug: "is-birlikleri", path: "/is-birlikleri", kicker: "SPONSORLAR VE İŞ BİRLİKLERİ", title: "GELECEĞİN MÜHENDİSLERİNE SAHA AÇIN.", description: "RECF Türkiye Takım Bursu modeli, sponsorluk seviyeleri ve kurumsal iş birliği iletişim formu.", defaultPublished: true, lang: "tr", body: IS_BIRLIKLERI },
-  { slug: "sss", path: "/sss", kicker: "SIK SORULAN SORULAR", title: "MERAK ETTİKLERİN.", description: "RECF Türkiye sık sorulan sorular: kayıt ücreti, malzeme, takım kurma, yaş grupları, etkinlikler ve RECF STEM World Championship yolu.", defaultPublished: true, lang: "tr", body: SSS },
-  { slug: "lansman", path: "/lansman", kicker: "LANSMAN", title: "RECF TÜRKİYE LANSMANI", description: "RECF Türkiye lansman etkinliği: program, tarih, mekân ve katılım formu.", defaultPublished: false, lang: "tr", body: LANSMAN },
-  { slug: "en-home", path: "/en", kicker: "RECF TÜRKİYE", title: "DESIGN IT. BUILD IT. PROVE IT ON THE FIELD.", description: "RECF Türkiye — RECF robotics and drone programs in Türkiye: Engage, Achieve, Inspire, Aerial Drone Competition and ADC Pro.", defaultPublished: true, lang: "en", body: EN_HOME },
-  { slug: "en-about", path: "/en/about", kicker: "ABOUT", title: "ABOUT RECF TÜRKİYE", description: "RECF Türkiye is operated by Intechne Teknoloji A.Ş. under a written agreement with the Robotics Education & Competition Foundation.", defaultPublished: true, lang: "en", body: EN_ABOUT },
-  { slug: "en-faq", path: "/en/faq", kicker: "FAQ", title: "FREQUENTLY ASKED QUESTIONS", description: "RECF Türkiye FAQ: registration fee, equipment, building a team, age groups, events and the RECF STEM World Championship pathway.", defaultPublished: true, lang: "en", body: EN_FAQ },
+  { slug: "okullar", metaTitle: "Okullar İçin RECF Türkiye", path: "/okullar", kicker: "OKULLAR İÇİN", title: "OKULUNUZ SAHAYA ÇIKSIN.", description: "Okul yöneticileri için RECF Türkiye: kampüs içi lig, öğretmen ve antrenör eğitimi, kurumsal paketler, sezon takvimi ve randevu talebi.", defaultPublished: true, lang: "tr", body: OKULLAR },
+  { slug: "veliler", metaTitle: "Veliler İçin RECF Türkiye", path: "/veliler", kicker: "VELİLER İÇİN", title: "ÇOCUĞUNUZ SAHADA. SİZ YANINDASINIZ.", description: "Veliler için RECF Türkiye: öğrencinin kazanımları, güvenlik, KVKK ve katılım onamı, maliyet ve sık sorulan sorular.", defaultPublished: true, lang: "tr", body: VELILER },
+  { slug: "is-birlikleri", metaTitle: "Sponsorlar ve İş Birlikleri", path: "/is-birlikleri", kicker: "SPONSORLAR VE İŞ BİRLİKLERİ", title: "GELECEĞİN MÜHENDİSLERİNE SAHA AÇIN.", description: "RECF Türkiye Takım Bursu modeli, sponsorluk seviyeleri ve kurumsal iş birliği iletişim formu.", defaultPublished: true, lang: "tr", body: IS_BIRLIKLERI },
+  { slug: "sss", metaTitle: "Sık Sorulan Sorular", path: "/sss", kicker: "SIK SORULAN SORULAR", title: "MERAK ETTİKLERİN.", description: "RECF Türkiye sık sorulan sorular: kayıt ücreti, malzeme, takım kurma, yaş grupları, etkinlikler ve RECF STEM World Championship yolu.", defaultPublished: true, lang: "tr", body: SSS },
+  { slug: "lansman", metaTitle: "RECF Türkiye Lansmanı", path: "/lansman", kicker: "LANSMAN", title: "RECF TÜRKİYE LANSMANI", description: "RECF Türkiye lansman etkinliği: program, tarih, mekân ve katılım formu.", defaultPublished: false, lang: "tr", body: LANSMAN },
+  { slug: "en-home", metaTitle: "RECF Türkiye — Robotics & Drone Programs in Türkiye", path: "/en", kicker: "RECF TÜRKİYE", title: "DESIGN IT. BUILD IT. PROVE IT ON THE FIELD.", description: "RECF Türkiye — RECF robotics and drone programs in Türkiye: Engage, Achieve, Inspire, Aerial Drone Competition and ADC Pro.", defaultPublished: true, lang: "en", body: EN_HOME },
+  { slug: "en-about", metaTitle: "About RECF Türkiye", path: "/en/about", kicker: "ABOUT", title: "ABOUT RECF TÜRKİYE", description: "RECF Türkiye is operated by Intechne Teknoloji A.Ş. under a written agreement with the Robotics Education & Competition Foundation.", defaultPublished: true, lang: "en", body: EN_ABOUT },
+  { slug: "en-faq", metaTitle: "Frequently Asked Questions", path: "/en/faq", kicker: "FAQ", title: "FREQUENTLY ASKED QUESTIONS", description: "RECF Türkiye FAQ: registration fee, equipment, building a team, age groups, events and the RECF STEM World Championship pathway.", defaultPublished: true, lang: "en", body: EN_FAQ },
 ];
 
 export const sitePage = (slug: string) => SITE_PAGES.find(page => page.slug === slug);
+
+/** Lansman sayfası tarih/mekân bilgisini bu CMS etkinlik kaydından okur. */
+export const LAUNCH_EVENT_SLUG = "recf-turkiye-lansman-etkinligi";

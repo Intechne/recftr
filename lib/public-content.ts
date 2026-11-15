@@ -37,8 +37,13 @@ export function eventPhase(event: EventDates, now = Date.now()) {
   return start !== null ? 'upcoming' : 'undated';
 }
 
-export function publicEvent<T extends EventDates & { slug?: string; body?: string; date_label?: string; status?: string; registration_enabled?: boolean }>(event: T, now = Date.now()): T {
+export const DATE_TBC_STATUS = 'TARİH TEYİT BEKLENİYOR';
+export function publicEvent<T extends EventDates & { slug?: string; body?: string; date_label?: string; status?: string; registration_enabled?: boolean; date_tbc?: boolean; registration_url?: string }>(event: T, now = Date.now()): T {
   let item = { ...event };
+  // "Tarih teyit bekleniyor": takvimde görünür, tarih/kayıt kesinmiş gibi sunulmaz.
+  if (item.date_tbc === true) {
+    return { ...item, status: DATE_TBC_STATUS, registration_enabled: false, registration_url: item.registration_url || '' };
+  }
   // This published record says March in its timestamps and April in its body.
   // Do not choose a date on the organiser's behalf while these values conflict.
   if (item.slug === 'recf-turkiye-ulusal-sampiyonasi' && !item.date_label?.trim()
