@@ -13,15 +13,15 @@ export const RECF_SOURCES = {
 /** 2026–27 RECF takım kayıt ücreti — resmî kayıt RECFEvents.org üzerinden. */
 export const RECF_TEAM_FEE = { amount: 175, currency: "USD", label: "175 USD", season: "2026–27", source: RECF_SOURCES.fee } as const;
 
-/** RECF STEM World Championship 2027. */
+/** RECF STEM World Championship 2027 — tarih: recf.org/faq ve recfevents.org (25 Nisan – 7 Mayıs 2027). */
 export const WORLD_CHAMPIONSHIP = {
   name: "RECF STEM World Championship",
   city: "St. Louis, ABD",
   cityEn: "St. Louis, USA",
-  start: "2027-04-27",
-  end: "2027-05-06",
-  label: "27 Nisan – 6 Mayıs 2027",
-  labelEn: "April 27 – May 6, 2027",
+  start: "2027-04-25",
+  end: "2027-05-07",
+  label: "25 Nisan – 7 Mayıs 2027",
+  labelEn: "April 25 – May 7, 2027",
   source: RECF_SOURCES.faq,
 } as const;
 
