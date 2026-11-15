@@ -49,8 +49,8 @@ export function publicEvent<T extends EventDates & { slug?: string; body?: strin
   if (item.slug === 'recf-turkiye-ulusal-sampiyonasi' && !item.date_label?.trim()
       && timestamp(item.event_start) === Date.parse('2027-03-13T08:00:00Z') && /(?:17\s*[–-]\s*18|17|18) Nisan 2027/.test(item.body || '')) {
     item = { ...item, event_start: null, event_end: null, registration_enabled: false,
-      date_label: 'Tarih doğrulaması bekleniyor', status: 'TARİH BEKLENİYOR',
-      body: item.body?.replace(/(?:17\s*[–-]\s*18|17|18) Nisan 2027/g, 'Tarih bekleniyor') };
+      date_label: 'Tarih yakında duyurulacak', status: 'TARİH BEKLENİYOR',
+      body: item.body?.replace(/(?:17\s*[–-]\s*18|17|18) Nisan 2027/g, 'Tarih yakında duyurulacak') };
   }
   const phase = eventPhase(item, now);
   if (phase === 'past') return { ...item, status: 'GEÇMİŞ ETKİNLİK', registration_enabled: false };
