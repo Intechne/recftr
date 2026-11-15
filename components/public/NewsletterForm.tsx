@@ -1,7 +1,7 @@
 "use client";
 import Link from "next/link";
 import { useState } from "react";
-import { NEWSLETTER_CONSENT_TEXT } from "@/lib/newsletter";
+import { NEWSLETTER_CONSENT_TEXT, NEWSLETTER_CONSENT_TEXT_EN } from "@/lib/newsletter";
 import { trackEvent } from "@/components/analytics/track";
 
 export default function NewsletterForm({ lang = "tr" }: { lang?: "tr" | "en" }) {
@@ -33,7 +33,7 @@ export default function NewsletterForm({ lang = "tr" }: { lang?: "tr" | "en" }) 
       <button type="submit" disabled={busy} className="min-h-11 rounded-md bg-ink px-4 py-2.5 font-display text-xs font-bold text-white disabled:opacity-50">{busy ? "…" : en ? "SUBSCRIBE" : "KAYDOL"}</button>
     </div>
     <div hidden aria-hidden="true"><label htmlFor={`newsletter-website-${lang}`}>Website</label><input id={`newsletter-website-${lang}`} tabIndex={-1} autoComplete="off" value={website} onChange={event => setWebsite(event.target.value)} /></div>
-    <label className="mt-3 flex items-start gap-2.5 text-[12px] leading-relaxed text-ink/65"><input type="checkbox" required checked={consent} onChange={event => setConsent(event.target.checked)} disabled={busy} className="mt-0.5 h-4 w-4 shrink-0 accent-cyan-deep" /><span>{NEWSLETTER_CONSENT_TEXT} <Link href="/acik-riza" className="font-semibold text-cyan-deep underline">Açık Rıza Metni</Link> · <Link href="/kvkk" className="font-semibold text-cyan-deep underline">KVKK</Link>*</span></label>
+    <label className="mt-3 flex items-start gap-2.5 text-[12px] leading-relaxed text-ink/65"><input type="checkbox" required checked={consent} onChange={event => setConsent(event.target.checked)} disabled={busy} className="mt-0.5 h-4 w-4 shrink-0 accent-cyan-deep" /><span>{en ? NEWSLETTER_CONSENT_TEXT_EN : NEWSLETTER_CONSENT_TEXT} <Link href="/acik-riza" className="font-semibold text-cyan-deep underline">{en ? "Explicit consent notice (TR)" : "Açık Rıza Metni"}</Link> · <Link href="/kvkk" className="font-semibold text-cyan-deep underline">{en ? "Privacy notice (TR)" : "KVKK"}</Link>*</span></label>
     {message && <p role={failed ? "alert" : "status"} className={`mt-2.5 text-[13px] font-semibold ${failed ? "text-red-700" : "text-cyan-deep"}`}>{message}</p>}
   </form>;
 }
