@@ -32,7 +32,7 @@ export async function POST(req:NextRequest){
     if(config.city&&!provinces().includes(city))return bad("Geçerli bir il seçin.");
     const message=cleanText(body.message,3000);
     if(config.message.required&&!message)return bad(`${config.message.label} alanı zorunludur.`);
-    const details:Record<string,string|string[]>={};
+    const details:Record<string,string|string[]|boolean>={};
     for(const choice of config.choices){
       const raw=body[choice.field];
       if(choice.multiple){
@@ -46,6 +46,7 @@ export async function POST(req:NextRequest){
         details[choice.field]=value;
       }
     }
+    for(const consent of config.consents||[]){if(body[consent.field]!==true)return bad("Zorunlu onay kutularını işaretleyin.");details[consent.field]=true;}
     if(body.kvkk!==true)return bad("KVKK Aydınlatma Metni için okuma bildirimi zorunludur.");
     const submissionKey=body.submissionKey===undefined?randomUUID():String(body.submissionKey);
     if(!uuid.test(submissionKey))return bad("Form gönderim anahtarı geçersiz. Sayfayı yenileyip tekrar deneyin.");
@@ -57,7 +58,11 @@ export async function POST(req:NextRequest){
     if(!record)return NextResponse.json({error:"Bu gönderimin bilgileri değişmiş. Formu yeniden gönderin."},{status:409});
     const confirmationEmail=await notifyLeadRequest(config.kind,record.id,email);
     return NextResponse.json({ok:true,id:record.id,confirmationEmail},{status:201});
-  }catch(error){return apiError(error,"Form kaydedilemedi.");}
+  }catch(error:any){
+    // Yeni form türü için veritabanı kısıtı henüz güncellenmediyse (migration bekliyor) anlaşılır mesaj ver.
+    if(error?.code==="23514"&&String(error?.constraint_name||error?.message||"").includes("lead_requests_kind_check"))return NextResponse.json({error:`Bu form çok yakında açılacak. Şimdilik ${PUBLIC_CONTACT.support} adresine yazabilirsiniz.`},{status:503});
+    return apiError(error,"Form kaydedilemedi.");
+  }
 }
 
 export async function GET(req:NextRequest){

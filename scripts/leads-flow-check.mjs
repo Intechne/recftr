@@ -96,7 +96,12 @@ try{
  const again=await newsletterApi.POST(request({email:'okur@example.net',consent:true,source:'evil'}));assert.deepEqual(await again.json(),{ok:true});assert.equal(fixture.subs[1].source,'footer');
  assert.equal((await newsletterApi.GET(request({}))).status,403);
  assert.equal((await newsletterApi.PATCH(request({id:1,status:'AYRILDI'}))).status,403);
- console.log('PASS lead forms (4 kinds) and newsletter: required fields, KVKK/explicit consent, option whitelists, honeypot, pre-migration 503, idempotent submissions, collision 409, record kept on mail failure, rate limit, admin-only reads, PII-free team notice and preview mail block. No live records or emails used.');
+ // Hakem ve Jüri Akademisi: rol, program, uygunluk ve iki zorunlu onay (18+ ve açık rıza)
+ const academy={kind:'akademi_basvuru',name:'Test Hakem',email:'hakem@example.net',role:'Jüri',city:'Ankara',programs:['RECF Achieve'],availability:'Hafta sonu etkinlikleri',adult:true,explicit_consent:true,kvkk:true,submissionKey:'44444444-4444-4444-8444-444444444444'};
+ for(const change of [{adult:false},{explicit_consent:undefined},{role:'Antrenör'},{programs:[]},{availability:''},{city:'Atlantis'}]){fixture.limitCalls=0;const r=await leadApi.POST(request({...academy,...change}));assert.equal(r.status,400,JSON.stringify(change));}
+ globalThis.fetch=async()=>({ok:true,status:200,json:async()=>({id:'test-email-id'})});fixture.limitCalls=0;
+ const ak=await leadApi.POST(request(academy));assert.equal(ak.status,201);const akRow=[...fixture.rows.values()].find(r=>r.kind==='akademi_basvuru');assert.equal(akRow.details.adult,true);assert.equal(akRow.details.explicit_consent,true);assert.deepEqual(akRow.details.programs,['RECF Achieve']);
+ console.log('PASS lead forms (5 kinds incl. Hakem ve Jüri Akademisi) and newsletter: required fields, KVKK/explicit consent, option whitelists, honeypot, pre-migration 503, idempotent submissions, collision 409, record kept on mail failure, rate limit, admin-only reads, PII-free team notice and preview mail block. No live records or emails used.');
 }finally{
  globalThis.fetch=oldFetch;delete globalThis.__recfLeadFixture;
  for(const [key,value] of Object.entries(saved)){if(value===undefined)delete process.env[key];else process.env[key]=value;}

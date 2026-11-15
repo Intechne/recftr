@@ -1,4 +1,4 @@
-export const LEAD_KINDS = ["okul_randevu", "destek_randevu", "isbirligi", "lansman_katilim"] as const;
+export const LEAD_KINDS = ["okul_randevu", "destek_randevu", "isbirligi", "lansman_katilim", "akademi_basvuru"] as const;
 export type LeadKindId = typeof LEAD_KINDS[number];
 export const LEAD_STATUSES = ["YENİ", "İNCELENİYOR", "İLETİŞİME GEÇİLDİ", "TAMAMLANDI", "ARŞİVLENDİ"] as const;
 export type LeadStatus = typeof LEAD_STATUSES[number];
@@ -14,6 +14,8 @@ export type LeadConfig = {
   city: boolean;
   message: { label: string; required: boolean; placeholder?: string };
   choices: Choice[];
+  /** Zorunlu onay kutuları (ör. 18 yaş üstü, açık rıza). Değer true olarak details içinde saklanır. */
+  consents?: { field: string; label: string; link?: { href: string; text: string } }[];
 };
 
 export const LEAD_CONFIG: Record<LeadKindId, LeadConfig> = {
@@ -48,6 +50,21 @@ export const LEAD_CONFIG: Record<LeadKindId, LeadConfig> = {
     city: false,
     message: { label: "Sorunuz veya notunuz", required: false },
     choices: [{ field: "build_team", label: "Takım kurmak istiyor musunuz?", options: ["Evet", "Kararsızım", "Hayır", "Zaten takımımız var"], required: true }],
+  },
+  akademi_basvuru: {
+    kind: "akademi_basvuru", label: "Hakem ve Jüri Akademisi başvurusu", reference: "AK", page: "/gonullu",
+    organization: { label: "Kurum / okul", required: false },
+    role: { label: "Başvurduğunuz rol", options: ["Hakem", "Jüri", "Hakem ve jüri"], required: true },
+    city: true,
+    message: { label: "Deneyiminiz", required: false, placeholder: "Robotik/drone etkinlikleri, eğitim, mentorluk veya değerlendirme deneyimleriniz" },
+    choices: [
+      { field: "programs", label: "İlgilendiğiniz programlar", options: ["RECF Engage", "RECF Achieve", "RECF Inspire", "Aerial Drone Competition", "ADC Pro"], multiple: true, required: true },
+      { field: "availability", label: "Uygunluğunuz", options: ["Hafta sonu etkinlikleri", "Hafta içi ve hafta sonu", "Yalnız çevrim içi eğitim"], required: true },
+    ],
+    consents: [
+      { field: "adult", label: "18 yaşından büyüğüm." },
+      { field: "explicit_consent", label: "Hakem ve Jüri Akademisi başvurumun değerlendirilmesi ve benimle iletişime geçilmesi amacıyla kişisel verilerimin işlenmesine açık rıza veriyorum.", link: { href: "/belgeler/recf-turkiye-gonullu-kvkk-aydinlatma-metni.pdf", text: "Gönüllü KVKK Aydınlatma Metni" } },
+    ],
   },
 };
 
