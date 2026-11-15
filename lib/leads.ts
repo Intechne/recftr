@@ -63,7 +63,7 @@ export const LEAD_CONFIG: Record<LeadKindId, LeadConfig> = {
     ],
     consents: [
       { field: "adult", label: "18 yaşından büyüğüm." },
-      { field: "explicit_consent", label: "Hakem ve Jüri Akademisi başvurumun değerlendirilmesi ve benimle iletişime geçilmesi amacıyla kişisel verilerimin işlenmesine açık rıza veriyorum.", link: { href: "/belgeler/recf-turkiye-gonullu-kvkk-aydinlatma-metni.pdf", text: "Gönüllü KVKK Aydınlatma Metni" } },
+      { field: "explicit_consent", label: "Hakem ve Jüri Akademisi başvurumun değerlendirilmesi ve benimle iletişime geçilmesi amacıyla kişisel verilerimin işlenmesine açık rıza veriyorum.", link: { href: "/kvkk", text: "KVKK Aydınlatma Metni" } },
     ],
   },
 };

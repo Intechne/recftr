@@ -8,7 +8,7 @@ değerlendirme kriterlerini yeniden yazmaz. Kriterler için her zaman resmî REC
 Kullanım:
   python3 -m venv .venv && .venv/bin/pip install reportlab==4.2.5 pillow pypdf==5.1.0 fonttools
   .venv/bin/python scripts/jury-docs/build.py --fonts <Montserrat/RobotoCondensed TTF klasörü>
-Çıktı: public/belgeler/*.pdf
+Çıktı: public/belgeler/*.pdf (hukuki onay bekleyenler: docs/belgeler-taslak/)
 """
 import argparse
 import os
@@ -33,6 +33,8 @@ VERSION = "Sürüm 1.0 · Kasım 2026"
 JUDGING_URL = "kb.roboticseducation.org — Robotics / Drones Guide to Judging"
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
 OUT = os.path.join(ROOT, "public", "belgeler")
+# Hukuki onay bekleyen metinler sunulmayan klasöre yazılır; onaydan sonra public/belgeler'e taşınır.
+DRAFT_OUT = os.path.join(ROOT, "docs", "belgeler-taslak")
 LOGO = os.path.join(ROOT, "public", "logos", "recf-turkiye-logo.png")
 
 
@@ -44,8 +46,9 @@ def register_fonts(folder):
 
 class Doc:
     def __init__(self, filename, title, subtitle, notice=True, draft_note=None):
-        os.makedirs(OUT, exist_ok=True)
-        self.path = os.path.join(OUT, filename)
+        folder = DRAFT_OUT if draft_note else OUT
+        os.makedirs(folder, exist_ok=True)
+        self.path = os.path.join(folder, filename)
         self.c = canvas.Canvas(self.path, pagesize=A4)
         self.c.setTitle(f"RECF Türkiye — {title}")
         self.c.setAuthor("RECF Türkiye · Intechne Teknoloji A.Ş.")
