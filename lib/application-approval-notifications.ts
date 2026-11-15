@@ -1,6 +1,7 @@
 import {PUBLIC_CONTACT} from "@/lib/public-contact";
 import {notificationConfiguration} from "@/lib/submission-notifications";
 import {claimApplicationApprovalEmail,finishApplicationApprovalEmail} from "@/lib/db";
+import {RECF_TEAM_FEE} from "@/lib/site-config";
 
 type Environment=Record<string,string|undefined>;
 type ApprovedApplication={id:number;num:string;team:string;program:string;email:string};
@@ -12,7 +13,8 @@ export function applicationApprovalMessage(app:ApprovedApplication){
   const summary='Takım başvurunuz RECF Türkiye ekibi tarafından onaylandı ve yerel takım kaydınız oluşturuldu. Sıradaki hazırlık adımlarını aşağıda bulabilirsiniz.';
   const steps=[
     {title:'Takım bilgilerinizi kontrol edin',text:'Aşağıdaki takım referansını ve programınızı kontrol edin. Bir düzeltme gerekiyorsa bu e-postayı yanıtlayarak ekibimize bildirin.',url:'https://www.recfturkiye.com/rehber/takim-kaydi',link:'Takım kayıt rehberi'},
-    {title:'Resmî sezon kayıt adımlarını tamamlayın',text:'Resmî sezon kaydı ve takım numarası tahsisi için programınıza ait RECFevents sürecini ayrıca tamamlayın. Hangi adımları izleyeceğiniz konusunda destek ekibimizle iletişime geçebilirsiniz.',url:'https://www.recfturkiye.com/rehber/takim-kaydi',link:'Kayıt adımlarını inceleyin'},
+    {title:'Resmî sezon kaydını RECFEvents.org’da tamamlayın',text:`Resmî sezon kaydı ve takım numarası RECFEvents.org üzerinden tamamlanır. ${RECF_TEAM_FEE.season} sezonu RECF takım kayıt ücreti takım başına ${RECF_TEAM_FEE.label}; ödeme RECFEvents.org üzerinden yapılır. Adımları rehberimizde bulabilirsiniz.`,url:'https://www.recfturkiye.com/rehber/takim-kaydi',link:'Resmî kayıt rehberi'},
+    {title:'Takıldığınız bir adım olursa destek randevusu alın',text:'Hesap, takım kaydı veya ödeme adımında yardıma ihtiyacınız olursa destek randevusu talep edin; ekibimiz sizinle iletişime geçsin.',url:'https://www.recfturkiye.com/rehber/takim-kaydi#destek',link:'Destek randevusu al'},
     {title:'Sezon dokümanlarıyla hazırlığa başlayın',text:'Programınıza ait güncel oyun kılavuzlarını inceleyin; takımınızı ve donanımınızı bu kurallara göre hazırlayın.',url:'https://www.recfturkiye.com/dokumanlar',link:'Sezon dokümanları'},
     {title:'Etkinlikleri ve portal duyurularını takip edin',text:'Etkinlik tarihlerini ve katılım koşullarını takip edin. Takım portalı henüz açılmadı; giriş ve kullanım bilgileri portal yayına alındığında ayrıca paylaşılacak.',url:'https://www.recfturkiye.com/etkinlikler',link:'Etkinlik takvimi'},
   ];

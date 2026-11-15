@@ -1,9 +1,9 @@
 import type { Metadata } from "next";
 import { pageMeta } from "@/lib/seo";
-export const metadata: Metadata = pageMeta({ title: "Takımlar", description: "RECF Türkiye'ye kayıtlı robotik ve drone takımları — şehir ve program dizini.", path: "/takimlar" });
 import {PageHead} from "@/components/Ui";
 import TeamDirectory from "@/components/public/TeamDirectory";
 import {getCachedTeams} from "@/lib/public-cache";
+export const metadata: Metadata = pageMeta({ title: "Takımlar — Founding 100", description: "RECF Türkiye kurucu takımları: Founding 100 listesinde yayın onamı veren takımların adı, okulu ve ili.", path: "/takimlar" });
 export const dynamic="force-dynamic";
 export const revalidate=0;
-export default async function TakimlarPage(){const items=await getCachedTeams();return <div className="pb-20"><PageHead kicker="TAKIM DİZİNİ" title="RECF TÜRKİYE TAKIMLARI" sub="Yayına açık aktif takımları program, okul, şehir veya takım numarasına göre bul."/><TeamDirectory initialItems={items as any[]}/></div>}
+export default async function TakimlarPage(){const items=await getCachedTeams();return <div className="pb-20"><PageHead kicker="FOUNDING 100" title="KURUCU TAKIMLAR" sub="RECF Türkiye’nin ilk sezonunu birlikte yazan takımlar. Listede yalnız yayın onamı veren ve ekibimizce onaylanan takımların adı, okulu ve ili yer alır."/><TeamDirectory initialItems={items as any[]}/></div>}

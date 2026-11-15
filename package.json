@@ -3,6 +3,7 @@
   "version": "3.3.0",
   "private": true,
   "scripts": {
+    "lint": "eslint .",
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
@@ -20,22 +21,29 @@
     "forms:check": "node scripts/submission-flow-check.mjs",
     "password:check": "node scripts/password-flow-check.mjs",
     "committee:check": "node scripts/committee-flow-check.mjs && node scripts/committee-db-check.mjs",
-    "approval:check": "node scripts/approval-flow-check.mjs && node scripts/approval-db-check.mjs"
+    "approval:check": "node scripts/approval-flow-check.mjs && node scripts/approval-db-check.mjs",
+    "forms:leads": "node scripts/leads-flow-check.mjs",
+    "content:pages": "node scripts/site-content-check.mjs",
+    "test": "node scripts/leads-flow-check.mjs && node scripts/site-content-check.mjs && node scripts/submission-flow-check.mjs && node scripts/approval-flow-check.mjs && node scripts/committee-flow-check.mjs && node scripts/password-flow-check.mjs && node scripts/content-consistency-check.mjs && node scripts/public-content-check.mjs && node scripts/security-static-check.mjs"
   },
   "dependencies": {
     "@halilertekin/turkey_province_image": "^3.3.3",
     "@supabase/supabase-js": "2.112.4",
+    "@vercel/analytics": "2.0.1",
     "next": "15.5.27",
     "postgres": "^3.4.9",
     "react": "19.2.8",
     "react-dom": "19.2.8"
   },
   "devDependencies": {
+    "@eslint/eslintrc": "3.3.7",
     "@tailwindcss/postcss": "4.3.3",
     "@types/node": "^24.0.0",
     "@types/react": "^19.0.0",
     "@types/react-dom": "^19.0.0",
     "autoprefixer": "10.4.19",
+    "eslint": "9.39.5",
+    "eslint-config-next": "15.5.27",
     "postcss": "8.5.29",
     "tailwindcss": "4.3.3",
     "typescript": "^5.9.0"

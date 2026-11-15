@@ -3,7 +3,7 @@ import { adminSession, contentSession } from "@/lib/auth";
 import { getSettings, setSettingsAtomic } from "@/lib/db";
 import { apiError } from "@/lib/api-server";
 import { currentContactSettings } from "@/lib/public-contact";
-import { cleanText, validHttpUrl } from "@/lib/security";
+import { validHttpUrl } from "@/lib/security";
 import { verifyPublicImageReference } from "@/lib/storage";
 import { currentContentRevision, publishContentChange, PUBLIC_SETTING_KEYS } from "@/lib/content-consistency";
 
@@ -13,7 +13,11 @@ export const revalidate=0;
 const PUBLIC=[...PUBLIC_SETTING_KEYS];
 const CONTENT=[...PUBLIC];
 const FINANCIAL=["registration_fee_engage","registration_fee_achieve","registration_fee_inspire","registration_fee_adc","registration_fee_adc-pro","field_kit_fee","registration_discount","registration_enabled"];
+// Yalnız admin değiştirebilir: RECF onayına bağlı resmî temsilcilik ibaresi.
+const ADMIN_ONLY=[...FINANCIAL,"recf_representation_approved"];
 const ALL=new Set([...CONTENT,...FINANCIAL]);
+const NUMERIC=new Set(["founding100_min_display","team_map_min_teams"]);
+const FLAGS=new Set(["home_show_programs","home_show_route","home_show_stats","home_show_events","home_show_news","home_show_gallery","home_show_cta","home_show_team_map","home_show_recf_news","recf_representation_approved"]);
 const URL_KEYS=new Set(["instagram","youtube","linkedin","hero_image","site_logo","site_mark","favicon_url","apple_touch_icon_url","og_image"]);
 const IMAGE_KEYS=new Set(["hero_image","site_logo","site_mark","favicon_url","apple_touch_icon_url","og_image"]);
 const NO_STORE={"Cache-Control":"private, no-store, max-age=0","Pragma":"no-cache"};
@@ -34,7 +38,7 @@ export async function PUT(req:NextRequest){
     const b=await req.json();const entries=Object.entries(b);
     if(entries.length>80)return NextResponse.json({error:'Çok fazla ayar gönderildi.'},{status:400});
     const unknown=entries.map(([k])=>k).filter(k=>!ALL.has(k));if(unknown.length)return NextResponse.json({error:'İzin verilmeyen ayar anahtarı.'},{status:400});
-    const touchesFinancial=entries.some(([k])=>FINANCIAL.includes(k));
+    const touchesFinancial=entries.some(([k])=>ADMIN_ONLY.includes(k));
     if(touchesFinancial&&!(await adminSession(req)))return NextResponse.json({error:'Kayıt ücretleri ve finansal ayarlar yalnız admin tarafından değiştirilebilir.'},{status:403});
 
     // Prevent an older CMS tab from silently overwriting a newer save.
@@ -51,6 +55,9 @@ export async function PUT(req:NextRequest){
       const raw=String(v??'').trim();
       if(raw.length>20000)return NextResponse.json({error:`${k} değeri çok uzun.`},{status:400});
       if(URL_KEYS.has(k)&&raw&&!validHttpUrl(raw))return NextResponse.json({error:`${k} için yalnız güvenli HTTPS URL kullanılabilir.`},{status:400});
+      if(NUMERIC.has(k)&&raw&&!/^\d{1,4}$/.test(raw))return NextResponse.json({error:`${k} için 0–9999 arası tam sayı girin.`},{status:400});
+      if(FLAGS.has(k)&&raw&&!["true","false"].includes(raw))return NextResponse.json({error:`${k} yalnız true/false olabilir.`},{status:400});
+      if(k==="season_route"&&raw){try{const route=JSON.parse(raw);if(!Array.isArray(route)||route.length>24)throw new Error();}catch{return NextResponse.json({error:"Sezon rotası geçersiz."},{status:400});}}
       if(IMAGE_KEYS.has(k)&&raw){const imageError=await verifyPublicImageReference(raw);if(imageError)return NextResponse.json({error:imageError},{status:400});}
       normalized.push([k,raw]);
     }

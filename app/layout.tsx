@@ -3,6 +3,14 @@ import "./globals.css";
 import {getCachedPublicSettings} from "@/lib/public-cache";
 import {SITE_URL, organizationLd, websiteLd} from "@/lib/seo";
 import JsonLd from "@/components/seo/JsonLd";
+import {Analytics} from "@vercel/analytics/next";
+import {headers} from "next/headers";
+import {isEnglishPath} from "@/lib/i18n";
+import {Chakra_Petch,Inter} from "next/font/google";
+
+// Self-host: harici font CSS'i render'ı bloklamaz, CSP font-src 'self' ile uyumlu.
+const display=Chakra_Petch({subsets:["latin","latin-ext"],weight:["400","500","600","700"],display:"swap",variable:"--font-display"});
+const sans=Inter({subsets:["latin","latin-ext"],display:"swap",variable:"--font-sans"});
 
 export const dynamic="force-dynamic";
 
@@ -30,4 +38,9 @@ export async function generateMetadata():Promise<Metadata>{
     twitter:{card:"summary_large_image",title:site,description:"RECF Türkiye robotik ve drone programları, etkinlikleri ve takım süreçleri.",images:s.og_image?[s.og_image]:undefined},
   };
 }
-export default function RootLayout({children}:{children:React.ReactNode}){return <html lang="tr"><head><link rel="preconnect" href="https://fonts.googleapis.com"/><link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous"/><link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"/></head><body><JsonLd data={[organizationLd(),websiteLd()]}/>{children}</body></html>}
+export default async function RootLayout({children}:{children:React.ReactNode}){
+  const path=(await headers()).get("x-pathname")||"/";
+  let s:Record<string,string>={};
+  try{s=(await getCachedPublicSettings()) as Record<string,string>}catch{}
+  const sameAs=[s.instagram,s.youtube,s.linkedin].filter((url):url is string=>!!url&&/^https:\/\//.test(url));
+  return <html lang={isEnglishPath(path)?"en":"tr"} className={`${display.variable} ${sans.variable}`}><body><a href="#icerik" className="sr-only focus:not-sr-only focus:fixed focus:left-3 focus:top-3 focus:z-[100] focus:rounded focus:bg-ink focus:px-4 focus:py-3 focus:font-display focus:text-sm focus:font-bold focus:text-white">{isEnglishPath(path)?"Skip to content":"İçeriğe geç"}</a><JsonLd data={[organizationLd(sameAs),websiteLd()]}/>{children}<Analytics/></body></html>}

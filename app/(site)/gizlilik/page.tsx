@@ -17,7 +17,7 @@ export default async function GizlilikPage() {
           <p key={i} className="text-[15.5px] leading-[1.75] text-ink/75">{par}</p>
         ))}
       </div>
-      <p className="mt-10 text-[12.5px] text-ink/45">Son güncelleme: {new Date(p.updated).toLocaleDateString("tr-TR", { day: "numeric", month: "long", year: "numeric" })}</p>
+      <p className="mt-10 text-[12.5px] text-ink/65">Son güncelleme: {new Date(p.updated).toLocaleDateString("tr-TR", { day: "numeric", month: "long", year: "numeric" })}</p>
     </div>
   );
 }

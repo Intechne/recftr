@@ -12,6 +12,27 @@ async function db() {
   return _sql;
 }
 
+// Additive migrations can land after a code deploy. Optional columns are used only once present,
+// so public forms never fail on a schema that has not been migrated yet.
+const columnCache = new Map<string, { ok: boolean; at: number }>();
+export async function columnExists(table: string, column: string) {
+  const key = `${table}.${column}`, cached = columnCache.get(key);
+  if (cached && (cached.ok || Date.now() - cached.at < 60_000)) return cached.ok;
+  const sql = await db();
+  const [row] = await sql`SELECT 1 FROM information_schema.columns WHERE table_schema='public' AND table_name=${table} AND column_name=${column} LIMIT 1`;
+  columnCache.set(key, { ok: !!row, at: Date.now() });
+  return !!row;
+}
+const tableCache = new Map<string, { ok: boolean; at: number }>();
+export async function tableExists(table: string) {
+  const cached = tableCache.get(table);
+  if (cached && (cached.ok || Date.now() - cached.at < 60_000)) return cached.ok;
+  const sql = await db();
+  const [row] = await sql`SELECT 1 FROM information_schema.tables WHERE table_schema='public' AND table_name=${table} LIMIT 1`;
+  tableCache.set(table, { ok: !!row, at: Date.now() });
+  return !!row;
+}
+
 export function slugify(input: string) {
   return input.toLowerCase().replace(/[ç]/g,"c").replace(/[ğ]/g,"g").replace(/[ı]/g,"i").replace(/[ö]/g,"o").replace(/[ş]/g,"s").replace(/[ü]/g,"u")
     .replace(/[^a-z0-9\s-]/g, "").trim().replace(/\s+/g, "-").replace(/-+/g, "-").slice(0, 64);
@@ -34,9 +55,10 @@ export function tempPassword() {
   return `RECF-${randomBytes(12).toString("base64url").replace(/[-_]/g,"A")}!`;
 }
 
-export type NewApplication = { num:string; team:string; org:string; city:string; district:string; type:string; program:string; mentor:string; email:string; phone:string; kvkkAccepted:boolean };
+export type NewApplication = { num:string; team:string; org:string; city:string; district:string; type:string; program:string; mentor:string; email:string; phone:string; kvkkAccepted:boolean; publicListingConsent?:boolean };
 export async function createApplication(a: NewApplication) {
   const sql = await db();
+  const listingConsent = a.publicListingConsent === true && await columnExists('applications','public_listing_consent');
   return sql.begin(async(tx:any)=>{
     const [used]=await tx`SELECT 1 FROM teams WHERE num=${a.num} LIMIT 1`;
     if(used) throw new Error('TEAM_NUM_USED');
@@ -45,11 +67,13 @@ export async function createApplication(a: NewApplication) {
     const [recent]=await tx`SELECT id FROM applications WHERE num=${a.num} AND lower(email)=lower(${a.email}) AND status='BAŞVURU ALINDI' AND created_at > now() - interval '24 hours' ORDER BY id DESC LIMIT 1`;
     if(recent){
       const [row]=await tx`UPDATE applications SET team=${a.team},org=${a.org},city=${a.city},district=${a.district},type=${a.type},program=${a.program},mentor=${a.mentor},phone=${a.phone},kit=false,kvkk_accepted=${a.kvkkAccepted},kvkk_accepted_at=CASE WHEN ${a.kvkkAccepted} THEN now() ELSE kvkk_accepted_at END,total=0 WHERE id=${recent.id} RETURNING id`;
+      if(await columnExists('applications','public_listing_consent'))await tx`UPDATE applications SET public_listing_consent=${listingConsent},public_listing_consent_at=CASE WHEN ${listingConsent}::boolean THEN now() ELSE NULL END WHERE id=${recent.id}`;
       return {id:Number(row.id),updated:true};
     }
     // Legacy non-null financial columns remain compatible; a preliminary
     // application records no quote or kit purchase. No pricing is calculated.
     const [row] = await tx`INSERT INTO applications (num,team,org,city,district,type,program,mentor,email,phone,kit,kvkk_accepted,kvkk_accepted_at,total,status) VALUES (${a.num},${a.team},${a.org},${a.city},${a.district},${a.type},${a.program},${a.mentor},${a.email},${a.phone},false,${a.kvkkAccepted},CASE WHEN ${a.kvkkAccepted} THEN now() ELSE NULL END,0,'BAŞVURU ALINDI') RETURNING id`;
+    if(listingConsent)await tx`UPDATE applications SET public_listing_consent=true,public_listing_consent_at=now() WHERE id=${row.id}`;
     return {id:Number(row.id),updated:false};
   });
 }
@@ -79,6 +103,8 @@ export async function resolveApplication(id:number, action:"approve"|"reject") {
     } else {
       await tx`UPDATE cms_users SET team_num=${app.num}, active=true, session_version=session_version+1, updated_at=now() WHERE id=${existing.id} AND role='mentor'`;
     }
+    // Founding 100 listing consent travels with the team; publication still needs a separate CMS approval.
+    if (app.public_listing_consent === true) await tx`UPDATE teams SET public_listing_consent=true,public_listing_consent_at=COALESCE(${app.public_listing_consent_at??null}::timestamptz,now()) WHERE num=${app.num}`;
     const [mentorMember] = await tx`SELECT id FROM members WHERE team_num=${app.num} AND lower(coalesce(email,''))=lower(${app.email}) LIMIT 1`;
     if (!mentorMember) await tx`INSERT INTO members (team_num,name,email,role,cat,consent,status) VALUES (${app.num},${app.mentor},${app.email},'MENTOR','—','—','AKTİF')`;
     await tx`UPDATE applications SET status='ONAYLANDI', reviewed_at=now() WHERE id=${id}`;
@@ -109,11 +135,27 @@ export async function finishApplicationApprovalEmail(id:number,claim:string,stat
 
 export async function listTeams(all=true) {
   const sql=await db();
-  return all ? sql`SELECT * FROM teams ORDER BY created_at DESC` : sql`SELECT num,name,school,city,district,program,status,slogan,logo_url FROM teams WHERE visible=true AND status='AKTİF' ORDER BY num`;
+  if(all){
+    const rows=await sql`SELECT t.*,r.founding_rank FROM teams t LEFT JOIN (SELECT id,row_number() OVER (ORDER BY created_at,id)::int founding_rank FROM teams WHERE status='AKTİF') r ON r.id=t.id ORDER BY t.created_at DESC`;
+    return rows;
+  }
+  // Public directory: only teams with recorded listing consent AND editorial approval. Name, school and
+  // province only — no mentor, contact or member data ever leaves this query.
+  if(!(await columnExists('teams','public_listing_approved')))return [];
+  return sql`SELECT num,name,school,city,program,founding_rank FROM (SELECT t.*,row_number() OVER (ORDER BY created_at,id)::int founding_rank FROM teams t WHERE status='AKTİF') x
+    WHERE visible=true AND public_listing_consent=true AND public_listing_approved=true ORDER BY founding_rank`;
 }
 export async function getTeam(num:string) { const sql=await db(); const [r]=await sql`SELECT * FROM teams WHERE num=${num}`; return r??null; }
 export async function updateTeam(num:string,b:any) {
   const sql=await db();
+  if(await columnExists('teams','public_listing_approved')){
+    const r=await upsertTeamRow(sql,num,b);
+    await sql`UPDATE teams SET public_listing_consent=${b.public_listing_consent===true},public_listing_consent_at=CASE WHEN ${b.public_listing_consent===true}::boolean THEN COALESCE(public_listing_consent_at,now()) ELSE NULL END,public_listing_approved=${b.public_listing_consent===true&&b.public_listing_approved===true} WHERE num=${num}`;
+    const [fresh]=await sql`SELECT * FROM teams WHERE num=${num}`;return fresh??r;
+  }
+  return upsertTeamRow(sql,num,b);
+}
+async function upsertTeamRow(sql:any,num:string,b:any){
   const [r]=await sql`INSERT INTO teams(num,name,school,city,district,program,status,visible,mentor_name,mentor_email,phone,slogan,logo_url) VALUES(${num},${b.name},${b.school},${b.city},${b.district??''},${b.program},${b.status??'AKTİF'},${b.visible!==false},${b.mentor_name??''},${b.mentor_email??''},${b.phone??''},${b.slogan??''},${b.logo_url??''}) ON CONFLICT(num) DO UPDATE SET name=EXCLUDED.name,school=EXCLUDED.school,city=EXCLUDED.city,district=EXCLUDED.district,program=EXCLUDED.program,status=EXCLUDED.status,visible=EXCLUDED.visible,mentor_name=EXCLUDED.mentor_name,mentor_email=EXCLUDED.mentor_email,phone=EXCLUDED.phone,slogan=EXCLUDED.slogan,logo_url=EXCLUDED.logo_url,updated_at=now() RETURNING *`;
   return r??null;
 }
@@ -124,7 +166,7 @@ export async function createMember(teamNum:string,b:any){ const sql=await db(); 
 export async function updateMember(teamNum:string,id:number,b:any){ const sql=await db(); const [r]=await sql`UPDATE members SET name=${b.name},email=${b.email??''},role=${b.role??'ÜYE'},cat=${b.cat??'—'},consent=${b.consent??'—'},status=${b.status??'AKTİF'} WHERE id=${id} AND team_num=${teamNum} RETURNING *`; return r??null; }
 export async function deleteMember(teamNum:string,id:number){ const sql=await db(); await sql`DELETE FROM members WHERE id=${id} AND team_num=${teamNum}`; }
 
-export async function listNews(all=false){ const sql=await db(); return all ? sql`SELECT * FROM news ORDER BY date DESC` : sql`SELECT * FROM news WHERE published=true ORDER BY featured DESC,date DESC`; }
+export async function listNews(all=false){ const sql=await db(); return all ? sql`SELECT * FROM news ORDER BY date DESC` : sql`SELECT * FROM news WHERE published=true ORDER BY date DESC,id DESC`; }
 export async function getNews(slug:string, includeDraft=false){ const sql=await db(); const [r]=includeDraft ? await sql`SELECT * FROM news WHERE slug=${slug}` : await sql`SELECT * FROM news WHERE slug=${slug} AND published=true`; return r??null; }
 export async function upsertNews(n:any){ const sql=await db(); const [r]=await sql`INSERT INTO news(slug,tag,title,excerpt,body,published,cover_url,featured,author,date)
   VALUES(${n.slug},${n.tag??'DUYURU'},${n.title},${n.excerpt??''},${n.body??''},${!!n.published},${n.cover_url??''},${!!n.featured},${n.author??'RECF Türkiye'},${n.date??new Date().toISOString()})
@@ -162,7 +204,9 @@ export async function listEvents(all=false){ const sql=await db(); const rows=al
 export async function getEvent(slug:string,includeDraft=false){ const sql=await db(); const [r]=includeDraft ? await sql`SELECT * FROM events WHERE slug=${slug}` : await sql`SELECT * FROM events WHERE slug=${slug} AND published=true`; return r&&!includeDraft?publicEvent(r):r??null; }
 export async function upsertEvent(e:any){ const sql=await db(); const [r]=await sql`INSERT INTO events(slug,code,title,city,venue,date_label,event_start,event_end,capacity,status,excerpt,body,published,featured,cover_url,registration_enabled)
   VALUES(${e.slug},${e.code},${e.title},${e.city},${e.venue??''},${e.date_label??''},${e.event_start||null},${e.event_end||null},${Number(e.capacity)||64},${e.status??'KAYIT AÇIK'},${e.excerpt??''},${e.body??''},${!!e.published},${!!e.featured},${e.cover_url??''},${e.registration_enabled!==false})
-  ON CONFLICT(slug) DO UPDATE SET code=EXCLUDED.code,title=EXCLUDED.title,city=EXCLUDED.city,venue=EXCLUDED.venue,date_label=EXCLUDED.date_label,event_start=EXCLUDED.event_start,event_end=EXCLUDED.event_end,capacity=EXCLUDED.capacity,status=EXCLUDED.status,excerpt=EXCLUDED.excerpt,body=EXCLUDED.body,published=EXCLUDED.published,featured=EXCLUDED.featured,cover_url=EXCLUDED.cover_url,registration_enabled=EXCLUDED.registration_enabled,updated_at=now() RETURNING *`; return r; }
+  ON CONFLICT(slug) DO UPDATE SET code=EXCLUDED.code,title=EXCLUDED.title,city=EXCLUDED.city,venue=EXCLUDED.venue,date_label=EXCLUDED.date_label,event_start=EXCLUDED.event_start,event_end=EXCLUDED.event_end,capacity=EXCLUDED.capacity,status=EXCLUDED.status,excerpt=EXCLUDED.excerpt,body=EXCLUDED.body,published=EXCLUDED.published,featured=EXCLUDED.featured,cover_url=EXCLUDED.cover_url,registration_enabled=EXCLUDED.registration_enabled,updated_at=now() RETURNING *`;
+  if(await columnExists('events','date_tbc')){const [x]=await sql`UPDATE events SET registration_url=${e.registration_url??''},date_tbc=${e.date_tbc===true} WHERE id=${r.id} RETURNING *`;return x??r;}
+  return r; }
 export async function deleteEvent(slug:string){ const sql=await db(); await sql`DELETE FROM events WHERE slug=${slug}`; }
 export async function listEventRegistrations(eventId?:number,teamNum?:string){ const sql=await db(); if(eventId) return sql`SELECT r.*,t.name team_name,t.school,e.title event_title,e.slug event_slug FROM event_registrations r JOIN teams t ON t.num=r.team_num JOIN events e ON e.id=r.event_id WHERE r.event_id=${eventId} ORDER BY r.created_at`; if(teamNum) return sql`SELECT r.*,e.title event_title,e.slug event_slug,e.date_label,e.city,e.venue,e.status event_status FROM event_registrations r JOIN events e ON e.id=r.event_id WHERE r.team_num=${teamNum} ORDER BY COALESCE(e.event_start,e.created_at)`; return sql`SELECT r.*,t.name team_name,e.title event_title FROM event_registrations r JOIN teams t ON t.num=r.team_num JOIN events e ON e.id=r.event_id ORDER BY r.created_at DESC`; }
 export async function registerEvent(teamNum:string,eventId:number){ const sql=await db(); return sql.begin(async(tx:any)=>{ const [e]=await tx`SELECT * FROM events WHERE id=${eventId} AND published=true FOR UPDATE`; if(!e) throw new Error('Etkinlik bulunamadı.'); if(eventPhase(e)==='past'||!e.registration_enabled) throw new Error('Etkinlik kaydı kapalı.'); const [team]=await tx`SELECT program,status FROM teams WHERE num=${teamNum}`; if(!team||team.status!=='AKTİF')throw new Error('Takım aktif değil.'); const expected:any={engage:'ENG',achieve:'ACH',inspire:'INS',adc:'ADC','adc-pro':'PRO'}; const code=String(e.code||'').toUpperCase(); if(code!=='TÜMÜ'&&expected[team.program]&&!code.startsWith(expected[team.program]))throw new Error('Bu etkinlik takım programınız için değil.'); const [c]=await tx`SELECT COUNT(*)::int c FROM event_registrations WHERE event_id=${eventId} AND status IN ('BEKLİYOR','ONAYLI')`; if(c.c>=e.capacity) throw new Error('Etkinlik kontenjanı dolu.'); const [r]=await tx`INSERT INTO event_registrations(event_id,team_num,status) VALUES(${eventId},${teamNum},'BEKLİYOR') ON CONFLICT(event_id,team_num) DO UPDATE SET status='BEKLİYOR',updated_at=now() RETURNING *`; return r; }); }
@@ -309,7 +353,9 @@ export async function getPublicHomeSnapshot(keys:readonly string[]){
     SELECT
       COALESCE((SELECT jsonb_agg(to_jsonb(p) ORDER BY p.sort_order,p.slug) FROM program_content p WHERE p.active=true),'[]'::jsonb) AS programs,
       COALESCE((SELECT jsonb_agg(to_jsonb(e) ORDER BY COALESCE(e.event_start,e.created_at),e.id) FROM (SELECT * FROM events WHERE published=true AND (event_start IS NULL OR COALESCE(event_end,event_start + interval '1 day') >= now()) ORDER BY COALESCE(event_start,created_at),id LIMIT 6) e),'[]'::jsonb) AS events,
-      COALESCE((SELECT jsonb_agg(to_jsonb(n) ORDER BY n.featured DESC,n.date DESC) FROM (SELECT * FROM news WHERE published=true ORDER BY featured DESC,date DESC LIMIT 3) n),'[]'::jsonb) AS news,
+      COALESCE((SELECT jsonb_agg(to_jsonb(n) ORDER BY n.date DESC,n.id DESC) FROM (SELECT * FROM news WHERE published=true AND upper(tag)<>'RECF''TEN' ORDER BY date DESC,id DESC LIMIT 3) n),'[]'::jsonb) AS news,
+      COALESCE((SELECT jsonb_agg(to_jsonb(n) ORDER BY n.date DESC,n.id DESC) FROM (SELECT * FROM news WHERE published=true AND upper(tag)='RECF''TEN' ORDER BY date DESC,id DESC LIMIT 3) n),'[]'::jsonb) AS recf_news,
+      COALESCE((SELECT jsonb_agg(jsonb_build_object('city',c.city,'count',c.count)) FROM (SELECT city,COUNT(*)::int count FROM teams WHERE status='AKTİF' AND NULLIF(trim(city),'') IS NOT NULL GROUP BY city) c),'[]'::jsonb) AS team_cities,
       COALESCE((SELECT jsonb_agg(to_jsonb(m) ORDER BY m.created_at DESC) FROM (SELECT * FROM media WHERE published=true ORDER BY created_at DESC LIMIT 7) m),'[]'::jsonb) AS media,
       COALESCE((SELECT jsonb_object_agg(s.key,s.value) FROM settings s WHERE s.key IN ${sql([...keys])}),'{}'::jsonb) AS settings,
       jsonb_build_object(
@@ -317,16 +363,19 @@ export async function getPublicHomeSnapshot(keys:readonly string[]){
         'cities',(SELECT COUNT(DISTINCT city)::int FROM teams WHERE status='AKTİF' AND visible=true AND NULLIF(trim(city),'') IS NOT NULL),
         'events',(SELECT COUNT(*)::int FROM events WHERE published=true),
         'students',(SELECT COUNT(*)::int FROM members WHERE status='AKTİF' AND upper(coalesce(role,'')) <> 'MENTOR'),
-        'programs',(SELECT COUNT(*)::int FROM program_content WHERE active=true)
+        'programs',(SELECT COUNT(*)::int FROM program_content WHERE active=true),
+        'founding',(SELECT LEAST(100,COUNT(*))::int FROM teams WHERE status='AKTİF')
       ) AS stats
   `;
   return {
     programs:(Array.isArray(row?.programs)?row.programs:[]).map(normalizeProgramRow).filter(Boolean),
     events:Array.isArray(row?.events)?row.events:[],
     news:Array.isArray(row?.news)?row.news:[],
+    recfNews:Array.isArray(row?.recf_news)?row.recf_news:[],
+    teamCities:Array.isArray(row?.team_cities)?row.team_cities:[],
     media:Array.isArray(row?.media)?row.media:[],
     settings:row?.settings&&typeof row.settings==='object'?row.settings:{},
-    stats:row?.stats&&typeof row.stats==='object'?row.stats:{teams:0,cities:0,events:0,students:0,programs:0},
+    stats:row?.stats&&typeof row.stats==='object'?row.stats:{teams:0,cities:0,events:0,students:0,programs:0,founding:0},
   };
 }
 
@@ -336,10 +385,59 @@ export async function dbDiagnostics(){
   try{
     const sql=await db();
     const [who]=await sql`SELECT current_database() database,current_user db_user,now() time`;
-    const expected=["applications","teams","members","news","program_content","events","documents","pages","settings","team_docs","document_requirements","payments","cms_users","event_registrations","media","contacts","audit_logs","security_rate_limits","security_revoked_sessions","planning_committee_applications"];
+    const expected=["applications","teams","members","news","program_content","events","documents","pages","settings","team_docs","document_requirements","payments","cms_users","event_registrations","media","contacts","audit_logs","security_rate_limits","security_revoked_sessions","planning_committee_applications","lead_requests","newsletter_subscriptions","partners"];
     const rows=await sql`SELECT table_name FROM information_schema.tables WHERE table_schema='public' AND table_name IN ${sql(expected)}`;
     const tables=rows.map((r:any)=>r.table_name);
     const missingTables=expected.filter(x=>!tables.includes(x));
     return {ok:missingTables.length===0,env:{databaseUrl:true},database:who,tables,missingTables,leastPrivilege:String(who?.db_user||'').toLowerCase()!=='postgres',warning:String(who?.db_user||'').toLowerCase()==='postgres'?'DATABASE_URL hâlâ postgres süper-yetkili rolünü kullanıyor. recf_app rolüne geçin.':null,error:missingTables.length?`Eksik tablolar: ${missingTables.join(", ")}`:null};
   }catch(e:any){return {ok:false,env:{databaseUrl:true},database:null,tables:[],missingTables:[] as string[],error:e?.message||"Veritabanı bağlantısı kurulamadı."};}
 }
+
+// ── Talepler (okul randevusu, destek randevusu, iş birliği, lansman katılımı) ──
+export type LeadKind = "okul_randevu"|"destek_randevu"|"isbirligi"|"lansman_katilim";
+export type LeadInput = { kind:LeadKind; submissionKey:string; fingerprint:string; name:string; email:string; phone:string; organization:string; role:string; city:string; message:string; details:Record<string,string|string[]> };
+export async function createLeadRequest(data:LeadInput){
+  const sql=await db();
+  const [created]=await sql`INSERT INTO lead_requests(kind,submission_key,payload_fingerprint,name,email,phone,organization,role,city,message,details,kvkk_acknowledged,kvkk_acknowledged_at)
+    VALUES(${data.kind},${data.submissionKey}::uuid,${data.fingerprint},${data.name},${data.email},${data.phone},${data.organization},${data.role},${data.city},${data.message},${sql.json(data.details)},true,now())
+    ON CONFLICT(submission_key) DO NOTHING RETURNING id`;
+  if(created)return {id:Number(created.id)};
+  const [existing]=await sql`SELECT id FROM lead_requests WHERE submission_key=${data.submissionKey}::uuid AND payload_fingerprint=${data.fingerprint}`;
+  return existing?{id:Number(existing.id)}:null;
+}
+export async function listLeadRequests({kind,status,cursor}:{kind:string;status:string;cursor?:number}){
+  const sql=await db();
+  const after=cursor?sql`AND id<${cursor}`:sql``,byKind=kind?sql`AND kind=${kind}`:sql``,byStatus=status?sql`AND status=${status}`:sql``;
+  const rows=await sql`SELECT id,kind,name,email,phone,organization,role,city,message,details,status,review_notes,version,created_at,updated_at FROM lead_requests WHERE true ${after} ${byKind} ${byStatus} ORDER BY id DESC LIMIT 101`;
+  const items=rows.slice(0,100).map((row:any)=>({...row,id:Number(row.id)}));
+  return {items,nextCursor:rows.length>100?Number(items[items.length-1].id):null};
+}
+export async function updateLeadRequest(id:number,status:string,notes:string,version:number){
+  const sql=await db();
+  const [row]=await sql`UPDATE lead_requests SET status=${status},review_notes=${notes},version=version+1,updated_at=now() WHERE id=${id} AND version=${version} RETURNING id,status,review_notes,version,updated_at`;
+  return row?{...row,id:Number(row.id)}:null;
+}
+
+// ── E-posta bülteni ──
+export async function subscribeNewsletter(email:string,consentText:string,source:string){
+  const sql=await db();
+  // Same response for new and existing addresses: the endpoint never reveals who is subscribed.
+  await sql`INSERT INTO newsletter_subscriptions(email,consent_given,consent_text,consent_at,source,status)
+    VALUES(${email},true,${consentText},now(),${source},'AKTİF')
+    ON CONFLICT(email) DO UPDATE SET consent_given=true,consent_text=EXCLUDED.consent_text,consent_at=now(),source=EXCLUDED.source,status='AKTİF',unsubscribed_at=NULL,updated_at=now()`;
+}
+export async function listNewsletterSubscriptions(){ const sql=await db(); return sql`SELECT id,email,consent_text,consent_at,source,status,unsubscribed_at,created_at FROM newsletter_subscriptions ORDER BY id DESC LIMIT 2000`; }
+export async function setNewsletterStatus(id:number,status:"AKTİF"|"AYRILDI"){ const sql=await db(); const [r]=await sql`UPDATE newsletter_subscriptions SET status=${status},unsubscribed_at=CASE WHEN ${status}='AYRILDI' THEN now() ELSE NULL END,updated_at=now() WHERE id=${id} RETURNING id,status`; return r??null; }
+
+// ── İş birliği partnerleri ──
+export async function listPartners(all=false){
+  const sql=await db();
+  if(!(await tableExists('partners')))return [];
+  return all ? sql`SELECT * FROM partners ORDER BY sort_order,name` : sql`SELECT id,name,logo_url,website_url,tier,sort_order FROM partners WHERE published=true AND logo_url<>'' ORDER BY sort_order,name`;
+}
+export async function savePartner(b:any){
+  const sql=await db();
+  if(b.id){const [r]=await sql`UPDATE partners SET name=${b.name},logo_url=${b.logo_url},website_url=${b.website_url},tier=${b.tier},sort_order=${b.sort_order},published=${b.published},updated_at=now() WHERE id=${Number(b.id)} RETURNING *`;return r??null;}
+  const [r]=await sql`INSERT INTO partners(name,logo_url,website_url,tier,sort_order,published) VALUES(${b.name},${b.logo_url},${b.website_url},${b.tier},${b.sort_order},${b.published}) RETURNING *`;return r;
+}
+export async function deletePartner(id:number){ const sql=await db(); const [r]=await sql`DELETE FROM partners WHERE id=${id} RETURNING *`; return r??null; }

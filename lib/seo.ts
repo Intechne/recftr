@@ -9,26 +9,32 @@ export const ORG = {
   email: PUBLIC_CONTACT.support,
   eventEmail: PUBLIC_CONTACT.events,
   address: { locality: "Pendik", region: "İstanbul", country: "TR", street: "Teknopark İstanbul" },
-  sameAs: ["https://www.instagram.com/recfturkiye", "https://www.youtube.com/@recfturkiye", "https://www.linkedin.com/company/recfturkiye"],
+  // Sosyal hesaplar CMS ayarlarından gelir (organizationLd(sameAs)); doğrulanmamış hesap yazılmaz.
+  sameAs: [] as string[],
   parent: { name: "Robotics Education & Competition Foundation", url: "https://recf.org" },
 };
+export const DEFAULT_OG_IMAGE = "/og/recf-turkiye-og.png";
 export const abs = (path: string) => `${SITE_URL}${path.startsWith("/") ? path : "/" + path}`;
 
-export function pageMeta(opts: { title: string; description: string; path: string; image?: string; type?: "website" | "article"; noIndex?: boolean }) {
+export function pageMeta(opts: { title: string; description: string; path: string; image?: string; type?: "website" | "article"; noIndex?: boolean; lang?: "tr" | "en"; languages?: Record<string, string> }) {
   const url = abs(opts.path);
+  // Sayfa kendi görselini vermezse markanın varsayılan paylaşım görseli kullanılır
+  // (Next, alt sayfadaki openGraph nesnesini üst düzeyle birleştirmez, tamamen değiştirir).
+  const image = opts.image || abs(DEFAULT_OG_IMAGE);
+  const images = opts.image ? [{ url: image, width: 1600, height: 900 }] : [{ url: image, width: 1200, height: 630, alt: "RECF Türkiye" }];
   return {
     title: opts.title,
     description: opts.description,
-    alternates: { canonical: url },
+    alternates: { canonical: url, ...(opts.languages ? { languages: opts.languages } : {}) },
     robots: opts.noIndex ? { index: false, follow: false } : { index: true, follow: true, "max-image-preview": "large" as const, "max-snippet": -1, "max-video-preview": -1 },
-    openGraph: { title: opts.title, description: opts.description, url, siteName: SITE_NAME, locale: "tr_TR", type: opts.type ?? "website", images: opts.image ? [{ url: opts.image, width: 1600, height: 900 }] : undefined },
-    twitter: { card: "summary_large_image" as const, title: opts.title, description: opts.description, images: opts.image ? [opts.image] : undefined },
+    openGraph: { title: opts.title, description: opts.description, url, siteName: SITE_NAME, locale: opts.lang === "en" ? "en_US" : "tr_TR", type: opts.type ?? "website", images },
+    twitter: { card: "summary_large_image" as const, title: opts.title, description: opts.description, images: [image] },
   };
 }
-export const organizationLd = () => ({
+export const organizationLd = (sameAs: string[] = ORG.sameAs) => ({
   "@context": "https://schema.org", "@type": "Organization",
   "@id": abs("/#organization"), name: ORG.name, legalName: ORG.legalName, url: ORG.url,
-  logo: abs("/logos/recf-turkiye.svg"), email: ORG.email, sameAs: ORG.sameAs,
+  logo: abs("/logos/recf-turkiye-logo.png"), email: ORG.email, ...(sameAs.length ? { sameAs } : {}),
   address: { "@type": "PostalAddress", streetAddress: ORG.address.street, addressLocality: ORG.address.locality, addressRegion: ORG.address.region, addressCountry: ORG.address.country },
   parentOrganization: { "@type": "Organization", name: ORG.parent.name, url: ORG.parent.url },
   contactPoint: [
@@ -38,20 +44,32 @@ export const organizationLd = () => ({
 });
 export const websiteLd = () => ({
   "@context": "https://schema.org", "@type": "WebSite", "@id": abs("/#website"),
-  url: SITE_URL, name: SITE_NAME, inLanguage: "tr-TR", publisher: { "@id": abs("/#organization") },
-  potentialAction: { "@type": "SearchAction", target: { "@type": "EntryPoint", urlTemplate: abs("/takimlar?q={search_term_string}") }, "query-input": "required name=search_term_string" },
+  url: SITE_URL, name: SITE_NAME, inLanguage: ["tr-TR", "en"], publisher: { "@id": abs("/#organization") },
 });
 export const breadcrumbLd = (items: { name: string; path: string }[]) => ({
   "@context": "https://schema.org", "@type": "BreadcrumbList",
   itemListElement: items.map((it, i) => ({ "@type": "ListItem", position: i + 1, name: it.name, item: abs(it.path) })),
 });
-export const eventLd = (e: any) => ({
-  "@context": "https://schema.org", "@type": "Event", name: e.title, description: e.excerpt || undefined,
-  url: abs(`/etkinlikler/${e.slug}`), image: e.cover_url || undefined,
-  startDate: e.event_start || undefined, endDate: e.event_end || undefined,
-  eventStatus: "https://schema.org/EventScheduled", eventAttendanceMode: "https://schema.org/OfflineEventAttendanceMode",
-  location: { "@type": "Place", name: e.venue || e.city, address: { "@type": "PostalAddress", addressLocality: e.city, addressCountry: "TR" } },
-  organizer: { "@id": abs("/#organization") },
+/** schema.org Event. Tarihi teyit edilmemiş etkinlik için `null` döner (startDate zorunlu alandır). */
+export const eventLd = (e: any) => {
+  const start = e?.event_start ? new Date(e.event_start) : null;
+  if (!start || Number.isNaN(start.getTime()) || e.date_tbc) return null;
+  const end = e.event_end ? new Date(e.event_end) : null;
+  const registration = typeof e.registration_url === "string" && /^https:\/\//.test(e.registration_url) ? e.registration_url : "";
+  return {
+    "@context": "https://schema.org", "@type": "Event", name: e.title, description: e.excerpt || undefined,
+    url: abs(`/etkinlikler/${e.slug}`), image: e.cover_url ? [e.cover_url] : [abs(DEFAULT_OG_IMAGE)],
+    startDate: start.toISOString(), endDate: end && !Number.isNaN(end.getTime()) ? end.toISOString() : undefined,
+    eventStatus: "https://schema.org/EventScheduled", eventAttendanceMode: "https://schema.org/OfflineEventAttendanceMode",
+    location: { "@type": "Place", name: e.venue || e.city || "Türkiye", address: { "@type": "PostalAddress", ...(e.city ? { addressLocality: e.city } : {}), addressCountry: "TR" } },
+    organizer: { "@type": "Organization", name: ORG.name, url: ORG.url },
+    ...(registration ? { offers: { "@type": "Offer", url: registration, availability: "https://schema.org/InStock" } } : {}),
+  };
+};
+/** schema.org FAQPage. */
+export const faqLd = (items: { q: string; a: string }[], lang: "tr" | "en" = "tr") => ({
+  "@context": "https://schema.org", "@type": "FAQPage", inLanguage: lang === "en" ? "en" : "tr-TR",
+  mainEntity: items.map(item => ({ "@type": "Question", name: item.q, acceptedAnswer: { "@type": "Answer", text: item.a } })),
 });
 export const articleLd = (n: any) => ({
   "@context": "https://schema.org", "@type": "NewsArticle", headline: n.title, description: n.excerpt || undefined,

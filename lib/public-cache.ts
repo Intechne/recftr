@@ -12,9 +12,11 @@ import {
   listMedia,
   listNews,
   listPrograms,
+  listPartners,
   listPublicStaff,
   listTeams,
 } from "@/lib/db";
+import { applyTokens, publishable, sitePage } from "@/lib/site-pages";
 import { PUBLIC_SETTING_KEYS } from "@/lib/content-consistency";
 import { FALLBACK_PROGRAMS, fallbackProgram } from "@/lib/program-fallback";
 import { publicTickerMessages } from "@/lib/public-announcements";
@@ -42,7 +44,7 @@ const homeSnapshotData = unstable_cache(
 );
 export async function getCachedHomeSnapshot(){
   try { const data = await homeSnapshotData(); return { ...data, settings: currentContactSettings(data.settings), programs: data.programs.map(correctAchieveContent), events: data.events.map((e:any) => publicEvent(e)) }; }
-  catch { return {programs:[],events:[],news:[],media:[],settings:currentContactSettings({}),stats:{teams:0,cities:0,events:0,students:0,programs:0}}; }
+  catch { return {programs:[],events:[],news:[],recfNews:[],teamCities:[],media:[],settings:currentContactSettings({}),stats:{teams:0,cities:0,events:0,students:0,programs:0,founding:0}}; }
 }
 
 const programsData = unstable_cache(async () => listPrograms(false), ["public-programs-v314"], { revalidate: TTL, tags: [TAG] });
@@ -77,3 +79,29 @@ export async function getCachedStaff(){ try{return await staffData();}catch{retu
 
 const pageData = unstable_cache(async (slug:string) => getPage(slug), ["public-page-v314"], { revalidate: TTL, tags: [TAG] });
 export async function getCachedPage(slug:string){ try{const page=await pageData(slug);return page?{...page,body:currentContactEmails(String(page.body||""))}:null;}catch{return null;} }
+
+const pageRecordData = unstable_cache(async (slug:string) => { const row:any=await getPage(slug,true); return row?{slug:row.slug,title:String(row.title||""),body:String(row.body||""),published:!!row.published}:null; }, ["public-page-record-v1"], { revalidate: TTL, tags: [TAG] });
+
+const partnersData = unstable_cache(async () => plainRows(await listPartners(false)), ["public-partners-v1"], { revalidate: TTL, tags: [TAG] });
+export async function getCachedPartners(){ try{return await partnersData();}catch{return [];} }
+
+/** Program yaş gruplarını CMS program verisinden tek cümleye çevirir (SSS belirteci). */
+export async function programAgesSentence(lang:"tr"|"en"="tr"){
+  const programs:any[]=await getCachedPrograms();
+  return programs.map(p=>`${p.name}: ${lang==="en"?(p.age||p.age_detail):(p.age_detail||p.age)}`).filter(x=>!/:\s*$/.test(x)).join(" · ");
+}
+
+/**
+ * CMS'ten düzenlenebilen site sayfası. CMS kaydı varsa o, yoksa kod içindeki varsayılan kullanılır.
+ * Yayında olmayan veya yer tutucu içeren sayfa `null` döner (public rota 404 verir).
+ */
+export async function getSitePage(slug:string){
+  const def=sitePage(slug); if(!def)return null;
+  let record:{title:string;body:string;published:boolean}|null=null;
+  try{record=await pageRecordData(slug);}catch{record=null;}
+  const title=record?.title?.trim()||def.title, rawBody=record?record.body:def.body;
+  const published=record?record.published:def.defaultPublished;
+  if(!published||!publishable(title,rawBody))return null;
+  const programAges=rawBody.includes("{{program_ages")?await programAgesSentence(def.lang):"";
+  return {...def,title,body:currentContactEmails(applyTokens(rawBody,{lang:def.lang,programAges})),fromCms:!!record};
+}

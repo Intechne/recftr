@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useRef, useState } from "react";
 
 const EMPTY = { name: "", email: "", phone: "", subject: "Genel", message: "", website: "" };
-const field = "mt-1 w-full rounded-md border border-white/25 bg-white/[.08] px-3.5 py-3 text-sm text-white placeholder:text-white/45 outline-none focus:border-cyan-brand";
+const field = "mt-1 w-full rounded-md border border-white/25 bg-white/[.08] px-3.5 py-3 text-sm text-white placeholder:text-white/65 outline-none focus:border-cyan-brand";
 const label = "mt-3 block text-xs font-semibold text-white/80";
 
 export default function ContactForm() {
