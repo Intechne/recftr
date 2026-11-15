@@ -6,7 +6,9 @@ import {apiError} from "@/lib/api-server";
 import {cleanText,validHttpUrl} from "@/lib/security";
 import {publishContentChange} from "@/lib/content-consistency";
 export const dynamic="force-dynamic";
+const meta=(b:any)=>({source:b.source==='recf'?'recf':'recf_turkiye',program:cleanText(b.program,60),version_label:cleanText(b.version_label,80),language:cleanText(b.language,20)||'TR',sort_order:Math.max(-1000,Math.min(1000,Number(b.sort_order)||0))});
 async function normalizedBody(b:any){
+  b={...b,...meta(b)};
   const name=cleanText(b.name,180),cat=cleanText(b.cat,80),file_path=cleanText(b.file_path,500),url=cleanText(b.url,1200);
   if(!name||!cat||!url)return {error:'Ad, kategori ve dosya/URL zorunlu'} as any;
   if(file_path){
