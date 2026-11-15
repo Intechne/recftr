@@ -12,8 +12,8 @@ const compile=(file,imports={})=>{
 };
 const config=compile('lib/site-config.ts');
 const {SITE_PAGES,parsePageBody,pageFaqs,applyTokens,publishable,plainText}=await import(compile('lib/site-pages.ts',{'@/lib/site-config':config}));
-const {hasPlaceholder,WORLD_CHAMPIONSHIP,RECF_TEAM_FEE}=await import(config);
-const {publicRoute,VERIFIED_ROUTE,SUGGESTED_ROUTE}=await import(compile('lib/season-route.ts',{'@/lib/site-config':config}));
+const {hasPlaceholder,WORLD_CHAMPIONSHIP,RECF_FEES,worldChampionship,feeGroupFor}=await import(config);
+const {publicRoute,VERIFIED_ROUTE,SUGGESTED_ROUTE,verifiedRoute}=await import(compile('lib/season-route.ts',{'@/lib/site-config':config}));
 const contacts=compile('lib/public-contact.ts');
 const {eventLd,faqLd}=await import(compile('lib/seo.ts',{'@/lib/public-contact':contacts}));
 
@@ -41,8 +41,16 @@ const neutral=faqs.find(f=>f.q==='Başka organizasyonların yarışmalarına da 
 assert.ok(neutral,'neutral FAQ question missing');
 assert.equal(neutral.a,"RECF Türkiye, RECF'in Türkiye'deki resmi programıdır. Diğer organizasyonların etkinliklerine katılım koşulları ilgili organizasyonlar tarafından belirlenir; bu konuda doğrudan ilgili kurumla iletişime geçmenizi öneririz.");
 assert.ok(faqs.length>=12);
-for(const source of ['https://recf.org/faq/','https://recf.org/faq/what-is-the-team-registration-fee-for-the-2026-2027-recf-robotics-competition-season/','https://recf.org/the-future-of-stem-competition-starts-here-introducing-recf-robotics/'])assert.ok(sss.includes(source),source);
-assert.ok(sss.includes(RECF_TEAM_FEE.label)&&sss.includes(WORLD_CHAMPIONSHIP.label));
+for(const source of ['https://recf.org/recf-world-championship/','https://recf.org/faq/what-is-the-team-registration-fee-for-the-2026-2027-recf-robotics-competition-season/','https://kb.roboticseducation.org/hc/en-us/articles/41294850729623','https://recf.org/the-future-of-stem-competition-starts-here-introducing-recf-robotics/'])assert.ok(sss.includes(source),source);
+assert.ok(sss.includes(RECF_FEES.robotics.label)&&sss.includes(RECF_FEES.drones.label)&&sss.includes(WORLD_CHAMPIONSHIP.label));
+// Ücret programa göre: robotik 175, drone 200 (RECF FAQ + KB, 16 Kasım 2026)
+assert.equal(RECF_FEES.robotics.amount,175);assert.equal(RECF_FEES.drones.amount,200);
+assert.equal(feeGroupFor('engage'),'robotics');assert.equal(feeGroupFor('inspire'),'robotics');assert.equal(feeGroupFor('adc'),'drones');assert.equal(feeGroupFor('adc-pro'),'drones');assert.equal(feeGroupFor('x'),null);
+// World Championship: resmî kaynaklar çeliştiği için kesin gün yazılmaz; CMS ayarı tek kaynaktır
+assert.ok(!/\b(25|27) Nisan\b|\b(6|7) Mayıs\b/.test(WORLD_CHAMPIONSHIP.label));
+assert.equal(worldChampionship({wc_date_label:'X Tarih'}).label,'X Tarih');assert.equal(worldChampionship({wc_date_label:'[TEYİT]'}).label,WORLD_CHAMPIONSHIP.label);
+assert.equal(verifiedRoute(worldChampionship({wc_date_label:'Y'}))[1].date_label,'Y');
+const wcSss=applyTokens(SITE_PAGES.find(p=>p.slug==='sss').body,{wc:worldChampionship({wc_date_label:'CMS TARİHİ'})});assert.ok(wcSss.includes('CMS TARİHİ'));
 const ld=faqLd(faqs.map(f=>({q:plainText(f.q),a:plainText(f.a)})));
 assert.equal(ld['@type'],'FAQPage');assert.ok(ld.mainEntity.every(q=>q['@type']==='Question'&&!/\]\(/.test(q.acceptedAnswer.text)));
 

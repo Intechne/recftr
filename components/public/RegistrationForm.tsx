@@ -4,7 +4,7 @@ import {initialRegistrationProgram} from "@/lib/public-content";
 import {FigmaIcon} from "@/components/FigmaIcon";
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { RECF_TEAM_FEE } from "@/lib/site-config";
+import { RECF_FEES, SEASON, feeGroupFor } from "@/lib/site-config";
 import { trackEvent } from "@/components/analytics/track";
 import RecfEventsLink from "@/components/analytics/RecfEventsLink";
 
@@ -41,6 +41,7 @@ export default function RegistrationForm({initialPrograms,requestedProgram}:{ini
   },[form.city]);
 
   const p = programs.find((x:any) => x.slug === prog) || programs[0] || {slug:prog,code:prog.toUpperCase(),name:prog,ageDetail:""};
+  const fee = RECF_FEES[feeGroupFor(prog) || "robotics"];
   const set = (k: string, v: any) => { markStarted(); setForm((f) => ({ ...f, [k]: v })); };
   const input = "w-full rounded-md border-[1.5px] border-ink/25 bg-paper px-3.5 py-3 text-[14.5px] outline-none focus:border-cyan-deep disabled:cursor-not-allowed disabled:opacity-55";
   const label = "block font-display text-[13px] font-semibold text-ink";
@@ -91,7 +92,7 @@ export default function RegistrationForm({initialPrograms,requestedProgram}:{ini
             ) : <>
               <h2 className="font-display text-[20px] font-bold text-ink">ADIM {step + 1} — {steps[step]}</h2>
 
-              {step === 0 && <div className="mt-5 rounded-lg border-2 border-ink bg-paper p-4 sm:flex sm:items-start sm:gap-4"><span className="inline-flex shrink-0 rounded bg-ink px-3 py-2 font-display text-[15px] font-bold text-cyan-brand">{RECF_TEAM_FEE.label}</span><p className="mt-3 text-[13.5px] leading-relaxed text-ink/75 sm:mt-0"><strong className="text-ink">RECF resmî takım kayıt ücreti ({RECF_TEAM_FEE.season} sezonu, takım başına).</strong> Ödeme RECFEvents.org üzerinden yapılır; bu ön başvuru ücretsizdir. <a href={RECF_TEAM_FEE.source} target="_blank" rel="noopener noreferrer" className="font-semibold text-cyan-deep underline">Kaynak: RECF SSS<span className="sr-only"> (yeni sekmede açılır)</span></a><span className="mt-1.5 block">Takım Bursu ve kurumsal paket seçenekleri için <Link href="/okullar#randevu" className="font-semibold text-cyan-deep underline">bize ulaşın</Link>.</span></p></div>}
+              {step === 0 && <div className="mt-5 rounded-lg border-2 border-ink bg-paper p-4 sm:flex sm:items-start sm:gap-4"><span className="inline-flex shrink-0 rounded bg-ink px-3 py-2 font-display text-[15px] font-bold text-cyan-brand">{fee.label}</span><p className="mt-3 text-[13.5px] leading-relaxed text-ink/75 sm:mt-0" aria-live="polite"><strong className="text-ink">RECF resmî takım kayıt ücreti ({SEASON} sezonu, takım başına) — {fee.name}.</strong> {fee===RECF_FEES.robotics?`ADC ve ADC Pro için ${RECF_FEES.drones.label}.`:`Engage, Achieve ve Inspire için ${RECF_FEES.robotics.label}.`} Ödeme RECFEvents.org üzerinden yapılır; bu ön başvuru ücretsizdir. <a href={fee.source} target="_blank" rel="noopener noreferrer" className="font-semibold text-cyan-deep underline">Kaynak: RECF SSS<span className="sr-only"> (yeni sekmede açılır)</span></a><span className="mt-1.5 block">Takım Bursu ve kurumsal paket seçenekleri için <Link href="/okullar#randevu" className="font-semibold text-cyan-deep underline">bize ulaşın</Link>.</span></p></div>}
 
               {step === 0 && <div className="mt-5 grid gap-3 sm:grid-cols-2">{programs.map((x) => <button key={x.slug} onClick={() => { markStarted(); setProg(x.slug); }} className={`rounded-lg border-2 p-4 text-left transition-colors ${prog === x.slug ? "border-ink bg-cyan-brand/10" : "border-ink/15 hover:border-ink/40"}`} aria-pressed={prog === x.slug}><span className="font-display text-[15px] font-bold text-ink">{x.code} — {String(x.name||'').replace("RECF ", "")}</span><span className="mt-1 block text-[12.5px] text-ink/65">{x.ageDetail}</span></button>)}</div>}
 
@@ -147,7 +148,7 @@ export default function RegistrationForm({initialPrograms,requestedProgram}:{ini
 
           <div className="space-y-5 lg:sticky lg:top-24">
             <div className="overflow-hidden rounded-xl border-[3px] border-cyan-brand bg-white shadow-plate shadow-cyan-brand/45"><div className="flex items-center justify-between bg-ink px-4 py-2.5"><span className="font-display text-[12px] font-bold text-cyan-brand">PLAKA ÖNİZLEME</span><span className="font-display text-[11px] font-medium text-white/60">{p.code} · 26–27</span></div><p className={`py-5 text-center font-display font-bold text-ink ${form.num?"text-[clamp(2.2rem,14vw,3.625rem)] tracking-[clamp(2px,1.2vw,5px)]":"text-[22px] tracking-[2px] text-ink/50"}`}>{form.num || "TAKIM NO"}</p><p className="pb-4 text-center font-display text-[10.5px] font-medium tracking-[1px] text-ink/65">{(form.team || "TAKIMIN").toUpperCase()} · {[form.district,form.city].filter(Boolean).join(" / ").toUpperCase()}</p></div>
-            <div className="rounded-xl bg-ink p-5"><h3 className="font-display text-[14px] font-bold text-cyan-brand">BAŞVURU SÜRECİ</h3><ol className="mt-3 space-y-3 text-[13.5px] leading-relaxed text-white/75"><li>1. Programını seç ve takım bilgilerini paylaş.</li><li>2. Başvuru alındı bilgilendirmesini e-postanda kontrol et.</li><li>3. Resmî kaydını RECFEvents.org’da tamamla ({RECF_TEAM_FEE.label}).</li><li>4. Takılırsan destek randevusu al; ekibimiz yanında.</li></ol></div>
+            <div className="rounded-xl bg-ink p-5"><h3 className="font-display text-[14px] font-bold text-cyan-brand">BAŞVURU SÜRECİ</h3><ol className="mt-3 space-y-3 text-[13.5px] leading-relaxed text-white/75"><li>1. Programını seç ve takım bilgilerini paylaş.</li><li>2. Başvuru alındı bilgilendirmesini e-postanda kontrol et.</li><li>3. Resmî kaydını RECFEvents.org’da tamamla ({fee.label}).</li><li>4. Takılırsan destek randevusu al; ekibimiz yanında.</li></ol></div>
             <p className="text-[12.5px] leading-relaxed text-ink/65">Nasıl ilerleyeceğinden emin değil misin? <Link href="/rehber/takim-kaydi" className="font-semibold text-cyan-deep underline">Takım Kaydı Rehberi</Link>ni incele.</p>
           </div>
         </div>
