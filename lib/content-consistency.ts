@@ -7,7 +7,8 @@ export const PUBLIC_SETTING_KEYS = [
   "site_logo","site_mark","favicon_url","apple_touch_icon_url","og_image","season_label",
   "season_route_title","season_route","home_cta_title","home_cta_description","home_cta_plate",
   "home_show_programs","home_show_route","home_show_stats","home_show_events","home_show_news",
-  "home_show_gallery","home_show_cta"
+  "home_show_gallery","home_show_cta","home_show_team_map","home_show_recf_news","founding100_min_display",
+  "team_map_min_teams","recf_representation_approved"
 ] as const;
 
 export async function publishContentChange(paths: string[] = [], existingRevision?: string) {

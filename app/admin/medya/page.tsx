@@ -15,6 +15,7 @@ const imageSpecs = [
 
 export default function Page() {
   const [list, setList] = useState<any[]>([]);
+  const [events, setEvents] = useState<{ slug: string; title: string }[]>([]);
   const [file, setFile] = useState<File | null>(null);
   const [title, setTitle] = useState("");
   const [event, setEvent] = useState("");
@@ -35,10 +36,11 @@ export default function Page() {
     }
   };
 
-  useEffect(() => { void load(); }, []);
+  useEffect(() => { void load(); fetch("/api/events?all=1", { cache: "no-store" }).then(r => r.ok ? r.json() : []).then(rows => setEvents(Array.isArray(rows) ? rows.map((e: any) => ({ slug: e.slug, title: e.title })) : [])).catch(() => setEvents([])); }, []);
 
   async function save() {
     if (!file || !title) return setMsg("⚠ Başlık ve dosya zorunlu.");
+    if (file.type.startsWith("image/") && !alt.trim()) return setMsg("⚠ Fotoğraflar için alternatif metin zorunlu (erişilebilirlik).");
     setBusy(true);
     try {
       const u = await uploadFile("media", file);
@@ -92,12 +94,12 @@ export default function Page() {
     {msg && <p className="mt-4 rounded-lg bg-cyan-deep/10 p-3 text-[13px] font-semibold text-cyan-deep">{msg}</p>}
     <div className="mt-5 grid gap-3 rounded-xl border-2 border-ink bg-white p-4 sm:p-5 md:grid-cols-3">
       <input className={i} placeholder="Başlık" value={title} onChange={e => setTitle(e.target.value)} />
-      <input className={i} placeholder="Etkinlik slug (opsiyonel)" value={event} onChange={e => setEvent(e.target.value)} />
+      <label className="text-[12px] font-semibold text-ink/70">Etkinlik (galeride bu etkinliğin fotoğrafı olarak gruplanır)<select className={i + " mt-1 w-full"} value={event} onChange={e => setEvent(e.target.value)}><option value="">Etkinlik seçilmedi</option>{events.map(ev => <option key={ev.slug} value={ev.slug}>{ev.title}</option>)}</select></label>
       <label className="text-[12px] font-semibold text-ink/70">Dosya
         <input type="file" accept="image/*,video/*" className={i + " mt-1 w-full"} onChange={e => setFile(e.target.files?.[0] || null)} />
         <span className="mt-1 block text-[11px] font-normal leading-relaxed text-ink/45">Fotoğraf: <b>1600 × 900 px</b> (16:9). Video: <b>1920 × 1080 px</b> (16:9). Galeri kartları 16:9 gösterilir.</span>
       </label>
-      <input className={i} placeholder="Alt text" value={alt} onChange={e => setAlt(e.target.value)} />
+      <label className="text-[12px] font-semibold text-ink/70">Alternatif metin (erişilebilirlik)*<input className={i + " mt-1 w-full"} placeholder="Görselde ne var? Ör. Takımlar sahada robotlarını hazırlıyor" value={alt} onChange={e => setAlt(e.target.value)} /></label>
       <input className={i} placeholder="Caption" value={caption} onChange={e => setCaption(e.target.value)} />
       <button disabled={busy} onClick={save} className="rounded-md bg-ink px-4 py-2.5 font-display text-[12px] font-bold text-white">{busy ? "YÜKLENİYOR…" : "YÜKLE"}</button>
     </div>
