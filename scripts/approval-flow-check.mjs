@@ -18,7 +18,8 @@ function assertClaim(claim){if(claim!=='test-claim')throw Error('Invalid claim')
 `);
 const next=pathToFileURL(require.resolve('next/server')).href;
 const contacts=compile('lib/public-contact.ts'),base=compile('lib/submission-notifications.ts',{'@/lib/public-contact':contacts});
-const notifications=compile('lib/application-approval-notifications.ts',{'@/lib/db':db,'@/lib/public-contact':contacts,'@/lib/submission-notifications':base});
+const siteConfig=compile('lib/site-config.ts');
+const notifications=compile('lib/application-approval-notifications.ts',{'@/lib/db':db,'@/lib/public-contact':contacts,'@/lib/submission-notifications':base,'@/lib/site-config':siteConfig});
 const {applicationApprovalMessage,sendApplicationApproval,notifyApprovedApplication}=await import(notifications);
 const config={RECF_NOTIFICATIONS_ENABLED:'1',RESEND_API_KEY:'fixture-key',RECF_NOTIFICATION_FROM:'notify@example.org',RECF_NOTIFICATION_TO:'admin@example.net',VERCEL_ENV:'production'};
 const app={id:7,num:'TEST26',team:'Test <script> & team',program:'engage',email:'test@example.net'};

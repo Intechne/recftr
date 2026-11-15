@@ -2,7 +2,11 @@
 import Link from "next/link";
 import {initialRegistrationProgram} from "@/lib/public-content";
 import {FigmaIcon} from "@/components/FigmaIcon";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
+import { RECF_TEAM_FEE } from "@/lib/site-config";
+import { trackEvent } from "@/components/analytics/track";
+import RecfEventsLink from "@/components/analytics/RecfEventsLink";
 
 const steps = ["PROGRAM SEÇİMİ", "TAKIM BİLGİLERİ", "MENTOR BİLGİLERİ", "BAŞVURU ONAYI"];
 const provinces = [
@@ -11,6 +15,10 @@ const provinces = [
 
 export default function RegistrationForm({initialPrograms,requestedProgram}:{initialPrograms:any[];requestedProgram?:string}) {
   const programs = initialPrograms;
+  const router = useRouter();
+  const started = useRef(false);
+  // Huni: formla ilk etkileşim "form_start". Kişisel veri gönderilmez.
+  const markStarted = () => { if (started.current) return; started.current = true; trackEvent("form_start", { form: "kayit" }); };
   const [districts,setDistricts]=useState<string[]>([]);
   const [districtLoading,setDistrictLoading]=useState(false);
   const [step, setStep] = useState(0);
@@ -19,7 +27,7 @@ export default function RegistrationForm({initialPrograms,requestedProgram}:{ini
   const [err, setErr] = useState("");
   const [busy, setBusy] = useState(false);
   const [prog, setProg] = useState(()=>initialRegistrationProgram(requestedProgram,initialPrograms));
-  const [form, setForm] = useState({ team: "", org: "", city: "", district: "", type: "Okul Takımı", num: "", mentor: "", email: "", phone: "", website: "", kvkk: false, done: false });
+  const [form, setForm] = useState({ team: "", org: "", city: "", district: "", type: "Okul Takımı", num: "", mentor: "", email: "", phone: "", website: "", kvkk: false, listing: false, done: false });
 
   useEffect(()=>{
     if(!form.city){setDistricts([]);return;}
@@ -33,7 +41,7 @@ export default function RegistrationForm({initialPrograms,requestedProgram}:{ini
   },[form.city]);
 
   const p = programs.find((x:any) => x.slug === prog) || programs[0] || {slug:prog,code:prog.toUpperCase(),name:prog,ageDetail:""};
-  const set = (k: string, v: any) => setForm((f) => ({ ...f, [k]: v }));
+  const set = (k: string, v: any) => { markStarted(); setForm((f) => ({ ...f, [k]: v })); };
   const input = "w-full rounded-md border-[1.5px] border-ink/25 bg-paper px-3.5 py-3 text-[14.5px] outline-none focus:border-cyan-deep disabled:cursor-not-allowed disabled:opacity-55";
   const label = "block font-display text-[13px] font-semibold text-ink";
 
@@ -59,7 +67,7 @@ export default function RegistrationForm({initialPrograms,requestedProgram}:{ini
 
   return (
     <div className="safe-x mx-auto max-w-7xl lg:px-10">
-        <p className="mb-6 rounded-lg border border-cyan-deep/25 bg-cyan-brand/10 p-4 text-sm leading-relaxed text-ink/70">Bu form RECF Türkiye takım ve mentor ön başvurusudur. Resmî sezon kaydı ve takım numarası doğrulaması RECFevents üzerinde ayrıca tamamlanır.</p>
+        <p className="mb-6 rounded-lg border border-cyan-deep/25 bg-cyan-brand/10 p-4 text-sm leading-relaxed text-ink/75">Bu form RECF Türkiye takım ve mentor ön başvurusudur. Resmî sezon kaydı ve takım numarası <RecfEventsLink placement="kayit-intro" className="font-semibold text-cyan-deep underline">RECFEvents.org</RecfEventsLink> üzerinde ayrıca tamamlanır.</p>
         <ol className="flex flex-wrap items-center gap-3">
           {steps.map((s, i) => (
             <li key={s} className="flex items-center gap-3">
@@ -78,12 +86,14 @@ export default function RegistrationForm({initialPrograms,requestedProgram}:{ini
                 <h2 className="mt-4 font-display text-[24px] font-bold text-ink">BAŞVURUN ALINDI!</h2>
                 <p className="mx-auto mt-3 max-w-md text-[15px] leading-relaxed text-ink/60">{form.num || "TAKIM NO"} için ön kaydın oluşturuldu{appId ? ` (Başvuru No: #${String(appId).padStart(4, "0")})` : ""}. Ekibimiz başvurunu inceleyerek <strong>{form.email || "e-posta adresin"}</strong> üzerinden dönüş yapacak. Resmî sezon kaydı RECFevents üzerinde ayrıca tamamlanır; bu başvuru resmî lisans veya takım numarası tahsisi değildir.</p>
                 <p role="status" className="mt-4 text-sm leading-relaxed text-ink/60">{emailAccepted?"Başvuru alındı bilgilendirmesini e-postanda kontrol edebilirsin. Gelen kutusunda görünmüyorsa spam klasörüne de bak.":"Başvurun kaydedildi; otomatik e-posta şu anda iletilemedi. Başvuru numaranı saklayabilir, soruların için destek@recfturkiye.com adresine yazabilirsin."}</p>
-                <p className="mt-5 rounded-lg border border-cyan-deep/30 bg-cyan-brand/10 px-4 py-3 text-[13px] leading-relaxed text-ink/70">Başvurun yönetim paneline kaydedildi. Takım Portalı henüz açık değil; erişim ve sonraki kayıt adımları ayrıca duyurulacak.</p><Link href="/etkinlikler" className="mt-4 inline-block rounded-md bg-ink px-6 py-3.5 font-display text-[14px] font-bold text-white">ETKİNLİK TAKVİMİNE GİT →</Link>
+                <p className="mt-5 rounded-lg border border-cyan-deep/30 bg-cyan-brand/10 px-4 py-3 text-[13px] leading-relaxed text-ink/70">Başvurun yönetim paneline kaydedildi. Takım Portalı henüz açık değil; erişim ve sonraki kayıt adımları ayrıca duyurulacak.</p><Link href="/rehber/takim-kaydi" className="mt-4 inline-block rounded-md bg-ink px-6 py-3.5 font-display text-[14px] font-bold text-white">RESMÎ KAYIT REHBERİ →</Link>
               </div>
             ) : <>
               <h2 className="font-display text-[20px] font-bold text-ink">ADIM {step + 1} — {steps[step]}</h2>
 
-              {step === 0 && <div className="mt-5 grid gap-3 sm:grid-cols-2">{programs.map((x) => <button key={x.slug} onClick={() => setProg(x.slug)} className={`rounded-lg border-2 p-4 text-left transition-colors ${prog === x.slug ? "border-ink bg-cyan-brand/10" : "border-ink/15 hover:border-ink/40"}`} aria-pressed={prog === x.slug}><span className="font-display text-[15px] font-bold text-ink">{x.code} — {String(x.name||'').replace("RECF ", "")}</span><span className="mt-1 block text-[12.5px] text-ink/55">{x.ageDetail}</span></button>)}</div>}
+              {step === 0 && <div className="mt-5 rounded-lg border-2 border-ink bg-paper p-4 sm:flex sm:items-start sm:gap-4"><span className="inline-flex shrink-0 rounded bg-ink px-3 py-2 font-display text-[15px] font-bold text-cyan-brand">{RECF_TEAM_FEE.label}</span><p className="mt-3 text-[13.5px] leading-relaxed text-ink/75 sm:mt-0"><strong className="text-ink">RECF resmî takım kayıt ücreti ({RECF_TEAM_FEE.season} sezonu, takım başına).</strong> Ödeme RECFEvents.org üzerinden yapılır; bu ön başvuru ücretsizdir. <a href={RECF_TEAM_FEE.source} target="_blank" rel="noopener noreferrer" className="font-semibold text-cyan-deep underline">Kaynak: RECF SSS<span className="sr-only"> (yeni sekmede açılır)</span></a><span className="mt-1.5 block">Takım Bursu ve kurumsal paket seçenekleri için <Link href="/okullar#randevu" className="font-semibold text-cyan-deep underline">bize ulaşın</Link>.</span></p></div>}
+
+              {step === 0 && <div className="mt-5 grid gap-3 sm:grid-cols-2">{programs.map((x) => <button key={x.slug} onClick={() => { markStarted(); setProg(x.slug); }} className={`rounded-lg border-2 p-4 text-left transition-colors ${prog === x.slug ? "border-ink bg-cyan-brand/10" : "border-ink/15 hover:border-ink/40"}`} aria-pressed={prog === x.slug}><span className="font-display text-[15px] font-bold text-ink">{x.code} — {String(x.name||'').replace("RECF ", "")}</span><span className="mt-1 block text-[12.5px] text-ink/55">{x.ageDetail}</span></button>)}</div>}
 
               {step === 1 && <div className="mt-5 space-y-4">
                 <input type="text" tabIndex={-1} autoComplete="off" aria-hidden="true" className="absolute left-[-9999px] h-px w-px opacity-0" value={form.website} onChange={(e)=>set("website",e.target.value)} name="website" />
@@ -106,6 +116,7 @@ export default function RegistrationForm({initialPrograms,requestedProgram}:{ini
               {step === 3 && <div className="mt-5 space-y-4">
                 <div className="rounded-lg border border-ink/15 bg-paper p-4 text-sm leading-relaxed text-ink/70"><p className="font-semibold text-ink">{form.team} · {p.name}</p><p>{form.org} · {[form.district,form.city].filter(Boolean).join(" / ")}</p><p>Mentor: {form.mentor}</p><p>{form.email}</p><p className="mt-2">Başvurun kaydedildiğinde bu adrese otomatik alındı bilgilendirmesi gönderilir.</p></div>
                 <div className="mb-4 rounded-lg border border-ink/15 bg-paper p-4 text-sm leading-relaxed text-ink/70"><Link href="/hukuki-belgeler" target="_blank" className="font-semibold text-cyan-deep underline">Hukuki belgeleri incele</Link>: <Link href="/acik-riza" target="_blank" className="text-cyan-deep underline">Açık Rıza Metni</Link> ve <Link href="/katilim-onami" target="_blank" className="text-cyan-deep underline">Katılım Onamı</Link>. Bu ön başvuru, bireysel rıza tercihleri veya veli/öğrenci imzası yerine geçmez.</div>
+                <label className={`flex items-start gap-3 rounded-lg border-[1.5px] p-4 text-[13.5px] ${form.listing?"border-cyan-deep bg-cyan-deep/5":"border-ink/20"}`}><input type="checkbox" checked={form.listing} onChange={e=>set("listing",e.target.checked)} className="mt-0.5 h-4 w-4 shrink-0 accent-cyan-deep" /><span>Takımımızın <strong>adı, okulu/kurumu ve ili</strong> RECF Türkiye Takımlar sayfasında (Founding 100 listesi) yayınlanabilir. <span className="text-ink/55">(İsteğe bağlı)</span><span className="mt-1 block text-[11.5px] text-ink/50">Öğrenci veya mentor kişisel bilgileri hiçbir zaman yayınlanmaz. Liste, ekibimizin onayından sonra güncellenir.</span></span></label>
                 <label className={`flex items-start gap-3 rounded-lg border-[1.5px] p-4 text-[13.5px] ${form.kvkk?"border-cyan-deep bg-cyan-deep/5":"border-ink/20"}`}><input type="checkbox" checked={form.kvkk} onChange={e=>set("kvkk",e.target.checked)} className="mt-0.5 h-4 w-4 accent-cyan-deep" /><span><Link href="/kvkk" target="_blank" className="font-semibold text-cyan-deep underline">KVKK Aydınlatma Metni</Link>’ni okudum ve bilgi edindim.*<span className="mt-1 block text-[11.5px] text-ink/45">Başvuru için metni okuduğunuzu belirtmeniz gerekir.</span></span></label>
                 <p className="rounded-lg bg-paper px-4 py-3 text-[13px] text-ink/60"><span className="inline-flex items-center gap-1.5"><FigmaIcon name="plaka" className="h-4 w-4"/> Bu form yalnızca takım ve mentor ön başvurunu alır. Ekibimiz başvurunu inceleyerek sonraki adımlar için seninle iletişime geçer.</span></p>
               </div>}
@@ -119,11 +130,14 @@ export default function RegistrationForm({initialPrograms,requestedProgram}:{ini
                   if(!form.kvkk){setErr("Başvuruyu göndermek için KVKK Aydınlatma Metni’ni okuduğunuzu belirtmelisiniz.");return;}
                   setBusy(true);
                   try {
-                    const r = await fetch("/api/applications", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ num: form.num, team: form.team, org: form.org, city: form.city, district: form.district, type: form.type, program: prog, mentor: form.mentor, email: form.email, phone: form.phone, website: form.website, kvkk: form.kvkk }) });
+                    const r = await fetch("/api/applications", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ num: form.num, team: form.team, org: form.org, city: form.city, district: form.district, type: form.type, program: prog, mentor: form.mentor, email: form.email, phone: form.phone, website: form.website, kvkk: form.kvkk, publicListing: form.listing }) });
                     const j = await r.json();
                     if (!r.ok) { setErr(j.error ?? "Başvuru gönderilemedi."); setBusy(false); return; }
                     if(!Number.isSafeInteger(j.id)||j.id<=0){setErr("Başvuru sonucu doğrulanamadı. Tekrar denemeden önce ekibimizle iletişime geçin.");setBusy(false);return;}
-                    setAppId(j.id); setEmailAccepted(j.confirmationEmail==="accepted"); set("done", true);
+                    setAppId(j.id); setEmailAccepted(j.confirmationEmail==="accepted");
+                    trackEvent("form_submit", { form: "kayit", program: prog });
+                    router.push(`/kayit/tesekkurler?ref=${encodeURIComponent(String(j.id))}&program=${encodeURIComponent(prog)}&mail=${j.confirmationEmail==="accepted"?"1":"0"}`);
+                    set("done", true);
                   } catch { setErr("Sunucuya ulaşılamadı — tekrar deneyin."); }
                   setBusy(false);
                 }} className="plate-hover rounded-md bg-ink px-6 py-3 font-display text-[13px] font-bold text-white shadow-plateSm shadow-cyan-brand disabled:cursor-not-allowed disabled:opacity-40">{busy ? "GÖNDERİLİYOR…" : !form.kvkk ? "METNİ OKUMA BİLDİRİMİ" : "BAŞVURUYU GÖNDER"}</button>}
@@ -133,7 +147,7 @@ export default function RegistrationForm({initialPrograms,requestedProgram}:{ini
 
           <div className="space-y-5 lg:sticky lg:top-24">
             <div className="overflow-hidden rounded-xl border-[3px] border-cyan-brand bg-white shadow-plate shadow-cyan-brand/45"><div className="flex items-center justify-between bg-ink px-4 py-2.5"><span className="font-display text-[12px] font-bold text-cyan-brand">PLAKA ÖNİZLEME</span><span className="font-display text-[11px] font-medium text-white/60">{p.code} · 26–27</span></div><p className={`py-5 text-center font-display font-bold text-ink ${form.num?"text-[clamp(2.2rem,14vw,3.625rem)] tracking-[clamp(2px,1.2vw,5px)]":"text-[22px] tracking-[2px] text-ink/30"}`}>{form.num || "TAKIM NO"}</p><p className="pb-4 text-center font-display text-[10.5px] font-medium tracking-[1px] text-ink/45">{(form.team || "TAKIMIN").toUpperCase()} · {[form.district,form.city].filter(Boolean).join(" / ").toUpperCase()}</p></div>
-            <div className="rounded-xl bg-ink p-5"><h3 className="font-display text-[14px] font-bold text-cyan-brand">BAŞVURU SÜRECİ</h3><ol className="mt-3 space-y-3 text-[13.5px] leading-relaxed text-white/75"><li>1. Programını seç ve takım bilgilerini paylaş.</li><li>2. Başvuru alındı bilgilendirmesini e-postanda kontrol et.</li><li>3. Ekibimiz başvurunu inceleyerek sonraki adımları paylaşsın.</li></ol></div>
+            <div className="rounded-xl bg-ink p-5"><h3 className="font-display text-[14px] font-bold text-cyan-brand">BAŞVURU SÜRECİ</h3><ol className="mt-3 space-y-3 text-[13.5px] leading-relaxed text-white/75"><li>1. Programını seç ve takım bilgilerini paylaş.</li><li>2. Başvuru alındı bilgilendirmesini e-postanda kontrol et.</li><li>3. Resmî kaydını RECFEvents.org’da tamamla ({RECF_TEAM_FEE.label}).</li><li>4. Takılırsan destek randevusu al; ekibimiz yanında.</li></ol></div>
             <p className="text-[12.5px] leading-relaxed text-ink/50">Nasıl ilerleyeceğinden emin değil misin? <Link href="/rehber/takim-kaydi" className="font-semibold text-cyan-deep underline">Takım Kaydı Rehberi</Link>ni incele.</p>
           </div>
         </div>

@@ -22,7 +22,7 @@ export async function POST(req:NextRequest){
     if(!PROGRAMS.includes(program))return NextResponse.json({error:'Geçersiz program.'},{status:400});
     if(b.kvkk!==true)return NextResponse.json({error:'KVKK Aydınlatma Metni için okuma bildirimi zorunludur.'},{status:400});
     const emailLimit=await enforceRateLimit(req,'application-email',email,3,24*60*60);if(!emailLimit.ok)return rateLimitResponse(emailLimit.retryAfter);
-    const out=await createApplication({num,team,org,city,district,type,program,mentor,email,phone,kvkkAccepted:true});
+    const out=await createApplication({num,team,org,city,district,type,program,mentor,email,phone,kvkkAccepted:true,publicListingConsent:b.publicListing===true});
     const [,confirmationEmail]=await Promise.all([notifySubmission('application',out.id),notifyApplicationReceipt(out.id,email)]);
     return NextResponse.json({ok:true,...out,confirmationEmail,note:'Bu ön başvuru resmî takım numarası tahsisi veya rezervasyon değildir.'},{status:201});
   }catch(e:any){const msg=String(e?.message||'');if(msg.includes('TEAM_NUM_USED')||msg.includes('unique')||msg.includes('duplicate'))return NextResponse.json({error:'Bu takım numarası onaylı bir takım tarafından kullanılıyor.'},{status:409});return apiError(e,'Başvuru kaydedilemedi.');}
