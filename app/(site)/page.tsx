@@ -144,8 +144,8 @@ export default async function Home() {
         <div className="relative mt-8 hidden lg:block">
           <RoutePath/>
           <FigmaIcon name="rota" className="route-fly absolute left-[39%] top-[36%] h-8 w-8 -rotate-12 text-ink"/>
-          <div className="relative mt-1 h-28">
-            {route.map((wp,i)=>{const left=route.length<=1?50:6+(i/(route.length-1))*88;return <div key={`${wp.month}-${i}`} className="absolute flex -translate-x-1/2 flex-col items-center text-center" style={{left:`${left}%`}}>
+          <div className="relative mt-1 h-36">
+            {route.map((wp,i)=>{const left=route.length<=1?50:9+(i/(route.length-1))*82;return <div key={`${wp.month}-${i}`} className="absolute flex w-[200px] -translate-x-1/2 flex-col items-center text-center" style={{left:`${left}%`}}>
               <span className={`diamond h-5 w-5 rounded border-[2.5px] border-ink ${wp.done?"bg-cyan-brand":"bg-white"}`}/>
               <span className={`mt-2.5 font-display text-sm font-bold ${wp.done?"text-cyan-deep":"text-ink"}`}>{wp.month}</span>
               <span className="max-w-[190px] text-[12px] font-semibold text-ink/75 xl:text-[13px]">{wp.link?<SafeLink href={wp.link} className="underline decoration-ink/25 underline-offset-4 hover:text-cyan-deep">{wp.label}</SafeLink>:wp.label}</span>
