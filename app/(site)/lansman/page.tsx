@@ -17,7 +17,7 @@ export default async function LansmanPage() {
   const confirmed = event && event.status !== DATE_TBC_STATUS;
   const facts = confirmed ? [["TARİH", event.date_label], ["MEKÂN", [event.venue, event.city].filter(Boolean).join(" · ")]].filter(([, value]) => value) : [];
   return <SitePageView kicker={page.kicker} title={page.title} body={page.body} action={{ label: "KATILIM FORMU", href: "#katilim" }}
-    aside={facts.length ? <div className="self-end rounded-xl border-2 border-ink bg-white p-6 shadow-plate shadow-cyan-brand/40"><dl className="space-y-4">{facts.map(([term, value]) => <div key={term}><dt className="font-display text-[11px] font-bold tracking-[1.5px] text-ink/55">{term}</dt><dd className="mt-1 font-display text-[18px] font-bold text-ink">{value}</dd></div>)}</dl></div> : undefined}>
+    aside={facts.length ? <div className="self-end rounded-xl border-2 border-ink bg-white p-6 shadow-plate shadow-cyan-brand/40"><dl className="space-y-4">{facts.map(([term, value]) => <div key={term}><dt className="font-display text-[11px] font-bold tracking-[1.5px] text-ink/65">{term}</dt><dd className="mt-1 font-display text-[18px] font-bold text-ink">{value}</dd></div>)}</dl></div> : undefined}>
     <section id="katilim" className="scroll-mt-28 pt-12 lg:max-w-3xl">
       <LeadForm kind="lansman_katilim" title="KATILIM FORMU" intro="Yerinizi ayırmak için formu doldurun; katılım bilgileri e-posta ile paylaşılacak." submitLabel="KATILIMIMI BİLDİR" />
     </section>

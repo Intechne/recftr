@@ -48,13 +48,13 @@ export default function LeadForm({ kind, title, intro, provinces = [], submitLab
   return <form id={id} onSubmit={submit} aria-busy={busy} className="scroll-mt-28 rounded-xl border-2 border-ink bg-white p-5 sm:p-7" noValidate={false}>
     <fieldset disabled={busy} className="space-y-5">
       <legend className="font-display text-xl font-bold">{title}</legend>
-      {intro && <p className="text-sm leading-relaxed text-ink/60">{intro}</p>}
-      <p className="text-xs text-ink/50">Yıldızlı (*) alanlar zorunludur.</p>
+      {intro && <p className="text-sm leading-relaxed text-ink/65">{intro}</p>}
+      <p className="text-xs text-ink/65">Yıldızlı (*) alanlar zorunludur.</p>
       <input name="website" aria-hidden="true" tabIndex={-1} autoComplete="off" className="absolute left-[-9999px] h-px w-px opacity-0" value={form.website} onChange={event => set("website", event.target.value)} />
       <div className="grid gap-4 sm:grid-cols-2">
         <label htmlFor={fid("name")} className={label}>Ad Soyad*<input id={fid("name")} required maxLength={120} autoComplete="name" className={input} value={form.name} onChange={event => set("name", event.target.value)} /></label>
         <label htmlFor={fid("email")} className={label}>E-posta*<input id={fid("email")} required type="email" maxLength={254} autoComplete="email" className={input} value={form.email} onChange={event => set("email", event.target.value)} /></label>
-        <label htmlFor={fid("phone")} className={label}>Telefon<input id={fid("phone")} type="tel" maxLength={40} autoComplete="tel" className={input} value={form.phone} onChange={event => set("phone", event.target.value)} /><span className="mt-1 block text-xs font-normal text-ink/50">İsteğe bağlı.</span></label>
+        <label htmlFor={fid("phone")} className={label}>Telefon<input id={fid("phone")} type="tel" maxLength={40} autoComplete="tel" className={input} value={form.phone} onChange={event => set("phone", event.target.value)} /><span className="mt-1 block text-xs font-normal text-ink/65">İsteğe bağlı.</span></label>
         {config.organization && <label htmlFor={fid("organization")} className={label}>{config.organization.label}{config.organization.required ? "*" : ""}<input id={fid("organization")} required={config.organization.required} maxLength={160} autoComplete="organization" className={input} value={form.organization} onChange={event => set("organization", event.target.value)} /></label>}
         {config.role && <label htmlFor={fid("role")} className={label}>{config.role.label}{config.role.required ? "*" : ""}<select id={fid("role")} required={config.role.required} className={input} value={form.role} onChange={event => set("role", event.target.value)}><option value="">Seçin</option>{config.role.options.map(option => <option key={option}>{option}</option>)}</select></label>}
         {config.city && <label htmlFor={fid("city")} className={label}>İl*<select id={fid("city")} required className={input} value={form.city} onChange={event => set("city", event.target.value)}><option value="">İl seçin</option>{provinces.map(province => <option key={province}>{province}</option>)}</select></label>}
@@ -65,7 +65,7 @@ export default function LeadForm({ kind, title, intro, provinces = [], submitLab
       <label htmlFor={fid("message")} className={label}>{config.message.label}{config.message.required ? "*" : ""}<textarea id={fid("message")} required={config.message.required} rows={4} maxLength={3000} placeholder={config.message.placeholder} className={input} value={form.message} onChange={event => set("message", event.target.value)} /></label>
       <div className="space-y-3 border-t border-ink/15 pt-5">
         <label className="flex items-start gap-3 text-sm"><input type="checkbox" required className="mt-0.5 h-4 w-4 shrink-0 accent-cyan-deep" checked={form.kvkk} onChange={event => set("kvkk", event.target.checked)} /><span><Link href="/kvkk" target="_blank" className="font-semibold text-cyan-deep underline">KVKK Aydınlatma Metni</Link>’ni okudum ve bilgi edindim.*</span></label>
-        <p className="text-xs leading-relaxed text-ink/50">Bilgilerin yalnız bu talebin değerlendirilmesi ve seninle iletişime geçilmesi için kullanılır.</p>
+        <p className="text-xs leading-relaxed text-ink/65">Bilgilerin yalnız bu talebin değerlendirilmesi ve seninle iletişime geçilmesi için kullanılır.</p>
       </div>
       {error && <p role="alert" className="rounded border-2 border-red-500 bg-red-50 p-3 text-sm font-semibold text-red-700">{error}</p>}
       <button type="submit" disabled={busy} className="min-h-12 w-full rounded-md border-2 border-ink bg-ink px-5 py-3 font-display text-sm font-bold text-white shadow-plateSm shadow-cyan-brand disabled:opacity-50">{busy ? "GÖNDERİLİYOR…" : `${submitLabel} →`}</button>

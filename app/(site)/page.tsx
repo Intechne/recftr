@@ -8,6 +8,7 @@ import { FOUNDING_100, TEAM_MAP_DEFAULT_MIN_TEAMS, settingNumber } from "@/lib/s
 import TurkeyTeamMap from "@/components/public/TurkeyTeamMap";
 import { SafeLink } from "@/components/public/RichText";
 import CmsImage from "@/components/public/CmsImage";
+import { badgeTextColor } from "@/lib/color";
 import Link from "next/link";
 import { getCachedHomeSnapshot } from "@/lib/public-cache";
 import { eventPhase } from "@/lib/public-content";
@@ -93,7 +94,7 @@ export default async function Home() {
             <span className="rise rise-2 block text-[clamp(2.9rem,14vw,5.2rem)] text-ink lg:text-[88px] 2xl:text-[102px]">{heroMain}</span>
             {heroAccent&&<span className="rise rise-3 block text-[clamp(2.9rem,14vw,5.2rem)] text-cyan-brand lg:text-[88px] 2xl:text-[102px]" style={{WebkitTextStroke:"clamp(1px,.16vw,2px) #10192F"}}>{heroAccent}</span>}
           </h1>
-          <p className="rise rise-4 mt-5 max-w-xl text-[15px] leading-relaxed text-ink/60 sm:mt-6 sm:text-[17px] lg:text-[18px] 2xl:max-w-2xl 2xl:text-[19px]">{settings.hero_description||"Türkiye’nin robotik ve drone yarışma programları. Programını seç, takımını başvur, sezon rotasına katıl."}</p>
+          <p className="rise rise-4 mt-5 max-w-xl text-[15px] leading-relaxed text-ink/65 sm:mt-6 sm:text-[17px] lg:text-[18px] 2xl:max-w-2xl 2xl:text-[19px]">{settings.hero_description||"Türkiye’nin robotik ve drone yarışma programları. Programını seç, takımını başvur, sezon rotasına katıl."}</p>
           <div className="rise rise-4 mt-7 flex flex-col gap-3 min-[460px]:flex-row sm:mt-8">
             <Link href="/kayit" className="flex min-h-12 items-center justify-center gap-2 rounded-md border-2 border-ink bg-ink px-5 py-3 font-display text-[13px] font-bold text-white shadow-plateSm shadow-cyan-brand transition-transform hover:-translate-y-0.5"><FigmaIcon name="kayit" className="h-5 w-5"/> TAKIMINI BAŞVUR</Link>
             <Link href="/programlar" className="flex min-h-12 items-center justify-center gap-2 rounded-md border-2 border-ink bg-white px-5 py-3 font-display text-[13px] font-bold transition-transform hover:-translate-y-0.5"><FigmaIcon name="kupa" className="h-5 w-5"/> PROGRAMLARI GÖR</Link>
@@ -109,11 +110,11 @@ export default async function Home() {
             </div>
             <div className="px-2 py-2">
               {programs.slice(0,5).map(p=><Link key={p.slug} href={`/programlar/${p.slug}`} className="group flex items-center gap-3 rounded-lg px-3 py-2.5 transition-colors hover:bg-white/5 sm:gap-3.5">
-                <span className="flex h-9 w-[52px] shrink-0 items-center justify-center rounded-md font-display text-sm font-bold text-white" style={{backgroundColor:p.color_hex||"#29B9E5"}}>{p.code}</span>
-                <span className="min-w-0 flex-1"><span className="block truncate font-display text-[15px] font-bold text-white sm:text-[17px]">{p.game||p.name}</span><span className="block truncate text-[11px] text-white/50 sm:text-[12px]">{p.age||p.name}</span></span>
+                <span className="flex h-9 w-[52px] shrink-0 items-center justify-center rounded-md font-display text-sm font-bold" style={{backgroundColor:p.color_hex||"#29B9E5",color:badgeTextColor(p.color_hex||"#29B9E5")}}>{p.code}</span>
+                <span className="min-w-0 flex-1"><span className="block truncate font-display text-[15px] font-bold text-white sm:text-[17px]">{p.game||p.name}</span><span className="block truncate text-[11px] text-white/65 sm:text-[12px]">{p.age||p.name}</span></span>
                 <span className="text-cyan-brand transition-transform group-hover:translate-x-1">→</span>
               </Link>)}
-              {programs.length===0&&<p className="px-3 py-6 text-sm text-white/45">Yayınlanmış program verisi bekleniyor.</p>}
+              {programs.length===0&&<p className="px-3 py-6 text-sm text-white/65">Yayınlanmış program verisi bekleniyor.</p>}
             </div>
           </div>
         </Reveal>
@@ -125,12 +126,12 @@ export default async function Home() {
       <div className="safe-x mx-auto max-w-7xl py-14 sm:py-16 lg:px-10 lg:py-20 2xl:py-24">
         <div className="mb-8 flex flex-col gap-4 md:flex-row md:items-end md:justify-between sm:mb-10">
           <h2 className="font-display text-[30px] font-bold leading-tight text-ink sm:text-[36px] lg:text-[44px]">PROGRAMINI SEÇ.<br/><span className="text-cyan-deep">SAHAYA ÇIK.</span></h2>
-          <p className="max-w-md text-[14px] leading-relaxed text-ink/50 md:text-right sm:text-[15px]">Yaş grubuna ve ilgi alanına uygun programı seç; sezon oyununu ve katılım koşullarını incele.</p>
+          <p className="max-w-md text-[14px] leading-relaxed text-ink/65 md:text-right sm:text-[15px]">Yaş grubuna ve ilgi alanına uygun programı seç; sezon oyununu ve katılım koşullarını incele.</p>
         </div>
         <div className="grid gap-4 min-[480px]:grid-cols-2 md:grid-cols-3 xl:grid-cols-5 2xl:gap-5">
           {programs.map((p,i)=><Reveal key={p.slug} delay={i*70} className="h-full"><Link href={`/programlar/${p.slug}`} className="plate-hover flex h-full flex-col overflow-hidden rounded-xl border-2 border-ink bg-white shadow-plate" style={{["--tw-shadow-color" as string]:p.color_hex||"#29B9E5"}}>
             <div className="flex min-h-20 items-center justify-between p-4 text-white" style={{backgroundColor:p.color_hex||"#29B9E5"}}><span className="font-display text-[30px] font-bold">{p.code}</span><FigmaIcon name={programIcon(p)} className="h-9 w-9 opacity-90"/></div>
-            <div className="flex flex-1 flex-col p-4"><p className="font-display text-[10px] font-medium tracking-[1.5px] text-ink/45">{p.age||"RECF PROGRAMI"}</p><h3 className="mt-1.5 font-display text-[19px] font-bold text-ink">{p.name}</h3><p className="mt-2 line-clamp-3 text-[13px] leading-relaxed text-ink/55">{p.game?`“${p.game}” — `:""}{p.short||"Program detaylarını ve sezon bilgisini incele."}</p><p className="mt-auto pt-4 font-display text-[12px] font-semibold text-ink">PROGRAMA GİR →</p></div>
+            <div className="flex flex-1 flex-col p-4"><p className="font-display text-[10px] font-medium tracking-[1.5px] text-ink/65">{p.age||"RECF PROGRAMI"}</p><h3 className="mt-1.5 font-display text-[19px] font-bold text-ink">{p.name}</h3><p className="mt-2 line-clamp-3 text-[13px] leading-relaxed text-ink/65">{p.game?`“${p.game}” — `:""}{p.short||"Program detaylarını ve sezon bilgisini incele."}</p><p className="mt-auto pt-4 font-display text-[12px] font-semibold text-ink">PROGRAMA GİR →</p></div>
           </Link></Reveal>)}
         </div>
       </div>
@@ -148,12 +149,12 @@ export default async function Home() {
               <span className={`diamond h-5 w-5 rounded border-[2.5px] border-ink ${wp.done?"bg-cyan-brand":"bg-white"}`}/>
               <span className={`mt-2.5 font-display text-sm font-bold ${wp.done?"text-cyan-deep":"text-ink"}`}>{wp.month}</span>
               <span className="max-w-[190px] text-[12px] font-semibold text-ink/75 xl:text-[13px]">{wp.link?<SafeLink href={wp.link} className="underline decoration-ink/25 underline-offset-4 hover:text-cyan-deep">{wp.label}</SafeLink>:wp.label}</span>
-              {wp.date_label&&<span className="mt-0.5 max-w-[190px] text-[11.5px] text-ink/60">{wp.date_label}{wp.status==="tbc"?" · teyit bekleniyor":""}</span>}
+              {wp.date_label&&<span className="mt-0.5 max-w-[190px] text-[11.5px] text-ink/65">{wp.date_label}{wp.status==="tbc"?" · teyit bekleniyor":""}</span>}
             </div>})}
           </div>
         </div>
         <ol className="mt-8 space-y-5 border-l-2 border-dashed border-ink/30 pl-6 lg:hidden">
-          {route.map((wp,i)=><li key={`${wp.month}-${i}`} className="relative"><span className={`diamond absolute -left-[33px] top-1 h-4 w-4 rounded border-2 border-ink ${wp.done?"bg-cyan-brand":"bg-white"}`}/><span className="block font-display text-sm font-bold text-ink">{wp.month}</span><span className="block text-[14px] font-semibold text-ink/75">{wp.link?<SafeLink href={wp.link} className="underline decoration-ink/25 underline-offset-4">{wp.label}</SafeLink>:wp.label}</span>{wp.date_label&&<span className="block text-[13px] text-ink/60">{wp.date_label}{wp.status==="tbc"?" · teyit bekleniyor":""}</span>}</li>)}
+          {route.map((wp,i)=><li key={`${wp.month}-${i}`} className="relative"><span className={`diamond absolute -left-[33px] top-1 h-4 w-4 rounded border-2 border-ink ${wp.done?"bg-cyan-brand":"bg-white"}`}/><span className="block font-display text-sm font-bold text-ink">{wp.month}</span><span className="block text-[14px] font-semibold text-ink/75">{wp.link?<SafeLink href={wp.link} className="underline decoration-ink/25 underline-offset-4">{wp.label}</SafeLink>:wp.label}</span>{wp.date_label&&<span className="block text-[13px] text-ink/65">{wp.date_label}{wp.status==="tbc"?" · teyit bekleniyor":""}</span>}</li>)}
         </ol>
       </div>
     </section>}
@@ -162,7 +163,7 @@ export default async function Home() {
     {showFounding&&<section className="field-grid-dark bg-ink" aria-labelledby="founding-100-title">
       <div className="safe-x mx-auto grid max-w-7xl items-center gap-8 py-12 lg:grid-cols-[1fr_1.1fr] lg:px-10 lg:py-14">
         <div><p className="inline-flex items-center gap-2 rounded bg-cyan-brand px-3 py-1.5 font-display text-[11px] font-bold tracking-[1.5px] text-ink"><FigmaIcon name="rozet" className="h-4 w-4"/> FOUNDING 100</p><h2 id="founding-100-title" className="mt-4 font-display text-[30px] font-bold leading-tight text-white sm:text-[38px]">TÜRKİYE’NİN KURUCU TAKIMLARI.</h2><p className="mt-3 max-w-lg text-[15px] leading-relaxed text-white/70">Sezonun ilk 100 takımı RECF Türkiye’nin kurucu kadrosunu oluşturuyor. Takımını başvur, sahadaki yerini al.</p><div className="mt-6 flex flex-col gap-3 min-[460px]:flex-row"><Link href="/kayit" className="inline-flex min-h-12 items-center justify-center rounded-md bg-cyan-brand px-5 py-3 font-display text-[13px] font-bold text-ink">TAKIMINI BAŞVUR</Link><Link href="/takimlar" className="inline-flex min-h-12 items-center justify-center rounded-md border-2 border-white/40 px-5 py-3 font-display text-[13px] font-bold text-white hover:border-white">KURUCU TAKIMLAR →</Link></div></div>
-        <Reveal><div className="rounded-2xl border-2 border-cyan-brand bg-white/[.04] p-6 sm:p-8"><p className="font-display text-[clamp(3.5rem,14vw,6.5rem)] font-bold leading-none text-cyan-brand"><CountUp to={founding}/><span className="text-white/45">/{FOUNDING_100.target}</span></p><div className="mt-5 h-3 overflow-hidden rounded-full bg-white/10" role="progressbar" aria-label="Founding 100 doluluk" aria-valuemin={0} aria-valuemax={FOUNDING_100.target} aria-valuenow={founding}><div className="h-full rounded-full bg-cyan-brand" style={{width:`${founding}%`}}/></div><p className="mt-3 font-display text-[11px] font-medium tracking-[1.7px] text-white/65">ONAYLANAN KURUCU TAKIM</p></div></Reveal>
+        <Reveal><div className="rounded-2xl border-2 border-cyan-brand bg-white/[.04] p-6 sm:p-8"><p className="font-display text-[clamp(3.5rem,14vw,6.5rem)] font-bold leading-none text-cyan-brand"><CountUp to={founding}/><span className="text-white/65">/{FOUNDING_100.target}</span></p><div className="mt-5 h-3 overflow-hidden rounded-full bg-white/10" role="progressbar" aria-label="Founding 100 doluluk" aria-valuemin={0} aria-valuemax={FOUNDING_100.target} aria-valuenow={founding}><div className="h-full rounded-full bg-cyan-brand" style={{width:`${founding}%`}}/></div><p className="mt-3 font-display text-[11px] font-medium tracking-[1.7px] text-white/65">ONAYLANAN KURUCU TAKIM</p></div></Reveal>
       </div>
     </section>}
 
@@ -171,15 +172,15 @@ export default async function Home() {
       <div className="safe-x mx-auto max-w-7xl py-14 sm:py-16 lg:px-10 lg:py-20 2xl:py-24">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between"><div><p className="font-display text-[11px] font-bold tracking-[2px] text-cyan-deep">SAHA TAKVİMİ</p><h2 className="mt-1 font-display text-[28px] font-bold sm:text-[34px] lg:text-[40px]">YAKLAŞAN ETKİNLİKLER</h2></div><Link href="/etkinlikler" className="flex items-center gap-2 font-display text-[12px] font-bold text-cyan-deep"><FigmaIcon name="takvim" className="h-5 w-5"/> TÜM ETKİNLİKLER →</Link></div>
         <div className="mt-7 overflow-hidden rounded-xl border-2 border-ink">
-          <div className="hidden bg-ink px-5 py-3.5 font-display text-[11px] font-semibold tracking-[1.3px] text-white/50 lg:grid lg:grid-cols-[110px_90px_1fr_240px_140px]"><span>TARİH</span><span>PROGRAM</span><span>ETKİNLİK</span><span>KONUM</span><span>DURUM</span></div>
+          <div className="hidden bg-ink px-5 py-3.5 font-display text-[11px] font-semibold tracking-[1.3px] text-white/65 lg:grid lg:grid-cols-[110px_90px_1fr_240px_140px]"><span>TARİH</span><span>PROGRAM</span><span>ETKİNLİK</span><span>KONUM</span><span>DURUM</span></div>
           {events.slice(0,6).map((e,i)=><Reveal key={e.id} delay={i*55}><Link href={`/etkinlikler/${e.slug}`} className={`group grid gap-3 px-4 py-4 transition-colors hover:bg-cyan-brand/5 sm:px-5 lg:grid-cols-[110px_90px_1fr_240px_140px] lg:items-center ${i%2?"bg-paper/60":"bg-white"}`}>
             <span className="font-display text-[15px] font-bold text-ink">{e.date_label||"Tarih yakında"}</span>
             <span><span className="inline-flex min-w-14 items-center justify-center rounded bg-cyan-brand px-2 py-1 font-display text-[10px] font-bold text-ink">{e.code||"RECF"}</span></span>
             <span><span className="block font-semibold text-ink">{e.title}</span><span className="mt-0.5 block text-[11px] text-ink/40 lg:hidden">ETKİNLİK</span></span>
-            <span className="flex items-center gap-2 text-[13px] text-ink/60"><FigmaIcon name="konum" className="h-4 w-4 shrink-0"/>{[e.city,e.venue].filter(Boolean).join(" · ")||"Konum yakında"}</span>
+            <span className="flex items-center gap-2 text-[13px] text-ink/65"><FigmaIcon name="konum" className="h-4 w-4 shrink-0"/>{[e.city,e.venue].filter(Boolean).join(" · ")||"Konum yakında"}</span>
             <span className="flex items-center gap-2 font-display text-[11px] font-bold text-cyan-deep"><span className="pulse-soft h-2 w-2 rounded-full bg-cyan-brand"/>{e.status||"YAYINDA"}</span>
           </Link></Reveal>)}
-          {events.length===0&&<p className="p-7 text-sm text-ink/45">Yaklaşan etkinlik henüz duyurulmadı. Geçmiş etkinlikleri takvimde inceleyebilirsin.</p>}
+          {events.length===0&&<p className="p-7 text-sm text-ink/65">Yaklaşan etkinlik henüz duyurulmadı. Geçmiş etkinlikleri takvimde inceleyebilirsin.</p>}
         </div>
       </div>
     </section>}
@@ -190,7 +191,7 @@ export default async function Home() {
         <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between"><div><p className="font-display text-[11px] font-bold tracking-[2px] text-cyan-deep">HABER MERKEZİ</p><h2 className="mt-1 font-display text-[28px] font-bold sm:text-[34px] lg:text-[40px]">DUYURULAR & HABERLER</h2></div><Link href="/duyurular" className="flex items-center gap-2 font-display text-[12px] font-bold text-cyan-deep"><FigmaIcon name="anons" className="h-5 w-5"/> TÜM HABERLER →</Link></div>
         <div className="mt-7 grid gap-4 md:grid-cols-3 2xl:gap-5">{news.slice(0,3).map((n,i)=><Reveal key={n.slug} delay={i*80} className="h-full"><Link href={`/duyurular/${n.slug}`} className="group flex h-full flex-col overflow-hidden rounded-xl border border-ink/20 bg-white transition-all hover:-translate-y-1 hover:shadow-lg">
           <div className="relative h-40 overflow-hidden bg-ink">{n.cover_url?<CmsImage src={n.cover_url} alt={n.title} sizes="(min-width:768px) 33vw, 100vw" className="object-cover transition-transform duration-500 group-hover:scale-105"/>:<div className="flex h-full items-center justify-center bg-gradient-to-br from-[#2e4780] to-ink"><FigmaIcon name="anons" className="h-14 w-14 text-cyan-brand"/></div>}<span className="absolute left-3 top-3 rounded bg-cyan-brand px-2 py-1 font-display text-[10px] font-bold text-ink">{n.tag||"DUYURU"}</span></div>
-          <div className="flex flex-1 flex-col p-5"><h3 className="font-semibold leading-snug text-ink">{n.title}</h3><p className="mt-2 line-clamp-3 text-[13px] leading-relaxed text-ink/55">{n.excerpt}</p><p className="mt-auto pt-4 font-display text-[10px] font-medium tracking-[1px] text-ink/40">{fmtDate(n.date).toUpperCase()}</p></div>
+          <div className="flex flex-1 flex-col p-5"><h3 className="font-semibold leading-snug text-ink">{n.title}</h3><p className="mt-2 line-clamp-3 text-[13px] leading-relaxed text-ink/65">{n.excerpt}</p><p className="mt-auto pt-4 font-display text-[10px] font-medium tracking-[1px] text-ink/40">{fmtDate(n.date).toUpperCase()}</p></div>
         </Link></Reveal>)}</div>
       </div>
     </section>}
@@ -199,7 +200,7 @@ export default async function Home() {
     {enabled(settings,"home_show_recf_news")&&recfNews.length>0&&<section className="bg-white">
       <div className="safe-x mx-auto max-w-7xl py-14 sm:py-16 lg:px-10 lg:py-20">
         <p className="font-display text-[11px] font-bold tracking-[2px] text-cyan-deep">RECF GLOBAL</p><h2 className="mt-1 font-display text-[28px] font-bold sm:text-[34px] lg:text-[40px]">RECF’TEN</h2>
-        <div className="mt-7 grid gap-4 md:grid-cols-3">{recfNews.slice(0,3).map(n=><Link key={n.slug} href={`/duyurular/${n.slug}`} className="group flex flex-col rounded-xl border-2 border-ink bg-paper p-5 transition-transform hover:-translate-y-1"><span className="font-display text-[10px] font-bold tracking-[1.5px] text-cyan-deep">{fmtDate(n.date).toUpperCase()}</span><h3 className="mt-2 font-display text-[18px] font-bold leading-snug text-ink">{n.title}</h3>{n.excerpt&&<p className="mt-2 line-clamp-3 text-[13.5px] leading-relaxed text-ink/60">{n.excerpt}</p>}<span className="mt-auto pt-4 font-display text-[12px] font-bold text-ink">OKU →</span></Link>)}</div>
+        <div className="mt-7 grid gap-4 md:grid-cols-3">{recfNews.slice(0,3).map(n=><Link key={n.slug} href={`/duyurular/${n.slug}`} className="group flex flex-col rounded-xl border-2 border-ink bg-paper p-5 transition-transform hover:-translate-y-1"><span className="font-display text-[10px] font-bold tracking-[1.5px] text-cyan-deep">{fmtDate(n.date).toUpperCase()}</span><h3 className="mt-2 font-display text-[18px] font-bold leading-snug text-ink">{n.title}</h3>{n.excerpt&&<p className="mt-2 line-clamp-3 text-[13.5px] leading-relaxed text-ink/65">{n.excerpt}</p>}<span className="mt-auto pt-4 font-display text-[12px] font-bold text-ink">OKU →</span></Link>)}</div>
       </div>
     </section>}
 
@@ -234,7 +235,7 @@ export default async function Home() {
       <div aria-hidden className="home-orbit home-orbit-blue absolute -bottom-20 -right-20 h-40 w-40 rotate-45 bg-alliance-blue sm:h-44 sm:w-44"/>
       <div className="safe-x mx-auto grid max-w-7xl items-center gap-10 py-16 lg:grid-cols-2 lg:px-10 lg:py-24 2xl:gap-16 2xl:py-28">
         <div className="relative z-10"><span className="inline-flex items-center gap-2 rounded bg-cyan-brand px-3 py-1.5 font-display text-[10px] font-bold text-ink"><FigmaIcon name="plaka" className="h-4 w-4"/> TAKIM PLAKASI</span><h2 className="mt-4 font-display text-[36px] font-bold leading-[1.04] text-white sm:text-[44px] lg:text-[56px]">{settings.home_cta_title||"PLAKAN HAZIR. SAHAYA ÇIK."}</h2><p className="mt-5 max-w-lg text-[15px] leading-relaxed text-white/65 sm:text-[16px]">{settings.home_cta_description||"Takımını başvur, resmî kaydını RECFEvents.org’da tamamla ve sezonun etkinliklerine hazırlan. Okul, kulüp veya bağımsız topluluk olarak RECF Türkiye yolculuğunu başlat."}</p><Link href="/kayit" className="mt-8 inline-flex min-h-12 items-center justify-center gap-2 rounded-md bg-cyan-brand px-5 py-3 font-display text-[13px] font-bold text-ink shadow-plateSm shadow-white/20 transition-transform hover:-translate-y-0.5"><FigmaIcon name="kayit" className="h-5 w-5"/> TAKIMINI BAŞVUR</Link></div>
-        <Reveal className="relative z-10"><div className="home-plate mx-auto max-w-[480px] -rotate-[3deg] overflow-hidden rounded-2xl border-4 border-cyan-brand bg-white shadow-[14px_14px_0_rgba(41,185,229,.28)]"><div className="flex items-center justify-between gap-3 bg-ink px-4 py-3 sm:px-5"><span className="font-display text-[11px] font-bold text-cyan-brand sm:text-sm">TR · RECF TÜRKİYE</span><span className="font-display text-[10px] font-medium text-white/60 sm:text-xs">SEZON {season}</span></div><p className="break-all py-6 text-center font-display text-[clamp(3.2rem,16vw,6rem)] font-bold tracking-[3px] text-ink sm:tracking-[6px]">{settings.home_cta_plate||"123A"}</p><p className="px-4 pb-5 text-center font-display text-[9px] font-medium tracking-[1px] text-ink/45 sm:text-[10.5px]">SENİN TAKIMIN — İLK MAÇTAN ŞAMPİYONAYA</p></div></Reveal>
+        <Reveal className="relative z-10"><div className="home-plate mx-auto max-w-[480px] -rotate-[3deg] overflow-hidden rounded-2xl border-4 border-cyan-brand bg-white shadow-[14px_14px_0_rgba(41,185,229,.28)]"><div className="flex items-center justify-between gap-3 bg-ink px-4 py-3 sm:px-5"><span className="font-display text-[11px] font-bold text-cyan-brand sm:text-sm">TR · RECF TÜRKİYE</span><span className="font-display text-[10px] font-medium text-white/60 sm:text-xs">SEZON {season}</span></div><p className="break-all py-6 text-center font-display text-[clamp(3.2rem,16vw,6rem)] font-bold tracking-[3px] text-ink sm:tracking-[6px]">{settings.home_cta_plate||"123A"}</p><p className="px-4 pb-5 text-center font-display text-[9px] font-medium tracking-[1px] text-ink/65 sm:text-[10.5px]">SENİN TAKIMIN — İLK MAÇTAN ŞAMPİYONAYA</p></div></Reveal>
       </div>
     </section>}
   </>;

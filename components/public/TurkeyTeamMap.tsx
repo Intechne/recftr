@@ -25,7 +25,7 @@ export default function TurkeyTeamMap({ counts }: { counts: { city: string; coun
     <div>
       <p className="font-display text-[44px] font-bold leading-none text-ink">{ranked.length}<span className="text-cyan-deep"> İL</span></p>
       <p className="mt-2 text-[15px] text-ink/65">{total} aktif takım sahada.</p>
-      <ol className="mt-5 divide-y divide-ink/10 rounded-xl border-2 border-ink bg-white">{ranked.slice(0, 8).map(([city, n], i) => <li key={city} className="flex items-center justify-between gap-3 px-4 py-3 text-[14px]"><span className="flex items-center gap-3"><span className="w-5 font-display text-xs font-bold text-ink/45">{i + 1}</span><span className="font-semibold text-ink">{city}</span></span><span className="font-display font-bold text-cyan-deep">{n}</span></li>)}</ol>
+      <ol className="mt-5 divide-y divide-ink/10 rounded-xl border-2 border-ink bg-white">{ranked.slice(0, 8).map(([city, n], i) => <li key={city} className="flex items-center justify-between gap-3 px-4 py-3 text-[14px]"><span className="flex items-center gap-3"><span className="w-5 font-display text-xs font-bold text-ink/65">{i + 1}</span><span className="font-semibold text-ink">{city}</span></span><span className="font-display font-bold text-cyan-deep">{n}</span></li>)}</ol>
     </div>
   </div>;
 }

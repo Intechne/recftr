@@ -25,7 +25,7 @@ export default async function Tesekkurler({ searchParams }: { searchParams: Prom
         <p className="inline-flex items-center gap-2 rounded bg-ink px-3 py-2 font-display text-xs font-bold tracking-[1.5px] text-cyan-brand"><FigmaIcon name="rozet" className="h-4 w-4" /> ÖN BAŞVURU ALINDI{ref ? ` · ${ref}` : ""}</p>
         <h1 className="mt-5 font-display text-[clamp(2.3rem,8vw,4.25rem)] font-bold leading-[.98]">BAŞVURUN ALINDI.<br /><span className="text-cyan-deep">ŞİMDİ RESMÎ KAYIT.</span></h1>
         <p className="mt-5 max-w-2xl text-[16px] leading-relaxed text-ink/65">RECF Türkiye ekibi ön başvurunu inceleyecek. Takımının sezona katılması için resmî kaydı <strong>RECFEvents.org</strong> üzerinde tamamlaman gerekiyor.</p>
-        <p role="status" className="mt-3 max-w-2xl text-sm leading-relaxed text-ink/60">{mailAccepted ? "Başvuru alındı e-postasını gelen kutunda kontrol edebilirsin; görünmüyorsa spam klasörüne de bak." : `Başvurun kaydedildi. Otomatik e-posta iletilemediyse başvuru numaranı saklayabilir, ${PUBLIC_CONTACT.support} adresine yazabilirsin.`}</p>
+        <p role="status" className="mt-3 max-w-2xl text-sm leading-relaxed text-ink/65">{mailAccepted ? "Başvuru alındı e-postasını gelen kutunda kontrol edebilirsin; görünmüyorsa spam klasörüne de bak." : `Başvurun kaydedildi. Otomatik e-posta iletilemediyse başvuru numaranı saklayabilir, ${PUBLIC_CONTACT.support} adresine yazabilirsin.`}</p>
       </div>
     </section>
     <div className="safe-x mx-auto max-w-7xl lg:px-10">

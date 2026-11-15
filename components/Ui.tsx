@@ -7,7 +7,7 @@ export function PageHead({ kicker, title, sub }: { kicker: string; title: string
     <div className="safe-x mx-auto max-w-7xl pb-7 pt-9 sm:pb-8 sm:pt-12 lg:px-10 2xl:pt-14">
       <p className="flex items-center gap-1.5 font-display text-[12px] font-semibold tracking-[2px] text-cyan-deep"><FigmaIcon name="robot" className="h-4 w-4"/> {kicker}</p>
       <h1 className="mt-2.5 font-display text-[clamp(2rem,8vw,3.25rem)] font-bold leading-[1.02] text-ink lg:text-[52px] 2xl:text-[58px]">{title}</h1>
-      {sub && <p className="mt-3.5 max-w-2xl text-[15px] leading-relaxed text-ink/60 sm:text-[16px] 2xl:text-[17px]">{sub}</p>}
+      {sub && <p className="mt-3.5 max-w-2xl text-[15px] leading-relaxed text-ink/65 sm:text-[16px] 2xl:text-[17px]">{sub}</p>}
     </div>
   );
 }
@@ -30,7 +30,7 @@ export function StatusPill({ status }: { status: "open" | "full" | "soon" | "ona
   const map = {
     open:   { t: "KAYIT AÇIK", cls: "border-green-700 bg-green-50 text-green-800 pulse-soft" },
     full:   { t: "DOLU", cls: "border-red-600 bg-red-50 text-red-700" },
-    soon:   { t: "YAKINDA", cls: "border-ink/30 bg-ink/5 text-ink/60" },
+    soon:   { t: "YAKINDA", cls: "border-ink/30 bg-ink/5 text-ink/65" },
     "onaylı": { t: "ONAYLI", cls: "border-green-700 bg-green-50 text-green-800" },
     "ödeme":  { t: "ÖDEME BEKLİYOR", cls: "border-amber-600 bg-amber-50 text-amber-700" },
   }[status];

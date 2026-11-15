@@ -43,7 +43,7 @@ export default function MentorPage() {
                 <h2 className="flex items-center gap-2 font-display text-[16px] font-bold text-ink"><FigmaIcon name={c.icon} className="h-5 w-5"/>{c.title}</h2>
                 <ul className="mt-3.5 space-y-2.5">
                   {c.items.map((it) => (
-                    <li key={it} className="flex gap-2.5 text-[13.5px] leading-relaxed text-ink/60">
+                    <li key={it} className="flex gap-2.5 text-[13.5px] leading-relaxed text-ink/65">
                       <span className="mt-1 text-[9px]" style={{ color: c.hex }} aria-hidden>◆</span>{it}
                     </li>
                   ))}
@@ -53,19 +53,19 @@ export default function MentorPage() {
           ))}
         </div>
 
-        <p className="mt-6 text-sm leading-relaxed text-ink/60">Takım formu ön başvuru içindir. Mentor eğitimi, resmî takım kaydı veya sertifika kaydı yerine geçmez. <Link href="/rehber/takim-kaydi" className="font-semibold text-cyan-deep underline">Kayıt adımlarını incele</Link>.</p>
+        <p className="mt-6 text-sm leading-relaxed text-ink/65">Takım formu ön başvuru içindir. Mentor eğitimi, resmî takım kaydı veya sertifika kaydı yerine geçmez. <Link href="/rehber/takim-kaydi" className="font-semibold text-cyan-deep underline">Kayıt adımlarını incele</Link>.</p>
         <h2 className="mt-14 font-display text-[26px] font-bold text-ink">BAŞVURU SÜRECİ</h2>
         <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           {proc.map((s, i) => (
             <div key={s.t} className="relative rounded-xl border-[1.5px] border-ink/20 bg-white p-6 text-center">
               <span className="diamond mx-auto flex h-11 w-11 items-center justify-center rounded-lg bg-adc font-display text-[16px] font-bold text-[#0d1f08]"><span>{i + 1}</span></span>
               <h3 className="mt-4 font-display text-[16px] font-bold text-ink">{s.t}</h3>
-              <p className="mt-1.5 text-[12.5px] text-ink/55">{s.d}</p>
+              <p className="mt-1.5 text-[12.5px] text-ink/65">{s.d}</p>
               {i < proc.length - 1 && <span aria-hidden className="absolute -right-4 top-1/2 hidden -translate-y-1/2 font-display text-[22px] font-bold text-ink/30 lg:block">→</span>}
             </div>
           ))}
         </div>
-        <p className="mt-6 text-[14px] text-ink/55">
+        <p className="mt-6 text-[14px] text-ink/65">
           Sorular için: <a href="mailto:destek@recfturkiye.com" className="font-semibold text-cyan-deep underline">destek@recfturkiye.com</a> · Yeni eğitim tarihi henüz duyurulmadı. <Link href="/duyurular" className="font-semibold text-cyan-deep underline">Duyuruları takip et</Link>.
         </p>
       </div>

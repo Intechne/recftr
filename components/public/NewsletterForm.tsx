@@ -26,7 +26,7 @@ export default function NewsletterForm({ lang = "tr" }: { lang?: "tr" | "en" }) 
   }
   return <form onSubmit={submit} aria-busy={busy} className="rounded-xl border-2 border-ink bg-paper p-4 sm:p-5">
     <h3 className="font-display text-[13px] font-bold tracking-[2px] text-ink">{en ? "NEWSLETTER" : "E-POSTA BÜLTENİ"}</h3>
-    <p className="mt-1.5 text-[13px] leading-relaxed text-ink/60">{en ? "Season news, events and program updates." : "Sezon haberleri, etkinlikler ve program duyuruları."}</p>
+    <p className="mt-1.5 text-[13px] leading-relaxed text-ink/65">{en ? "Season news, events and program updates." : "Sezon haberleri, etkinlikler ve program duyuruları."}</p>
     <div className="mt-3 flex flex-col gap-2 min-[420px]:flex-row">
       <label htmlFor={`newsletter-email-${lang}`} className="sr-only">{en ? "Email address" : "E-posta adresi"}</label>
       <input id={`newsletter-email-${lang}`} type="email" required maxLength={254} autoComplete="email" placeholder={en ? "you@example.com" : "eposta@ornek.com"} value={email} onChange={event => setEmail(event.target.value)} disabled={busy} className="min-h-11 min-w-0 flex-1 rounded-md border-[1.5px] border-ink/25 bg-white px-3.5 py-2.5 text-sm outline-none focus:border-cyan-deep" />

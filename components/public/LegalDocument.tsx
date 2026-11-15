@@ -8,7 +8,7 @@ export default function LegalDocument({slug}:{slug:string}) {
   return <div className="safe-x mx-auto max-w-4xl py-10 sm:py-14 lg:px-10">
     <Link href="/hukuki-belgeler" className="text-xs font-bold tracking-wider text-cyan-deep">HUKUKİ BELGELER →</Link>
     <h1 className="mt-3 font-display text-[clamp(1.75rem,6vw,2.5rem)] font-bold leading-tight text-ink">{document.title}</h1>
-    <p className="mt-4 text-sm leading-relaxed text-ink/60">{document.description}</p>
+    <p className="mt-4 text-sm leading-relaxed text-ink/65">{document.description}</p>
     <div className="mt-6 flex flex-wrap gap-3"><a href={document.pdf} download className="inline-flex min-h-12 items-center rounded-md bg-ink px-5 py-3 text-sm font-bold text-white">ORİJİNAL PDF’İ İNDİR ↓</a><a href={document.pdf} target="_blank" rel="noreferrer" className="inline-flex min-h-12 items-center rounded-md border-2 border-ink px-5 py-3 text-sm font-bold text-ink">PDF’İ AÇ ↗</a></div>
     <p className="mt-5 rounded-lg border border-ink/15 bg-white p-4 text-sm leading-relaxed text-ink/65">Aşağıdaki metin PDF’deki içeriğin web görünümüdür. Tercih, tarih ve imza alanları orijinal belgede yer alır. Bu sayfayı görüntülemek veya takım ön başvurusu yapmak, bu alanların doldurulması ve imzalanması yerine geçmez.</p>
     <article aria-label={document.title} className="mt-8 rounded-xl border border-ink/15 bg-white p-5 sm:p-8">
@@ -22,6 +22,6 @@ export default function LegalDocument({slug}:{slug:string}) {
       </section>)}
     </article>
     <nav aria-label="Diğer hukuki belgeler" className="mt-8 flex flex-wrap gap-4">{LEGAL_DOCUMENTS.filter(item=>item.slug!==slug).map(item=><Link key={item.slug} href={`/${item.slug}`} className="text-sm font-semibold text-cyan-deep underline">{item.title}</Link>)}</nav>
-    <p className="mt-8 text-xs text-ink/50">Web’de yayımlanma: 5 Ekim 2026 · Orijinal belge: {document.pageCount} sayfa</p>
+    <p className="mt-8 text-xs text-ink/65">Web’de yayımlanma: 5 Ekim 2026 · Orijinal belge: {document.pageCount} sayfa</p>
   </div>;
 }

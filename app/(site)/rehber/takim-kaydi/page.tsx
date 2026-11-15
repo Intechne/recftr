@@ -82,7 +82,7 @@ export default function Rehber() {
             </details>
           ))}
         </div>
-        <p className="mt-4 text-sm text-ink/60">Daha fazlası için <Link href="/sss" className="font-semibold text-cyan-deep underline">Sık Sorulan Sorular</Link>.</p>
+        <p className="mt-4 text-sm text-ink/65">Daha fazlası için <Link href="/sss" className="font-semibold text-cyan-deep underline">Sık Sorulan Sorular</Link>.</p>
         <div className="mt-10 flex flex-col gap-4 rounded-xl bg-ink px-6 py-5 sm:flex-row sm:items-center sm:justify-between">
           <p className="font-display text-[16px] font-bold text-white">HAZIRSAN BAŞLAYALIM.</p>
           <div className="flex flex-col gap-3 min-[460px]:flex-row">
