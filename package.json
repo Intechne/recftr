@@ -3,6 +3,7 @@
   "version": "3.3.0",
   "private": true,
   "scripts": {
+    "lint": "eslint .",
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
@@ -25,17 +26,21 @@
   "dependencies": {
     "@halilertekin/turkey_province_image": "^3.3.3",
     "@supabase/supabase-js": "2.112.4",
+    "@vercel/analytics": "2.0.1",
     "next": "15.5.27",
     "postgres": "^3.4.9",
     "react": "19.2.8",
     "react-dom": "19.2.8"
   },
   "devDependencies": {
+    "@eslint/eslintrc": "3.3.7",
     "@tailwindcss/postcss": "4.3.3",
     "@types/node": "^24.0.0",
     "@types/react": "^19.0.0",
     "@types/react-dom": "^19.0.0",
     "autoprefixer": "10.4.19",
+    "eslint": "9.39.5",
+    "eslint-config-next": "15.5.27",
     "postcss": "8.5.29",
     "tailwindcss": "4.3.3",
     "typescript": "^5.9.0"
