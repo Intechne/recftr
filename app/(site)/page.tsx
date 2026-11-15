@@ -1,14 +1,16 @@
 import type { Metadata } from "next";
 import { pageMeta } from "@/lib/seo";
-export const metadata: Metadata = pageMeta({ title: "RECF Türkiye — Maç Günü. Her Gün.", description: "Türkiye'nin resmi RECF robotik ve drone programları: Engage, Achieve, Inspire, Aerial Drone Competition, ADC Pro. Takımını başvur, RECF STEM World Championship'e giden yolculuğa başla.", path: "/", languages: languageAlternates("/", "/en", abs) });
+export const metadata: Metadata = pageMeta({ title: "RECF Türkiye — Maç Günü. Her Gün.", description: "Türkiye'nin resmi RECF robotik ve drone programları: Engage, Achieve, Inspire, Aerial Drone Competition, ADC Pro. Takım başvurunu yap, RECF STEM World Championship'e giden yolculuğa başla.", path: "/", languages: languageAlternates("/", "/en", abs) });
 import { abs } from "@/lib/seo";
 import { languageAlternates } from "@/lib/i18n";
 import { publicRoute, type RouteStep } from "@/lib/season-route";
-import { FOUNDING_100, TEAM_MAP_DEFAULT_MIN_TEAMS, settingNumber } from "@/lib/site-config";
+import { FOUNDING_100, TEAM_MAP_DEFAULT_MIN_TEAMS, settingNumber, worldChampionship } from "@/lib/site-config";
 import TurkeyTeamMap from "@/components/public/TurkeyTeamMap";
 import { SafeLink } from "@/components/public/RichText";
 import CmsImage from "@/components/public/CmsImage";
 import { badgeTextColor } from "@/lib/color";
+import { videoEmbedUrl } from "@/lib/embed";
+import { copy } from "@/lib/copy";
 import Link from "next/link";
 import { getCachedHomeSnapshot } from "@/lib/public-cache";
 import { eventPhase } from "@/lib/public-content";
@@ -38,6 +40,7 @@ type Settings = {
   home_show_programs?:string; home_show_route?:string; home_show_stats?:string;
   home_show_events?:string; home_show_news?:string; home_show_gallery?:string; home_show_cta?:string;
   home_show_team_map?:string; home_show_recf_news?:string; founding100_min_display?:string; team_map_min_teams?:string;
+  recf_message_kind?:string; recf_message_url?:string; recf_message_title?:string; recf_message_text?:string; wc_date_label?:string; wc_date_label_en?:string;
 };
 
 const EMPTY_STATS:HomeStats={teams:0,cities:0,events:0,students:0,programs:0,founding:0};
@@ -63,7 +66,9 @@ export default async function Home() {
   const media=(Array.isArray(snapshot.media)?snapshot.media:[]) as Media[];
   const settings=(snapshot.settings&&typeof snapshot.settings==='object'?snapshot.settings:{}) as Settings;
   const stats=(snapshot.stats&&typeof snapshot.stats==='object'?snapshot.stats:EMPTY_STATS) as HomeStats;
-  const route:RouteStep[]=publicRoute(settings.season_route);
+  const route:RouteStep[]=publicRoute(settings.season_route,Date.now(),worldChampionship(settings as Record<string,unknown>));
+  const recfUrl=String(settings.recf_message_url||"").trim();
+  const recfMessage=/^https:\/\//.test(recfUrl)?{url:recfUrl,embed:settings.recf_message_kind==="video"?videoEmbedUrl(recfUrl):null,title:String(settings.recf_message_title||"").trim(),text:String(settings.recf_message_text||"").trim()}:null;
   const recfNews=(Array.isArray(snapshot.recfNews)?snapshot.recfNews:[]) as News[];
   const teamCities=(Array.isArray(snapshot.teamCities)?snapshot.teamCities:[]) as {city:string;count:number}[];
   const season=settings.season_label||"2026–27";
@@ -94,9 +99,9 @@ export default async function Home() {
             <span className="rise rise-2 block text-[clamp(2.9rem,14vw,5.2rem)] text-ink lg:text-[88px] 2xl:text-[102px]">{heroMain}</span>
             {heroAccent&&<span className="rise rise-3 block text-[clamp(2.9rem,14vw,5.2rem)] text-cyan-brand lg:text-[88px] 2xl:text-[102px]" style={{WebkitTextStroke:"clamp(1px,.16vw,2px) #10192F"}}>{heroAccent}</span>}
           </h1>
-          <p className="rise rise-4 mt-5 max-w-xl text-[15px] leading-relaxed text-ink/65 sm:mt-6 sm:text-[17px] lg:text-[18px] 2xl:max-w-2xl 2xl:text-[19px]">{settings.hero_description||"Türkiye’nin robotik ve drone yarışma programları. Programını seç, takımını başvur, sezon rotasına katıl."}</p>
+          <p className="rise rise-4 mt-5 max-w-xl text-[15px] leading-relaxed text-ink/65 sm:mt-6 sm:text-[17px] lg:text-[18px] 2xl:max-w-2xl 2xl:text-[19px]">{settings.hero_description||"Türkiye’nin robotik ve drone yarışma programları. Programını seç, takım başvurunu yap, sezon rotasına katıl."}</p>
           <div className="rise rise-4 mt-7 flex flex-col gap-3 min-[460px]:flex-row sm:mt-8">
-            <Link href="/kayit" className="flex min-h-12 items-center justify-center gap-2 rounded-md border-2 border-ink bg-ink px-5 py-3 font-display text-[13px] font-bold text-white shadow-plateSm shadow-cyan-brand transition-transform hover:-translate-y-0.5"><FigmaIcon name="kayit" className="h-5 w-5"/> TAKIMINI BAŞVUR</Link>
+            <Link href="/kayit" className="flex min-h-12 items-center justify-center gap-2 rounded-md border-2 border-ink bg-ink px-5 py-3 font-display text-[13px] font-bold text-white shadow-plateSm shadow-cyan-brand transition-transform hover:-translate-y-0.5"><FigmaIcon name="kayit" className="h-5 w-5"/> {copy().apply}</Link>
             <Link href="/programlar" className="flex min-h-12 items-center justify-center gap-2 rounded-md border-2 border-ink bg-white px-5 py-3 font-display text-[13px] font-bold transition-transform hover:-translate-y-0.5"><FigmaIcon name="kupa" className="h-5 w-5"/> PROGRAMLARI GÖR</Link>
           </div>
         </div>
@@ -162,7 +167,7 @@ export default async function Home() {
     {/* FOUNDING 100 — gerçek veriden; eşiğin altında gizli */}
     {showFounding&&<section className="field-grid-dark bg-ink" aria-labelledby="founding-100-title">
       <div className="safe-x mx-auto grid max-w-7xl items-center gap-8 py-12 lg:grid-cols-[1fr_1.1fr] lg:px-10 lg:py-14">
-        <div><p className="inline-flex items-center gap-2 rounded bg-cyan-brand px-3 py-1.5 font-display text-[11px] font-bold tracking-[1.5px] text-ink"><FigmaIcon name="rozet" className="h-4 w-4"/> FOUNDING 100</p><h2 id="founding-100-title" className="mt-4 font-display text-[30px] font-bold leading-tight text-white sm:text-[38px]">TÜRKİYE’NİN KURUCU TAKIMLARI.</h2><p className="mt-3 max-w-lg text-[15px] leading-relaxed text-white/70">Sezonun ilk 100 takımı RECF Türkiye’nin kurucu kadrosunu oluşturuyor. Takımını başvur, sahadaki yerini al.</p><div className="mt-6 flex flex-col gap-3 min-[460px]:flex-row"><Link href="/kayit" className="inline-flex min-h-12 items-center justify-center rounded-md bg-cyan-brand px-5 py-3 font-display text-[13px] font-bold text-ink">TAKIMINI BAŞVUR</Link><Link href="/takimlar" className="inline-flex min-h-12 items-center justify-center rounded-md border-2 border-white/40 px-5 py-3 font-display text-[13px] font-bold text-white hover:border-white">KURUCU TAKIMLAR →</Link></div></div>
+        <div><p className="inline-flex items-center gap-2 rounded bg-cyan-brand px-3 py-1.5 font-display text-[11px] font-bold tracking-[1.5px] text-ink"><FigmaIcon name="rozet" className="h-4 w-4"/> FOUNDING 100</p><h2 id="founding-100-title" className="mt-4 font-display text-[30px] font-bold leading-tight text-white sm:text-[38px]">TÜRKİYE’NİN KURUCU TAKIMLARI.</h2><p className="mt-3 max-w-lg text-[15px] leading-relaxed text-white/70">Sezonun ilk 100 takımı RECF Türkiye’nin kurucu kadrosunu oluşturuyor. Takım başvurunu yap, sahadaki yerini al.</p><div className="mt-6 flex flex-col gap-3 min-[460px]:flex-row"><Link href="/kayit" className="inline-flex min-h-12 items-center justify-center rounded-md bg-cyan-brand px-5 py-3 font-display text-[13px] font-bold text-ink">{copy().apply}</Link><Link href="/takimlar" className="inline-flex min-h-12 items-center justify-center rounded-md border-2 border-white/40 px-5 py-3 font-display text-[13px] font-bold text-white hover:border-white">KURUCU TAKIMLAR →</Link></div></div>
         <Reveal><div className="rounded-2xl border-2 border-cyan-brand bg-white/[.04] p-6 sm:p-8"><p className="font-display text-[clamp(3.5rem,14vw,6.5rem)] font-bold leading-none text-cyan-brand"><CountUp to={founding}/><span className="text-white/65">/{FOUNDING_100.target}</span></p><div className="mt-5 h-3 overflow-hidden rounded-full bg-white/10" role="progressbar" aria-label="Founding 100 doluluk" aria-valuemin={0} aria-valuemax={FOUNDING_100.target} aria-valuenow={founding}><div className="h-full rounded-full bg-cyan-brand" style={{width:`${founding}%`}}/></div><p className="mt-3 font-display text-[11px] font-medium tracking-[1.7px] text-white/65">ONAYLANAN KURUCU TAKIM</p></div></Reveal>
       </div>
     </section>}
@@ -196,11 +201,15 @@ export default async function Home() {
       </div>
     </section>}
 
-    {/* RECF'TEN — CMS'te "RECF'TEN" etiketiyle yayınlanan içerikler */}
-    {enabled(settings,"home_show_recf_news")&&recfNews.length>0&&<section className="bg-white">
+    {/* RECF'TEN — CMS: Site Ayarları → RECF'ten bloğu (video / resmî paylaşım linki) ve "RECF'TEN" etiketli haberler. İçerik yoksa gizli. */}
+    {enabled(settings,"home_show_recf_news")&&(recfMessage||recfNews.length>0)&&<section className="bg-white" aria-labelledby="recften-title">
       <div className="safe-x mx-auto max-w-7xl py-14 sm:py-16 lg:px-10 lg:py-20">
-        <p className="font-display text-[11px] font-bold tracking-[2px] text-cyan-deep">RECF GLOBAL</p><h2 className="mt-1 font-display text-[28px] font-bold sm:text-[34px] lg:text-[40px]">RECF’TEN</h2>
-        <div className="mt-7 grid gap-4 md:grid-cols-3">{recfNews.slice(0,3).map(n=><Link key={n.slug} href={`/duyurular/${n.slug}`} className="group flex flex-col rounded-xl border-2 border-ink bg-paper p-5 transition-transform hover:-translate-y-1"><span className="font-display text-[10px] font-bold tracking-[1.5px] text-cyan-deep">{fmtDate(n.date).toUpperCase()}</span><h3 className="mt-2 font-display text-[18px] font-bold leading-snug text-ink">{n.title}</h3>{n.excerpt&&<p className="mt-2 line-clamp-3 text-[13.5px] leading-relaxed text-ink/65">{n.excerpt}</p>}<span className="mt-auto pt-4 font-display text-[12px] font-bold text-ink">OKU →</span></Link>)}</div>
+        <p className="font-display text-[11px] font-bold tracking-[2px] text-cyan-deep">RECF GLOBAL</p><h2 id="recften-title" className="mt-1 font-display text-[28px] font-bold sm:text-[34px] lg:text-[40px]">RECF’TEN</h2>
+        {recfMessage&&<div className={`mt-7 grid gap-6 ${recfMessage.embed?"lg:grid-cols-[1.4fr_1fr] lg:items-center":""}`}>
+          {recfMessage.embed&&<div className="relative aspect-video overflow-hidden rounded-xl border-2 border-ink bg-ink"><iframe src={recfMessage.embed} title={recfMessage.title||"RECF video mesajı"} loading="lazy" allow="accelerometer; encrypted-media; gyroscope; picture-in-picture" allowFullScreen referrerPolicy="strict-origin-when-cross-origin" className="absolute inset-0 h-full w-full"/></div>}
+          <div className="rounded-xl border-2 border-ink bg-paper p-6">{recfMessage.title&&<h3 className="font-display text-[22px] font-bold leading-snug text-ink">{recfMessage.title}</h3>}{recfMessage.text&&<p className="mt-3 text-[15px] leading-relaxed text-ink/70">{recfMessage.text}</p>}{!recfMessage.embed&&<SafeLink href={recfMessage.url} className="mt-5 inline-flex min-h-11 items-center rounded-md bg-ink px-4 py-2.5 font-display text-[12px] font-bold text-white">RECF PAYLAŞIMINI GÖR ↗</SafeLink>}</div>
+        </div>}
+        {recfNews.length>0&&<div className="mt-7 grid gap-4 md:grid-cols-3">{recfNews.slice(0,3).map(n=><Link key={n.slug} href={`/duyurular/${n.slug}`} className="group flex flex-col rounded-xl border-2 border-ink bg-paper p-5 transition-transform hover:-translate-y-1"><span className="font-display text-[10px] font-bold tracking-[1.5px] text-cyan-deep">{fmtDate(n.date).toUpperCase()}</span><h3 className="mt-2 font-display text-[18px] font-bold leading-snug text-ink">{n.title}</h3>{n.excerpt&&<p className="mt-2 line-clamp-3 text-[13.5px] leading-relaxed text-ink/65">{n.excerpt}</p>}<span className="mt-auto pt-4 font-display text-[12px] font-bold text-ink">OKU →</span></Link>)}</div>}
       </div>
     </section>}
 
@@ -227,14 +236,14 @@ export default async function Home() {
       </div>
     </section>}
 
-    <section className="border-t-2 border-ink bg-cyan-brand/10"><div className="safe-x mx-auto flex max-w-7xl flex-col gap-6 py-12 sm:flex-row sm:items-center sm:justify-between lg:px-10"><div><p className="font-display text-xs font-bold tracking-[2px] text-cyan-deep">PLANLAMA KOMİTESİ</p><h2 className="mt-2 font-display text-3xl font-bold">SAHAYI BİRLİKTE HAZIRLAYALIM.</h2><p className="mt-3 max-w-2xl text-sm leading-relaxed text-ink/65">Etkinlik hazırlığı, eğitim, teknik destek ve iletişim süreçlerine katkı sunmak isteyen yetişkin gönüllüler için komite başvuruları.</p></div><Link href="/planlama-komitesi" className="inline-flex min-h-12 shrink-0 items-center justify-center rounded-md border-2 border-ink bg-ink px-5 py-3 font-display text-sm font-bold text-white shadow-plateSm shadow-cyan-brand">KOMİTEYİ TANI & BAŞVUR →</Link></div></section>
+    <section className="border-t-2 border-ink bg-cyan-brand/10"><div className="safe-x mx-auto flex max-w-7xl flex-col gap-6 py-12 sm:flex-row sm:items-center sm:justify-between lg:px-10"><div><p className="font-display text-xs font-bold tracking-[2px] text-cyan-deep">GÖNÜLLÜ AĞI</p><h2 className="mt-2 font-display text-3xl font-bold">SAHAYI BİRLİKTE HAZIRLAYALIM.</h2><p className="mt-3 max-w-2xl text-sm leading-relaxed text-ink/65">Etkinlik hazırlığı, eğitim, teknik destek ve iletişim süreçlerine katkı sunmak isteyen yetişkin gönüllüler ve Hakem ve Jüri Akademisi adayları için.</p></div><Link href="/gonullu" className="inline-flex min-h-12 shrink-0 items-center justify-center rounded-md border-2 border-ink bg-ink px-5 py-3 font-display text-sm font-bold text-white shadow-plateSm shadow-cyan-brand">GÖNÜLLÜ AĞI’NA KATIL →</Link></div></section>
 
     {/* TAKIM PLAKASI CTA */}
     {enabled(settings,"home_show_cta")&&<section className="field-grid-dark relative overflow-hidden bg-ink">
       <div aria-hidden className="home-orbit home-orbit-red absolute -left-20 -top-20 h-40 w-40 rotate-45 bg-alliance-red sm:h-44 sm:w-44"/>
       <div aria-hidden className="home-orbit home-orbit-blue absolute -bottom-20 -right-20 h-40 w-40 rotate-45 bg-alliance-blue sm:h-44 sm:w-44"/>
       <div className="safe-x mx-auto grid max-w-7xl items-center gap-10 py-16 lg:grid-cols-2 lg:px-10 lg:py-24 2xl:gap-16 2xl:py-28">
-        <div className="relative z-10"><span className="inline-flex items-center gap-2 rounded bg-cyan-brand px-3 py-1.5 font-display text-[10px] font-bold text-ink"><FigmaIcon name="plaka" className="h-4 w-4"/> TAKIM PLAKASI</span><h2 className="mt-4 font-display text-[36px] font-bold leading-[1.04] text-white sm:text-[44px] lg:text-[56px]">{settings.home_cta_title||"PLAKAN HAZIR. SAHAYA ÇIK."}</h2><p className="mt-5 max-w-lg text-[15px] leading-relaxed text-white/65 sm:text-[16px]">{settings.home_cta_description||"Takımını başvur, resmî kaydını RECFEvents.org’da tamamla ve sezonun etkinliklerine hazırlan. Okul, kulüp veya bağımsız topluluk olarak RECF Türkiye yolculuğunu başlat."}</p><Link href="/kayit" className="mt-8 inline-flex min-h-12 items-center justify-center gap-2 rounded-md bg-cyan-brand px-5 py-3 font-display text-[13px] font-bold text-ink shadow-plateSm shadow-white/20 transition-transform hover:-translate-y-0.5"><FigmaIcon name="kayit" className="h-5 w-5"/> TAKIMINI BAŞVUR</Link></div>
+        <div className="relative z-10"><span className="inline-flex items-center gap-2 rounded bg-cyan-brand px-3 py-1.5 font-display text-[10px] font-bold text-ink"><FigmaIcon name="plaka" className="h-4 w-4"/> TAKIM PLAKASI</span><h2 className="mt-4 font-display text-[36px] font-bold leading-[1.04] text-white sm:text-[44px] lg:text-[56px]">{settings.home_cta_title||"PLAKAN HAZIR. SAHAYA ÇIK."}</h2><p className="mt-5 max-w-lg text-[15px] leading-relaxed text-white/65 sm:text-[16px]">{settings.home_cta_description||"Takım başvurunu yap, resmî kaydını RECFEvents.org’da tamamla ve sezonun etkinliklerine hazırlan. Okul, kulüp veya bağımsız topluluk olarak RECF Türkiye yolculuğunu başlat."}</p><Link href="/kayit" className="mt-8 inline-flex min-h-12 items-center justify-center gap-2 rounded-md bg-cyan-brand px-5 py-3 font-display text-[13px] font-bold text-ink shadow-plateSm shadow-white/20 transition-transform hover:-translate-y-0.5"><FigmaIcon name="kayit" className="h-5 w-5"/> {copy().apply}</Link></div>
         <Reveal className="relative z-10"><div className="home-plate mx-auto max-w-[480px] -rotate-[3deg] overflow-hidden rounded-2xl border-4 border-cyan-brand bg-white shadow-[14px_14px_0_rgba(41,185,229,.28)]"><div className="flex items-center justify-between gap-3 bg-ink px-4 py-3 sm:px-5"><span className="font-display text-[11px] font-bold text-cyan-brand sm:text-sm">TR · RECF TÜRKİYE</span><span className="font-display text-[10px] font-medium text-white/60 sm:text-xs">SEZON {season}</span></div><p className="break-all py-6 text-center font-display text-[clamp(3.2rem,16vw,6rem)] font-bold tracking-[3px] text-ink sm:tracking-[6px]">{settings.home_cta_plate||"123A"}</p><p className="px-4 pb-5 text-center font-display text-[9px] font-medium tracking-[1px] text-ink/65 sm:text-[10.5px]">SENİN TAKIMIN — İLK MAÇTAN ŞAMPİYONAYA</p></div></Reveal>
       </div>
     </section>}

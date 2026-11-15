@@ -31,6 +31,7 @@ function contentSecurityPolicy(nonce: string) {
     "img-src 'self' data: blob: https:",
     "media-src 'self' blob: https:",
     `connect-src 'self' ${supabaseOrigin}`,
+    "frame-src https://www.youtube-nocookie.com https://player.vimeo.com",
     "worker-src 'self' blob:",
     "manifest-src 'self'",
     ...(process.env.NODE_ENV === "production" ? ["upgrade-insecure-requests"] : []),

@@ -21,10 +21,13 @@ export function Reveal({ children, delay = 0, className = "" }: { children: Reac
   );
 }
 
-/** Görünüme girince 0'dan sayan sayaç */
+/**
+ * Görünüme girince 0'dan sayan sayaç. Sunucu çıktısı (ilk HTML) her zaman gerçek değeri içerir;
+ * arama motorları, sosyal önizlemeler ve JavaScript çalıştırmayan araçlar doğru sayıyı görür.
+ */
 export function CountUp({ to, suffix = "", duration = 1500 }: { to: number; suffix?: string; duration?: number }) {
   const ref = useRef<HTMLSpanElement>(null);
-  const [val, setVal] = useState(0);
+  const [val, setVal] = useState(to);
   useEffect(() => {
     const el = ref.current;
     if (!el) return;
