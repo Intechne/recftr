@@ -88,11 +88,11 @@ type ProgramConfig={
 };
 
 const PROGRAMS:Record<SiteProgramSlug,ProgramConfig>={
-  engage:{siteSlug:"engage",apiSlug:"engage",fallbackVersion:"2.0",fallbackGame:"Tier Takeover"},
-  achieve:{siteSlug:"achieve",apiSlug:"achieve",fallbackVersion:"2.0",fallbackGame:"Pinnacle"},
-  inspire:{siteSlug:"inspire",apiSlug:"inspire",fallbackVersion:"2.0",fallbackGame:"Pinnacle"},
-  adc:{siteSlug:"adc",apiSlug:"adc",fallbackVersion:"1.1",fallbackGame:"Mission 2027: Fast Track"},
-  "adc-pro":{siteSlug:"adc-pro",apiSlug:"pro",fallbackVersion:"2.0",fallbackGame:"Off Grid"},
+  engage:{siteSlug:"engage",apiSlug:"engage",fallbackVersion:"3.0",fallbackGame:"Tier Takeover"},
+  achieve:{siteSlug:"achieve",apiSlug:"achieve",fallbackVersion:"3.0",fallbackGame:"Pinnacle"},
+  inspire:{siteSlug:"inspire",apiSlug:"inspire",fallbackVersion:"3.0",fallbackGame:"Pinnacle"},
+  adc:{siteSlug:"adc",apiSlug:"adc",fallbackVersion:"1.2",fallbackGame:"Mission 2027: Fast Track"},
+  "adc-pro":{siteSlug:"adc-pro",apiSlug:"pro",fallbackVersion:"2.1",fallbackGame:"Off Grid"},
 };
 
 const FALLBACK_ENGAGE_SCORES:EngageScores={floor:1,l1:5,l2:10,l3:25,l4:50,park:25};
@@ -205,7 +205,8 @@ function engageData(version:string,meta:ReturnType<typeof revisionMeta>,gameName
     publishedAt:meta.publishedAt,
     releasedDateLabel:meta.releasedDateLabel,
     gameName,
-    manualUrl:`${base}/engage/${encodeURIComponent(meta.versionLabel||version||"2.0")}`,
+    // Sürümsüz adres: games.recf.org her zaman güncel kılavuza yönlendirir.
+    manualUrl:`${base}/engage`,
     calculatorUrl:`${base}/engage/calculator`,
     qnaUrl:`${base}/engage/qa`,
     apiDocsUrl:`${base}/api-docs`,
@@ -221,7 +222,7 @@ function engageData(version:string,meta:ReturnType<typeof revisionMeta>,gameName
   };
 }
 
-// Verified v2.0 summary shared by Achieve and Inspire (§3.1 and §5.1).
+// Verified v3.0 summary shared by Achieve and Inspire (§3.1 and §5.1), checked 17 November 2026.
 function pinnacleScoring(){
   const cup=1, halfpin=5, center=10, park=21;
   const groups:ProgramScoringGroup[]=[
@@ -252,13 +253,12 @@ function pinnacleScoring(){
 }
 
 
-// Reviewed against https://games.recf.org/pro/2.0, sections 3.1, 4.2 and 5.1.
-// Curated v2.0 summary: do not infer scores from arbitrary nearby numbers in a manual.
+// Reviewed against https://games.recf.org/pro/2.1, sections 3.1, 4.2 and 5.1 (17 Nov 2026).
+// v2.1 removed colour matching from solo piloting (changelog §3.1). Curated summary: do not infer scores from arbitrary nearby numbers in a manual.
 function offGridScoring(){
   const groups:ProgramScoringGroup[]=[
     {id:"piloting",title:"Solo Pilotaj · 60 saniye",subtitle:"Kılavuz §3.1 — geçerlilik koşulları ve görev sınırları resmî kılavuzda açıklanır.",items:[
       item("panel","Panel Geçişi","5 / 10 puan","Büyük delik: 5; küçük delik: 10.",0),
-      item("color","Renk Eşleştirme","10 puan","Geçerli renk eşleştirmesi yapılan her pad.",1),
       item("canister","Canister Bölgesi","5 / 10 / 15 puan","Bölge 1, 2 veya 3; yalnız bir bölge sayılır.",2),
       item("park","Park Eden Araç","5 puan","Geçerli park eden araç başına; en fazla iki araç.",3),
       item("dock","Drone Docking","10 puan","Geçerli biçimde robota dock eden drone.",4),
@@ -282,7 +282,7 @@ function offGridScoring(){
   return {groups,examples:[] as ProgramScoringExample[]};
 }
 
-// Verified ADC v1.1 summary (§3.1, §4.2, §5.1), checked 5 October 2026.
+// Verified ADC v1.2 summary (§3.1, §4.2, §5.1), checked 17 November 2026.
 function adcScoring(){
   const takeoff=5, phase1=5, phase2=10, phase3=15, phase4=10;
   const green=10, yellow=20, cube=25, mini=15, spiral=10, tunnel=15;
@@ -330,10 +330,11 @@ function fallbackScoring(siteSlug:SiteProgramSlug){
   return {groups:[],examples:[]};
 }
 
-function officialLinks(apiSlug:string,version:string){
+function officialLinks(apiSlug:string){
   const base=baseUrl();
   return {
-    manualUrl:version?`${base}/${apiSlug}/${encodeURIComponent(version)}`:"",
+    // Sürümsüz adres: games.recf.org her zaman güncel kılavuza yönlendirir.
+    manualUrl:`${base}/${apiSlug}`,
     calculatorUrl:`${base}/${apiSlug}/calculator`,
     qnaUrl:`${base}/${apiSlug}/qa`,
   };
@@ -347,9 +348,9 @@ export async function getProgramOfficialData(inputSlug:string):Promise<OfficialP
   try{
     const programs=await getJson("/api/v1/programs","recf-games:programs");
     if(!hasProgram(programs,config.apiSlug)){
-      const fallback=fallbackScoring(siteSlug);
-      const links=officialLinks(config.apiSlug,config.fallbackVersion);
-      return {siteSlug,apiSlug:config.apiSlug,supported:true,available:false,source:"fallback",versionLabel:config.fallbackVersion,publishedAt:null,releasedDateLabel:null,gameName:config.fallbackGame,...links,scoringGroups:fallback.groups,examples:fallback.examples,engage:siteSlug==="engage"?engageData(config.fallbackVersion,{versionLabel:"",publishedAt:null,releasedDateLabel:null},config.fallbackGame,false):null,fetchedAt};
+      // Güncel sürüm bilinmiyor: eski sürüme göre doğrulanmış puanlama gösterilmez.
+      const links=officialLinks(config.apiSlug);
+      return {siteSlug,apiSlug:config.apiSlug,supported:true,available:false,source:"fallback",versionLabel:"",publishedAt:null,releasedDateLabel:null,gameName:config.fallbackGame,...links,scoringGroups:[],examples:[],engage:null,fetchedAt};
     }
     const version=latestVersionFromPrograms(programs,config.apiSlug)||config.fallbackVersion;
     const manualPayload=await getJson(`/api/v1/programs/${config.apiSlug}/manual/${encodeURIComponent(version)}`,`recf-games:${config.apiSlug}:${version}`);
@@ -357,17 +358,17 @@ export async function getProgramOfficialData(inputSlug:string):Promise<OfficialP
     const meta=revisionMeta(manualPayload);
     const versionLabel=meta.versionLabel||version;
     const gameName=extractGameName(manual,config);
-    const links=officialLinks(config.apiSlug,versionLabel);
+    const links=officialLinks(config.apiSlug);
     const reviewed=versionLabel===config.fallbackVersion;
     const scoring=reviewed?fallbackScoring(siteSlug):{groups:[],examples:[]};
     return {
       siteSlug,apiSlug:config.apiSlug,supported:true,available:true,source:"api",versionLabel,publishedAt:meta.publishedAt,releasedDateLabel:meta.releasedDateLabel,gameName,...links,scoringGroups:scoring.groups,examples:scoring.examples,engage:siteSlug==="engage"&&reviewed?engageData(versionLabel,meta,gameName,true):null,fetchedAt,
     };
   }catch{
-    const fallback=fallbackScoring(siteSlug);
-    const links=officialLinks(config.apiSlug,config.fallbackVersion);
+    // Güncel sürüm bilinmiyor: eski sürüme göre doğrulanmış puanlama gösterilmez.
+    const links=officialLinks(config.apiSlug);
     return {
-      siteSlug,apiSlug:config.apiSlug,supported:true,available:false,source:"fallback",versionLabel:config.fallbackVersion,publishedAt:null,releasedDateLabel:null,gameName:config.fallbackGame,...links,scoringGroups:fallback.groups,examples:fallback.examples,engage:siteSlug==="engage"?engageData(config.fallbackVersion,{versionLabel:"",publishedAt:null,releasedDateLabel:null},config.fallbackGame,false):null,fetchedAt,
+      siteSlug,apiSlug:config.apiSlug,supported:true,available:false,source:"fallback",versionLabel:"",publishedAt:null,releasedDateLabel:null,gameName:config.fallbackGame,...links,scoringGroups:[],examples:[],engage:null,fetchedAt,
     };
   }
 }

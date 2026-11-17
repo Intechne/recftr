@@ -1,4 +1,4 @@
-import { FEE_SUMMARY, FEE_SUMMARY_EN, RECF_EVENTS_URL, RECF_FEES, RECF_SOURCES, SEASON, WORLD_CHAMPIONSHIP, hasPlaceholder, type WorldChampionshipInfo } from "@/lib/site-config";
+import { FEE_SUMMARY, FEE_SUMMARY_EN, PROGRAM_ELIGIBILITY, RECF_EVENTS_URL, RECF_FEES, RECF_SOURCES, SEASON, WORLD_CHAMPIONSHIP, hasPlaceholder, type WorldChampionshipInfo } from "@/lib/site-config";
 
 /*
  * CMS'ten düzenlenebilen site sayfaları.
@@ -13,7 +13,7 @@ import { FEE_SUMMARY, FEE_SUMMARY_EN, RECF_EVENTS_URL, RECF_FEES, RECF_SOURCES, 
  *   ? Soru            (bir sonraki boş satıra kadar gelen satırlar cevaptır)
  *   > Vurgulu not
  *   [[Buton metni](/adres)]
- * Belirteçler: {{fee}} (programa göre özet) {{fee_robotics}} {{fee_drones}} {{season}} {{fee_source}} {{fee_drone_source}}
+ * Belirteçler: {{fee}} (programa göre özet) {{fee_robotics}} {{fee_adc}} {{fee_adc_pro}} {{season}} {{fee_source}} {{fee_drone_source}} {{wc_spots}}
  *   {{wc_name}} {{wc_date}} {{wc_city}} {{wc_source}} {{founding_count}}
  *   {{pathway_source}} {{recfevents_url}} {{program_ages}}
  */
@@ -79,16 +79,27 @@ export function plainText(text: string) {
   return text.replace(/\[([^\]]+)\]\(([^)\s]+)\)/g, "$1").replace(/\s+/g, " ").trim();
 }
 
+const PROGRAM_NAMES: Record<string, string> = { engage: "RECF Engage", achieve: "RECF Achieve", inspire: "RECF Inspire", adc: "Aerial Drone Competition", "adc-pro": "ADC Pro" };
+/** Resmî uygunluk ifadeleri (RECF KB "Which RECF Competition Do I Choose?"). */
+export function programAgesText(en = false) {
+  return Object.entries(PROGRAM_ELIGIBILITY).map(([slug, e]) => `${PROGRAM_NAMES[slug]}: ${en ? e.en : e.tr}`).join("; ");
+}
+/** Resmî asgari takım büyüklükleri; kaynakta belirtilmeyen program yazılmaz. */
+export function teamSizesText(en = false) {
+  return Object.entries(PROGRAM_ELIGIBILITY).filter(([, e]) => e.teamTr).map(([slug, e]) => `${PROGRAM_NAMES[slug]}: ${en ? e.teamEn : e.teamTr}`).join("; ");
+}
+
 export type TokenContext = { lang?: "tr" | "en"; programAges?: string; wc?: WorldChampionshipInfo; foundingCount?: number };
 export function applyTokens(text: string, context: TokenContext = {}) {
   const en = context.lang === "en";
   const tokens: Record<string, string> = {
     fee: en ? FEE_SUMMARY_EN : FEE_SUMMARY,
     fee_robotics: RECF_FEES.robotics.label,
-    fee_drones: RECF_FEES.drones.label,
+    fee_adc: RECF_FEES.adc.label,
+    fee_adc_pro: en ? RECF_FEES.adcPro.labelEn : RECF_FEES.adcPro.label,
     season: SEASON,
     fee_source: RECF_FEES.robotics.source,
-    fee_drone_source: RECF_FEES.drones.source,
+    fee_drone_source: RECF_FEES.adc.source,
     wc_name: (context.wc || WORLD_CHAMPIONSHIP).name,
     wc_date: en ? (context.wc || WORLD_CHAMPIONSHIP).labelEn : (context.wc || WORLD_CHAMPIONSHIP).label,
     wc_city: en ? (context.wc || WORLD_CHAMPIONSHIP).cityEn : (context.wc || WORLD_CHAMPIONSHIP).city,
@@ -96,7 +107,11 @@ export function applyTokens(text: string, context: TokenContext = {}) {
     founding_count: context.foundingCount != null ? String(context.foundingCount) : "",
     pathway_source: RECF_SOURCES.pathway,
     recfevents_url: RECF_EVENTS_URL,
-    program_ages: context.programAges || "",
+    program_ages: programAgesText(en),
+    team_sizes: teamSizesText(en),
+    eligibility_source: RECF_SOURCES.chooseCompetition,
+    wc_spots: en ? (context.wc || WORLD_CHAMPIONSHIP).spotsNoteEn : (context.wc || WORLD_CHAMPIONSHIP).spotsNote,
+    wc_faq: RECF_SOURCES.faq,
   };
   // Bilinmeyen belirteçler ve teyit yer tutucuları hiçbir zaman ziyaretçiye gösterilmez.
   return text.replace(/\{\{\s*([a-z_]+)\s*\}\}/g, (_, key: string) => tokens[key] ?? "");
@@ -174,7 +189,7 @@ Hayır. Öğrencilere ait kişisel veriler sitede yayınlanmaz. Takımlar listes
 const IS_BIRLIKLERI = `Şirketler, vakıflar ve kurumlar; RECF Türkiye ile öğrencilerin robotik ve drone takımlarına doğrudan destek olabilir. Desteğinizi okul, bölge ve program bazında birlikte planlayalım.
 
 ## Takım Bursu modeli
-Takım Bursu, bir kurumun bir veya daha fazla öğrenci takımının sezon giderlerini üstlenmesidir. Burs; resmî takım kayıt ücretini (robotik programlarda {{fee_robotics}}, drone programlarında {{fee_drones}}), donanım ve etkinlik katılımı gibi kalemleri kapsayacak şekilde planlanabilir.
+Takım Bursu, bir kurumun bir veya daha fazla öğrenci takımının sezon giderlerini üstlenmesidir. Burs; resmî takım kayıt ücretini (robotik programlarda {{fee_robotics}}, Aerial Drone Competition’da {{fee_adc}}, ADC Pro’da {{fee_adc_pro}}), donanım ve etkinlik katılımı gibi kalemleri kapsayacak şekilde planlanabilir.
 - Desteklenecek takım sayısını, programı ve bölgeyi birlikte belirleriz
 - Takımı okul veya topluluk iş birliğiyle eşleştiririz
 - Takımın sezon yolculuğunu birlikte duyururuz
@@ -192,7 +207,7 @@ const SSS = `Ücret, malzeme, takım kurma, yaş grupları, etkinlikler ve World
 
 ## Ücret ve kayıt
 ? Takım kayıt ücreti ne kadar?
-{{season}} sezonunda RECF resmî takım kayıt ücreti takım başına {{fee}}. Kayıt ve ödeme RECFEvents.org üzerinden yapılır. Kaynaklar: [RECF SSS — robotik]({{fee_source}}) · [RECF KB — drone]({{fee_drone_source}}). Takım Bursu ve kurumsal paket seçenekleri için bize ulaşın.
+{{season}} sezonunda RECF resmî takım kayıt ücreti takım başına {{fee}}. Kayıt ve ödeme RECFEvents.org üzerinden yapılır. Kaynaklar: [RECF SSS — robotik]({{fee_source}}) · [RECF KB — ADC]({{fee_drone_source}}). Takım Bursu ve kurumsal paket seçenekleri için bize ulaşın.
 
 ? Bu sitedeki ön başvuru resmî kayıt yerine geçer mi?
 Hayır. Ön başvuru takımınızı RECF Türkiye ekibiyle tanıştırır ve destek sürecini başlatır. Resmî sezon kaydı ve takım numarası RECFEvents.org üzerinden tamamlanır. [Takım kaydı rehberi](/rehber/takim-kaydi)
@@ -215,11 +230,15 @@ Programın yaş ve kademe koşullarını sağlayan öğrenciler, 18 yaş üstü 
 Hayır. Okul takımlarının yanı sıra kulüp, dernek ve bağımsız topluluklar da takım kurabilir.
 
 ? Takımda kaç öğrenci olmalı?
-Takım büyüklüğü programa göre değişir; ayrıntılar programın resmî oyun kılavuzunda yer alır.
+RECF'in program seçim rehberine göre takımlar en az şu sayıda öğrenciden oluşur — {{team_sizes}}. RECF Inspire için kaynakta takım büyüklüğü belirtilmez; ayrıntılar programın resmî oyun kılavuzunda yer alır. Kaynak: [RECF KB — Which RECF Competition Do I Choose?]({{eligibility_source}})
+
+## Founding 100
+? Founding 100 nedir?
+Founding 100, RECF Türkiye'nin ilk sezonunda ön başvuru yapan kurucu takımlar topluluğudur. Ön başvuru [başvuru formu](/kayit) üzerinden yapılır; resmî sezon kaydı ayrıca RECFEvents.org'da tamamlanır. Takımlar sayfasında yalnız yayın onamı veren takımlar listelenir.
 
 ## Yaş grupları
 ? Hangi program hangi yaş grubu için?
-{{program_ages}}. Kesin uygunluk koşulları için programın resmî kılavuzunu inceleyin.
+{{program_ages}}. Kaynak: [RECF KB — Which RECF Competition Do I Choose?]({{eligibility_source}})
 
 ## Etkinlikler
 ? Etkinliklere nasıl katılırız?
@@ -230,7 +249,10 @@ RECF Türkiye, RECF'in Türkiye'deki resmi programıdır. Diğer organizasyonlar
 
 ## World Championship yolu
 ? RECF STEM World Championship nedir?
-RECF sezonunun zirve etkinliğidir: {{wc_date}} · {{wc_city}}. Güncel bilgi: [RECF World Championship]({{wc_source}})
+RECF sezonunun zirve etkinliğidir: {{wc_date}} · {{wc_city}}. Kaynak: [RECF SSS]({{wc_source}})
+
+? World Championship kontenjanları nasıl belirlenir?
+{{wc_spots}} Kaynak: [RECF SSS]({{wc_faq}})
 
 ? World Championship'e nasıl gidilir?
 RECF etkinliklerine katılım, RECF STEM World Championship'e giden yoldur. RECF, düzenlediği, tanıttığı veya yönettiği yarışmaların takımları 2027 RECF STEM World Championship'e taşıyacağını duyurmuştur. Kaynak: [RECF duyurusu]({{pathway_source}})`;
@@ -259,7 +281,7 @@ RECF Engage, RECF Achieve, RECF Inspire, Aerial Drone Competition (ADC) and ADC 
 - Follow the RECF Türkiye event calendar
 
 ## The road to St. Louis
-The season culminates at the {{wc_name}}: {{wc_date}} · {{wc_city}}. Participating in RECF events is the pathway to the World Championship. Details: [RECF World Championship]({{wc_source}})
+The season culminates at the {{wc_name}}: {{wc_date}} · {{wc_city}}. Participating in RECF events is the pathway to the World Championship. Source: [RECF FAQ]({{wc_source}})
 [[Read the FAQ](/en/faq)]`;
 
 const EN_ABOUT = `RECF Türkiye is the RECF program in Türkiye. It is operated by Intechne Teknoloji A.Ş. under a written agreement with the Robotics Education & Competition Foundation; the Türkiye partnership agreement was signed in October 2026.
@@ -276,7 +298,7 @@ const EN_FAQ = `Answers to the most common questions about fees, equipment, buil
 
 ## Fees and registration
 ? How much is the team registration fee?
-For the {{season}} season the official RECF team registration fee is {{fee}} per team, paid on RECFEvents.org. Sources: [RECF FAQ — robotics]({{fee_source}}) · [RECF KB — drones]({{fee_drone_source}})
+For the {{season}} season the official RECF team registration fee is {{fee}} per team, paid on RECFEvents.org. Sources: [RECF FAQ — robotics]({{fee_source}}) · [RECF KB — ADC]({{fee_drone_source}})
 
 ? Does the RECF Türkiye pre-application replace official registration?
 No. The pre-application introduces your team to the RECF Türkiye team. Official season registration and team numbers are completed on RECFEvents.org.
@@ -289,9 +311,12 @@ Each program's official game manual defines the allowed hardware and technical l
 ? Who can build a team?
 Students who meet a program's age and grade requirements can build a team with an adult mentor (18+). Schools, clubs and independent communities are all welcome.
 
+? How many students should a team have?
+According to RECF's program guide, teams have at least — {{team_sizes}}. No team size is stated for RECF Inspire. Source: [RECF KB — Which RECF Competition Do I Choose?]({{eligibility_source}})
+
 ## Age groups
 ? Which program fits which age group?
-{{program_ages}}. See each program's official manual for exact eligibility.
+{{program_ages}}. Source: [RECF KB — Which RECF Competition Do I Choose?]({{eligibility_source}})
 
 ## Events
 ? How do we join events?
@@ -302,7 +327,10 @@ RECF Türkiye is RECF's official program in Türkiye. Participation conditions f
 
 ## World Championship pathway
 ? What is the RECF STEM World Championship?
-It is the culminating event of the RECF season: {{wc_date}} · {{wc_city}}. Details: [RECF World Championship]({{wc_source}})
+It is the culminating event of the RECF season: {{wc_date}} · {{wc_city}}. Source: [RECF FAQ]({{wc_source}})
+
+? How are World Championship spots allocated?
+{{wc_spots}} Source: [RECF FAQ]({{wc_faq}})
 
 ? How do teams reach the World Championship?
 Participating in RECF events is the pathway to the RECF STEM World Championship. RECF has announced that competitions it organizes, promotes or manages qualify teams for the 2027 RECF STEM World Championship. Source: [RECF announcement]({{pathway_source}})`;

@@ -54,23 +54,34 @@ const originalFetch = globalThis.fetch;
 try {
   const {getProgramOfficialData} = await load('lib/recf-games.ts');
   globalThis.fetch = async () => { throw new Error('Simulated upstream outage'); };
+  // Kesinti: güncel sürüm bilinmiyor → eski sürüme göre doğrulanmış puanlar gösterilmez; bağlantılar sürümsüz.
   const fallback = await getProgramOfficialData('adc-pro');
-  assert.equal(fallback.manualUrl,'https://games.recf.org/pro/2.0');
+  assert.equal(fallback.manualUrl,'https://games.recf.org/pro');
   assert.equal(fallback.qnaUrl,'https://games.recf.org/pro/qa');
   assert.equal(fallback.calculatorUrl,'https://games.recf.org/pro/calculator');
-  assert.equal(fallback.versionLabel,'2.0');
-  assert.equal(fallback.scoringGroups[2].items.find(x=>x.key==='drop').points,'15 puan');
+  assert.equal(fallback.versionLabel,'');
+  assert.equal(fallback.scoringGroups.length,0);
   assert.equal(fallback.examples.length,0);
-  const achieveFallback=await getProgramOfficialData('achieve');
-  assert.equal(achieveFallback.scoringGroups[1].items.find(x=>x.key==='neutral-alliance').points,'7 puan');
+  // Doğrulanmış güncel sürümler (17 Kasım 2026): Engage/Achieve/Inspire 3.0, ADC 1.2, ADC Pro 2.1
+  const reviewedVersions={engage:'3.0',achieve:'3.0',inspire:'3.0',adc:'1.2','adc-pro':'2.1'};
+  const api=(slug,version)=>{const apiSlug=slug==='adc-pro'?'pro':slug;return async url=>({ok:true,json:async()=>url.endsWith('/programs')?{data:[{slug:apiSlug,currentVersionLabel:version}]}:{data:{revision:{versionLabel:version},sections:[]}}});};
+  globalThis.fetch=api('adc-pro',reviewedVersions["adc-pro"]);
+  const pro=await getProgramOfficialData('adc-pro');
+  assert.equal(pro.manualUrl,'https://games.recf.org/pro');
+  assert.equal(pro.scoringGroups[2].items.find(x=>x.key==='drop').points,'15 puan');
+  assert.ok(!pro.scoringGroups[0].items.some(x=>x.key==='color'),'v2.1 removed colour matching from solo piloting');
+  globalThis.fetch=api("achieve",reviewedVersions.achieve);
+  assert.equal((await getProgramOfficialData('achieve')).scoringGroups[1].items.find(x=>x.key==='neutral-alliance').points,'7 puan');
+  globalThis.fetch=api("inspire",reviewedVersions.inspire);
   const inspire=await getProgramOfficialData('inspire');
-  assert.equal(inspire.versionLabel,'2.0');
-  assert.equal(inspire.scoringGroups[1].items.find(x=>x.key==='neutral-alliance').points,'7 puan');
+  assert.equal(inspire.versionLabel,'3.0');
+  globalThis.fetch=api("adc",reviewedVersions.adc);
   const adc=await getProgramOfficialData('adc');
-  assert.equal(adc.manualUrl,'https://games.recf.org/adc/1.1');
+  assert.equal(adc.manualUrl,'https://games.recf.org/adc');
   assert.ok(adc.scoringGroups[1].title.includes('180 saniye'));
+  globalThis.fetch=api("engage",reviewedVersions.engage);
   const engage=await getProgramOfficialData('engage');
-  assert.equal(engage.manualUrl,'https://games.recf.org/engage/2.0');
+  assert.equal(engage.engage.manualUrl,'https://games.recf.org/engage');
   assert.equal(engage.engage.officialExample.total,80);
   for (const slug of ['engage','achieve','inspire','adc','adc-pro']) {
     const apiSlug=slug==='adc-pro'?'pro':slug;
@@ -79,19 +90,19 @@ try {
     assert.equal(future.scoringGroups.length,0,slug+' must withhold unreviewed scores');
     assert.equal(future.examples.length,0);
     assert.equal(future.engage,null);
-    assert.equal(future.manualUrl,'https://games.recf.org/'+apiSlug+'/9.0');
+    assert.equal(future.manualUrl,'https://games.recf.org/'+apiSlug,'manual links are version-less');
   }
-  globalThis.fetch=async url=>({ok:true,json:async()=>url.endsWith('/programs')?{data:[{slug:'inspire',currentVersionLabel:'2.0'}]}:{data:{revision:{versionLabel:'2.0'},sections:[{title:'Misleading unrelated numbers',body:'center goal 999 points, Parked robot 999 points'}]}}});
+  globalThis.fetch=async url=>({ok:true,json:async()=>url.endsWith('/programs')?{data:[{slug:'inspire',currentVersionLabel:'3.0'}]}:{data:{revision:{versionLabel:'3.0'},sections:[{title:'Misleading unrelated numbers',body:'center goal 999 points, Parked robot 999 points'}]}}});
   const reviewed=await getProgramOfficialData('inspire');
   assert.equal(reviewed.scoringGroups[0].items.find(x=>x.key==='center').points,'10 puan');
   assert.equal(reviewed.scoringGroups[1].items.find(x=>x.key==='park').points,'21 puan');
   let calls=[];
   globalThis.fetch = async url => {
     calls.push(url);
-    return {ok:true,json:async()=>url.endsWith('/programs')?{data:[{slug:'pro',currentVersionLabel:'3.0'}]}:{data:{revision:{versionLabel:'3.0'},sections:[]}}};
+    return {ok:true,json:async()=>url.endsWith('/programs')?{data:[{slug:'pro',currentVersionLabel:'3.1'}]}:{data:{revision:{versionLabel:'3.1'},sections:[]}}};
   };
   const changed = await getProgramOfficialData('adc-pro');
-  assert.equal(changed.scoringGroups.length,0,'A newer manual must not silently display v2.0 scores');
-  assert.ok(calls.some(url=>url.includes('/programs/pro/manual/3.0')));
+  assert.equal(changed.scoringGroups.length,0,'A newer manual must not silently display v2.1 scores');
+  assert.ok(calls.some(url=>url.includes('/programs/pro/manual/3.1')));
 } finally { globalThis.fetch=originalFetch; }
 console.log('PASS public content: document guards, event boundaries, schedule conflicts, program selection, rule corrections and official-source failure/version changes.');
