@@ -13,5 +13,5 @@ export default async function EnglishFaq() {
   const page = await getSitePage("en-faq");
   if (!page) notFound();
   const faqs = pageFaqs(parsePageBody(page.body)).map(item => ({ q: plainText(item.q), a: plainText(item.a) }));
-  return <>{faqs.length > 0 && <JsonLd data={faqLd(faqs, "en")} />}<SitePageView kicker={page.kicker} title={page.title} body={page.body} /></>;
+  return <>{faqs.length > 0 && <JsonLd data={faqLd(faqs, "en")} />}<SitePageView lang="en" kicker={page.kicker} title={page.title} body={page.body} /></>;
 }

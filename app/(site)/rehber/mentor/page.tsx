@@ -44,7 +44,7 @@ export default function MentorPage() {
                 <ul className="mt-3.5 space-y-2.5">
                   {c.items.map((it) => (
                     <li key={it} className="flex gap-2.5 text-[13.5px] leading-relaxed text-ink/65">
-                      <span className="mt-1 text-[9px]" style={{ color: c.hex }} aria-hidden>◆</span>{it}
+                      <span className="mt-1 text-xs" style={{ color: c.hex }} aria-hidden>◆</span>{it}
                     </li>
                   ))}
                 </ul>

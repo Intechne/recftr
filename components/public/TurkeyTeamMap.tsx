@@ -20,7 +20,7 @@ export default function TurkeyTeamMap({ counts }: { counts: { city: string; coun
           {r > 14 && <text x={x} y={y - r - 6} textAnchor="middle" fontFamily="Chakra Petch, sans-serif" fontWeight={700} fontSize={18} fill="#fff">{n}</text>}
         </g>; })}
       </svg>
-      <figcaption className="mt-2 font-display text-[11px] tracking-[1px] text-white/60">İL MERKEZLERİNE GÖRE YAKLAŞIK YERLEŞİM · AKTİF TAKIMLAR</figcaption>
+      <figcaption className="mt-2 font-display text-xs tracking-[1px] text-white/60">İL MERKEZLERİNE GÖRE YAKLAŞIK YERLEŞİM · AKTİF TAKIMLAR</figcaption>
     </figure>
     <div>
       <p className="font-display text-[44px] font-bold leading-none text-ink">{ranked.length}<span className="text-cyan-deep"> İL</span></p>
