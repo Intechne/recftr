@@ -35,7 +35,7 @@ export function StatusPill({ status }: { status: "open" | "full" | "soon" | "ona
     "ödeme":  { t: "ÖDEME BEKLİYOR", cls: "border-amber-600 bg-amber-50 text-amber-700" },
   }[status];
   return (
-    <span className={`inline-block rounded border px-3 py-1.5 font-display text-[11px] font-semibold ${map.cls}`}>
+    <span className={`inline-block rounded border px-3 py-1.5 font-display text-xs font-semibold ${map.cls}`}>
       {map.t}
     </span>
   );
@@ -81,7 +81,7 @@ export function Photo({ label, tone, className = "", accent }: { label: string; 
       style={accent ? { borderBottom: `4px solid ${accent}` } : undefined}
       role="img" aria-label={label}
     >
-      <span className="absolute bottom-3.5 left-4 flex items-center gap-1.5 text-[11.5px] text-white/70"><FigmaIcon name="yayin" className="h-4 w-4"/> {label}</span>
+      <span className="absolute bottom-3.5 left-4 flex items-center gap-1.5 text-xs text-white/70"><FigmaIcon name="yayin" className="h-4 w-4"/> {label}</span>
     </div>
   );
 }

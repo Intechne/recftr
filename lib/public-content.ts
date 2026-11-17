@@ -37,6 +37,21 @@ export function eventPhase(event: EventDates, now = Date.now()) {
   return start !== null ? 'upcoming' : 'undated';
 }
 
+/** event_start/event_end'den Türkiye saatine göre tarih etiketi; zaman damgası yoksa null. */
+export function eventDateLabel(event: EventDates) {
+  if (timestamp(event.event_start) === null) return null;
+  const format = (date: string | Date) => new Date(date).toLocaleDateString('tr-TR', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'Europe/Istanbul' });
+  let label = format(event.event_start!);
+  if (timestamp(event.event_end) !== null && format(event.event_end!) !== label) label += ` – ${format(event.event_end!)}`;
+  return label;
+}
+
+/** ISO 8601, Europe/Istanbul (UTC+03:00 — Türkiye 2016'dan beri yaz saati uygulamaz). */
+export function istanbulIso(value: string | Date) {
+  const ms = new Date(value).getTime();
+  return new Date(ms + 3 * 3600 * 1000).toISOString().replace(/\.\d{3}Z$/, "+03:00");
+}
+
 export const DATE_TBC_STATUS = 'TARİH TEYİT BEKLENİYOR';
 export function publicEvent<T extends EventDates & { slug?: string; body?: string; date_label?: string; status?: string; registration_enabled?: boolean; date_tbc?: boolean; registration_url?: string }>(event: T, now = Date.now()): T {
   let item = { ...event };
@@ -53,13 +68,11 @@ export function publicEvent<T extends EventDates & { slug?: string; body?: strin
       body: item.body?.replace(/(?:17\s*[–-]\s*18|17|18) Nisan 2027/g, 'Tarih yakında duyurulacak') };
   }
   const phase = eventPhase(item, now);
-  if (phase === 'past') return { ...item, status: 'GEÇMİŞ ETKİNLİK', registration_enabled: false };
+  if (phase === 'past') return { ...item, date_label: eventDateLabel(item) || item.date_label, status: 'GEÇMİŞ ETKİNLİK', registration_enabled: false };
   if (phase === 'current') return { ...item, status: 'DEVAM EDİYOR' };
-  if (!item.date_label?.trim() && timestamp(item.event_start) !== null) {
-    const format = (date: string | Date) => new Date(date).toLocaleDateString('tr-TR', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'Europe/Istanbul' });
-    item.date_label = format(item.event_start!);
-    if (item.event_end && format(item.event_end) !== item.date_label) item.date_label += ` – ${format(item.event_end)}`;
-  }
+  // Sayfadaki tarih ve Event yapılandırılmış verisi aynı kaynaktan (event_start / event_end) üretilir.
+  const label = eventDateLabel(item);
+  if (label) item.date_label = label;
   if (item.status === 'KAYIT AÇIK') item.status = 'KAYIT BİLGİSİ BEKLENİYOR';
   return item;
 }
@@ -69,7 +82,7 @@ export function correctAchieveContent<T extends { slug?: string; facts?: any[]; 
   return { ...program,
     facts: program.facts?.map(f => /^otonom$/i.test(f.label || '') && /^30\s*(saniye|sn)/i.test(f.value || '') ? { ...f, value: '15 saniye' } : f),
     match_types: program.match_types?.map(m => ({ ...m, desc: String(m.desc || '').replace(/0:30(?=\s+otonom)/gi, '0:15') })),
-    source: program.source === 'https://games.recf.org/achieve/1.2' ? 'https://games.recf.org/achieve/2.0' : program.source,
+    source: /^https:\/\/games\.recf\.org\/achieve\/[0-9.]+$/.test(String(program.source)) ? 'https://games.recf.org/achieve' : program.source,
   };
 }
 

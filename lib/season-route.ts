@@ -25,7 +25,7 @@ const ISO_DAY = /^\d{4}-\d{2}-\d{2}$/;
 /** Doğrulanmış varsayılan rota. World Championship tarihi tek kaynaktan (CMS / site-config) gelir. */
 export function verifiedRoute(wc: WorldChampionshipInfo = WORLD_CHAMPIONSHIP): RouteStep[] {
   return [
-    { month: "ŞİMDİ", label: `${SEASON} resmî takım kaydı · RECFEvents.org`, done: false, status: "confirmed", published: true, link: RECF_EVENTS_URL, date_label: `Kayıt ücreti ${RECF_FEES.robotics.label} (robotik) · ${RECF_FEES.drones.label} (drone)` },
+    { month: "ŞİMDİ", label: `${SEASON} resmî takım kaydı · RECFEvents.org`, done: false, status: "confirmed", published: true, link: RECF_EVENTS_URL, date_label: `Kayıt ücreti ${RECF_FEES.robotics.label} (robotik) · ${RECF_FEES.adc.label} (ADC) · ADC Pro: ${RECF_FEES.adcPro.label}` },
     { month: "2027", label: `${wc.name} · ${wc.city}`, done: false, status: "confirmed", published: true, date_label: wc.label, link: wc.source },
   ];
 }
@@ -73,7 +73,8 @@ const istanbulDay = (now: number) => new Date(now).toLocaleDateString("en-CA", {
 
 /** Public sitede gösterilecek rota: yalnız yayınlanmış adımlar; yeterli adım yoksa doğrulanmış varsayılan. */
 export function publicRoute(raw?: string, now = Date.now(), wc: WorldChampionshipInfo = WORLD_CHAMPIONSHIP): RouteStep[] {
-  const steps = parseRouteSetting(raw).filter(step => step.published && step.month && step.label);
+  // Yalnız yayınlanmış ve tarihi teyitli adımlar; "tbc" (teyit bekleyen) adımlar public sitede gösterilmez.
+  const steps = parseRouteSetting(raw).filter(step => step.published && step.status !== "tbc" && step.month && step.label);
   const base = steps.length >= 2 ? steps : verifiedRoute(wc);
   const today = istanbulDay(now);
   return base.map(step => ({ ...step, done: step.done || (!!(step.end_date || step.date) && (step.end_date || step.date)! < today) }));

@@ -24,12 +24,12 @@ export default function EnglishPrograms() {
     </section>
     <div className="safe-x mx-auto grid max-w-7xl gap-4 py-12 md:grid-cols-2 lg:px-10 xl:grid-cols-3">
       {PROGRAMS_EN.map(program => <article key={program.slug} className="flex flex-col overflow-hidden rounded-xl border-2 border-ink bg-white">
-        <div className="flex items-center justify-between p-4" style={{ backgroundColor: COLORS[program.slug], color: badgeTextColor(COLORS[program.slug]) }}><span className="font-display text-[28px] font-bold">{program.code}</span><span className="font-display text-[12px] font-bold tracking-[1px]">{program.fee.label} / TEAM</span></div>
+        <div className="flex items-center justify-between p-4" style={{ backgroundColor: COLORS[program.slug], color: badgeTextColor(COLORS[program.slug]) }}><span className="font-display text-[28px] font-bold">{program.code}</span><span className="font-display text-[12px] font-bold tracking-[1px]">{program.fee} / TEAM</span></div>
         <div className="flex flex-1 flex-col p-5">
           <h2 className="font-display text-[20px] font-bold">{program.name}</h2>
           <p className="mt-1 font-display text-[13px] font-semibold text-cyan-deep">Season game: {program.game}</p>
           <p className="mt-3 text-[14px] leading-relaxed text-ink/70">{program.summary}</p>
-          <dl className="mt-4 text-[13.5px]"><dt className="font-bold">Age groups</dt><dd className="text-ink/70">{program.ages}</dd></dl>
+          <dl className="mt-4 text-[13.5px]"><dt className="font-bold">Eligibility</dt><dd className="text-ink/70">{program.ages}</dd>{program.team&&<><dt className="mt-2 font-bold">Team size</dt><dd className="text-ink/70">{program.team}</dd></>}</dl>
           <div className="mt-auto flex flex-wrap gap-3 pt-5"><a href={program.manual} target="_blank" rel="noopener noreferrer" className="inline-flex min-h-11 items-center rounded-md border-2 border-ink px-3.5 py-2 font-display text-[12px] font-bold">OFFICIAL GAME MANUAL ↗<span className="sr-only"> (opens in a new tab)</span></a><Link href={`/programlar/${program.slug}`} lang="tr" className="inline-flex min-h-11 items-center px-1 font-display text-[12px] font-bold text-cyan-deep">DETAILS (TR) →</Link></div>
         </div>
       </article>)}

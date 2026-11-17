@@ -38,7 +38,16 @@ function contentSecurityPolicy(nonce: string) {
   ].join("; ");
 }
 
+/** Yinelenen alan adları kanonik adrese 301 ile yönlenir (recfturkiye.com → www Vercel'de 308 ile yönleniyor). */
+const CANONICAL_HOST = "www.recfturkiye.com";
+const ALIAS_HOSTS = new Set(["recfturkiye.org", "www.recfturkiye.org"]);
+
 export async function middleware(req: NextRequest) {
+  const host = (req.headers.get("host") || "").toLowerCase().split(":")[0];
+  if (ALIAS_HOSTS.has(host)) {
+    const target = new URL(req.nextUrl.pathname + req.nextUrl.search, `https://${CANONICAL_HOST}`);
+    return NextResponse.redirect(target, 301);
+  }
   const nonce = btoa(String.fromCharCode(...crypto.getRandomValues(new Uint8Array(16))));
   const policy = contentSecurityPolicy(nonce);
   const headers = new Headers(req.headers);

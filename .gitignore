@@ -19,3 +19,17 @@ yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
 supabase/.temp/
+
+# Ortam dosyaları (.env.example hariç), yedekler ve dışa aktarımlar asla commit'lenmez
+.env*
+!.env.example
+*.dump
+*.bak
+*.backup
+backup/
+backups/
+yedek/
+exports/
+*-export.csv
+*-export.json
+*.sqlite

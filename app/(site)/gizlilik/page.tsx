@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { pageMeta } from "@/lib/seo";
+import { DATA_CONTROLLER, LEGAL_VERSION } from "@/lib/site-config";
 export const metadata: Metadata = pageMeta({ title: "Gizlilik Politikası", description: "RECF Türkiye web sitesi gizlilik politikası.", path: "/gizlilik" });
 import { getCachedPage } from "@/lib/public-cache";
 import { notFound } from "next/navigation";
@@ -17,7 +18,7 @@ export default async function GizlilikPage() {
           <p key={i} className="text-[15.5px] leading-[1.75] text-ink/75">{par}</p>
         ))}
       </div>
-      <p className="mt-10 text-[12.5px] text-ink/65">Son güncelleme: {new Date(p.updated).toLocaleDateString("tr-TR", { day: "numeric", month: "long", year: "numeric" })}</p>
+      <p className="mt-10 text-[12.5px] text-ink/65">Sürüm {LEGAL_VERSION.version} · Yürürlük tarihi: {LEGAL_VERSION.effectiveLabel} · Son güncelleme: {new Date(p.updated).toLocaleDateString("tr-TR", { day: "numeric", month: "long", year: "numeric" })} · Veri sorumlusu: {DATA_CONTROLLER.shortName} · {DATA_CONTROLLER.email}</p>
     </div>
   );
 }

@@ -10,7 +10,7 @@ export default function Breadcrumbs({ items }: { items: { name: string; path: st
         {all.map((it, i) => (
           <li key={it.path} className="flex items-center gap-1.5">
             {i > 0 && <span aria-hidden>/</span>}
-            {i === all.length - 1 ? <span className="font-semibold text-ink/70" aria-current="page">{it.name}</span> : <Link href={it.path} className="hover:text-cyan-deep">{it.name}</Link>}
+            {i === all.length - 1 ? <span className="font-semibold text-ink/70" aria-current="page">{it.name}</span> : <Link href={it.path} className="inline-flex min-h-11 items-center hover:text-cyan-deep">{it.name}</Link>}
           </li>
         ))}
       </ol>

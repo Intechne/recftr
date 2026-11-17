@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { getCachedPage } from "@/lib/public-cache";
 import { LEGAL_FALLBACK } from "@/lib/legal-fallback";
 import { pageMeta } from "@/lib/seo";
+import { DATA_CONTROLLER, LEGAL_VERSION } from "@/lib/site-config";
 import Breadcrumbs from "@/components/seo/Breadcrumbs";
 export const dynamic = "force-dynamic";
 const SLUG = "cerez-politikasi";
@@ -13,6 +14,6 @@ export default async function CerezPolitikasi() {
     <p className="font-display text-[13px] font-semibold tracking-[2px] text-cyan-deep">⬡ YASAL</p>
     <h1 className="mt-2 font-display text-[34px] font-bold text-ink">{String(title).toUpperCase()}</h1>
     <div className="mt-8 space-y-5">{String(body).split("\n\n").map((par: string, i: number) => <p key={i} className="text-[15.5px] leading-[1.75] text-ink/75">{par}</p>)}</div>
-    <p className="mt-10 text-[12.5px] text-ink/65">Son güncelleme: {p?.updated ? new Date(p.updated).toLocaleDateString("tr-TR") : "31 Ağustos 2026"}</p>
+    <p className="mt-10 text-[12.5px] text-ink/65">Sürüm {LEGAL_VERSION.version} · Yürürlük tarihi: {LEGAL_VERSION.effectiveLabel}{p?.updated ? ` · Son güncelleme: ${new Date(p.updated).toLocaleDateString("tr-TR")}` : ""} · Veri sorumlusu: {DATA_CONTROLLER.shortName} · {DATA_CONTROLLER.email}</p>
   </article></>);
 }

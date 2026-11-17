@@ -5,6 +5,7 @@ import {isValidProvinceDistrict} from "@/lib/locations";
 import {apiError} from "@/lib/api-server";
 import {cleanText,clientIp,enforceRateLimit,rateLimitResponse,validEmail} from "@/lib/security";
 import {notifySubmission,notifyApplicationReceipt} from "@/lib/submission-notifications";
+import { provisionalTeamNumber } from "@/lib/team-number";
 export const dynamic="force-dynamic";
 const PROGRAMS=['engage','achieve','inspire','adc','adc-pro'];
 export async function GET(req:NextRequest){try{if(!(await approvalsSession(req)))return NextResponse.json({error:'Yetkisiz'},{status:403});return NextResponse.json(await listApplications());}catch(e){return apiError(e,'Başvurular alınamadı.');}}
@@ -14,10 +15,10 @@ export async function POST(req:NextRequest){
     const b=await req.json();
     // Simple bot honeypot: browsers keep this hidden field empty.
     if(String(b.website||'').trim())return NextResponse.json({ok:true},{status:201});
-    const num=cleanText(b.num,10).toUpperCase(),team=cleanText(b.team,120),org=cleanText(b.org,160),city=cleanText(b.city,80),district=cleanText(b.district,80),type=cleanText(b.type,50),program=cleanText(b.program,20),mentor=cleanText(b.mentor,120),email=cleanText(b.email,254).toLowerCase(),phone=cleanText(b.phone,40);
+    const givenNum=cleanText(b.num,10).toUpperCase(),num=givenNum||provisionalTeamNumber(),team=cleanText(b.team,120),org=cleanText(b.org,160),city=cleanText(b.city,80),district=cleanText(b.district,80),type=cleanText(b.type,50),program=cleanText(b.program,20),mentor=cleanText(b.mentor,120),email=cleanText(b.email,254).toLowerCase(),phone=cleanText(b.phone,40);
     if(!num||!team||!org||!city||!district||!type||!program||!mentor||!email||!phone)return NextResponse.json({error:'Zorunlu alanlardan biri eksik.'},{status:400});
     if(!isValidProvinceDistrict(city,district))return NextResponse.json({error:'Seçilen il / ilçe eşleşmesi geçersiz.'},{status:400});
-    if(!/^[A-Z0-9]{2,10}$/.test(num))return NextResponse.json({error:'Takım numarası geçersiz.'},{status:400});
+    if(!/^[A-Z0-9]{2,10}$/.test(num))return NextResponse.json({error:'RECFEvents.org takım numarası 2–10 harf ve rakamdan oluşmalıdır.'},{status:400});
     if(!validEmail(email))return NextResponse.json({error:'Geçerli e-posta girin.'},{status:400});
     if(!PROGRAMS.includes(program))return NextResponse.json({error:'Geçersiz program.'},{status:400});
     if(b.kvkk!==true)return NextResponse.json({error:'KVKK Aydınlatma Metni için okuma bildirimi zorunludur.'},{status:400});

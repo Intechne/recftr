@@ -30,7 +30,7 @@
     "@halilertekin/turkey_province_image": "^3.3.3",
     "@supabase/supabase-js": "2.112.4",
     "@vercel/analytics": "2.0.1",
-    "next": "15.5.27",
+    "next": "15.5.29",
     "postgres": "^3.4.9",
     "react": "19.2.8",
     "react-dom": "19.2.8"
