@@ -76,7 +76,7 @@ const auth=uri('export async function approvalsSession(){return null;}export asy
 const security=uri(String.raw`export const cleanText=(value,max)=>String(value||'').trim().slice(0,max);export const clientIp=()=> 'test';export const enforceRateLimit=async()=>({ok:true});export const rateLimitResponse=()=>{};export const validEmail=value=>/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);`);
 const locations=uri(`export const isValidProvinceDistrict=(city,district)=>city==='İstanbul'&&district==='Kadıköy';`);
 const errors=uri(`export const apiError=()=>new Response('test failure',{status:500});`);
-const imports={'next/server':pathToFileURL(require.resolve('next/server')).href,'@/lib/auth':auth,'@/lib/db':db,'@/lib/security':security,'@/lib/locations':locations,'@/lib/api-server':errors,'@/lib/submission-notifications':notificationUrl};
+const imports={'next/server':pathToFileURL(require.resolve('next/server')).href,'@/lib/auth':auth,'@/lib/db':db,'@/lib/security':security,'@/lib/locations':locations,'@/lib/api-server':errors,'@/lib/submission-notifications':notificationUrl,'@/lib/team-number':moduleUrl('lib/team-number.ts')};
 const contact=await import(moduleUrl('app/api/contact/route.ts',imports));
 const application=await import(moduleUrl('app/api/applications/route.ts',imports));
 const oldFetch=globalThis.fetch;const saved=Object.fromEntries(Object.keys(config).map(key=>[key,process.env[key]]));
@@ -86,7 +86,8 @@ try{
  const request=body=>({json:async()=>body});
  const invalid=await contact.POST(request({name:'Test',email:'invalid',message:'Test'}));assert.equal(invalid.status,400);assert.equal(fixture.contact,null);
  const bot=await contact.POST(request({website:'bot'}));assert.equal(bot.status,201);assert.equal(fixture.contact,null);assert.deepEqual(fixture.order,[]);
- const result=await contact.POST(request({name:'Test Contact',email:'test@example.net',message:'Test message'}));
+ const noConsent=await contact.POST(request({name:'Test Contact',email:'test@example.net',message:'Test message'}));assert.equal(noConsent.status,400);assert.equal(fixture.contact,null);
+ const result=await contact.POST(request({name:'Test Contact',email:'test@example.net',message:'Test message',kvkk:true}));
  assert.equal(result.status,201);assert.deepEqual(await result.json(),{id:201,ok:true});assert.deepEqual(fixture.order,['persist-contact','email-attempt']);
  fixture.order=[];
  const invalidApplication=await application.POST(request({}));assert.equal(invalidApplication.status,400);assert.equal(fixture.application,null);
