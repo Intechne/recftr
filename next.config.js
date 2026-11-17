@@ -8,7 +8,7 @@ const securityHeaders = [
   { key: "Cross-Origin-Resource-Policy", value: "same-site" },
   { key: "X-DNS-Prefetch-Control", value: "off" },
   { key: "Origin-Agent-Cluster", value: "?1" },
-  ...(process.env.NODE_ENV === "production" ? [{ key: "Strict-Transport-Security", value: "max-age=31536000" }] : []),
+  ...(process.env.NODE_ENV === "production" ? [{ key: "Strict-Transport-Security", value: "max-age=31536000; includeSubDomains" }] : []),
 ];
 
 let supabaseHost = "";
@@ -28,6 +28,10 @@ const nextConfig = {
   reactStrictMode: true,
   poweredByHeader: false,
   compress: true,
+  // Yayından kaldırılan (taslağa alınan) etkinlik sayfaları: 404 yerine etkinlik takvimine kalıcı yönlendirme.
+  async redirects() {
+    return ["recf-turkiye-lansmani", "recf-turkiye-kick-off"].map(slug => ({ source: `/etkinlikler/${slug}`, destination: "/etkinlikler", statusCode: 301 }));
+  },
   async headers() {
     return [{ source: "/:path*", headers: securityHeaders },
       { source: "/_next/static/:path*", headers: [{ key: "Cache-Control", value: "public, max-age=31536000, immutable" }] },

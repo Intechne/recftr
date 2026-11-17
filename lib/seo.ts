@@ -1,14 +1,17 @@
 import { PUBLIC_CONTACT } from "@/lib/public-contact";
+import { CANONICAL_ORIGIN, DATA_CONTROLLER } from "@/lib/site-config";
+import { eventPhase, istanbulIso } from "@/lib/public-content";
 // ── SEO merkezi yapılandırma ──
-export const SITE_URL = (process.env.NEXT_PUBLIC_SITE_URL || "https://recfturkiye.com").replace(/\/$/, "");
+// Kanonik alan adı tek kaynaktan; ortam değişkeni farklı bir alan adı veremez (denetim 2026-11, madde 24).
+export const SITE_URL = CANONICAL_ORIGIN;
 export const SITE_NAME = "RECF Türkiye";
 export const ORG = {
   name: "RECF Türkiye",
-  legalName: "Intechne Teknoloji A.Ş.",
+  legalName: DATA_CONTROLLER.shortName,
   url: SITE_URL,
   email: PUBLIC_CONTACT.support,
   eventEmail: PUBLIC_CONTACT.events,
-  address: { locality: "Pendik", region: "İstanbul", country: "TR", street: "Teknopark İstanbul" },
+  address: { locality: "Pendik", region: "İstanbul", country: "TR", street: DATA_CONTROLLER.address },
   // Sosyal hesaplar CMS ayarlarından gelir (organizationLd(sameAs)); doğrulanmamış hesap yazılmaz.
   sameAs: [] as string[],
   parent: { name: "Robotics Education & Competition Foundation", url: "https://recf.org" },
@@ -59,11 +62,13 @@ export const eventLd = (e: any) => {
   return {
     "@context": "https://schema.org", "@type": "Event", name: e.title, description: e.excerpt || undefined,
     url: abs(`/etkinlikler/${e.slug}`), image: e.cover_url ? [e.cover_url] : [abs(DEFAULT_OG_IMAGE)],
-    startDate: start.toISOString(), endDate: end && !Number.isNaN(end.getTime()) ? end.toISOString() : undefined,
+    // Sayfadaki tarih etiketiyle aynı alanlardan (event_start/event_end), Europe/Istanbul saat diliminde.
+    startDate: istanbulIso(start), endDate: end && !Number.isNaN(end.getTime()) ? istanbulIso(end) : undefined,
+    // Planlandığı gibi gerçekleşen geçmiş etkinlikler için de schema.org'un önerdiği değer EventScheduled'dir.
     eventStatus: "https://schema.org/EventScheduled", eventAttendanceMode: "https://schema.org/OfflineEventAttendanceMode",
     location: { "@type": "Place", name: e.venue || e.city || "Türkiye", address: { "@type": "PostalAddress", ...(e.city ? { addressLocality: e.city } : {}), addressCountry: "TR" } },
     organizer: { "@type": "Organization", name: ORG.name, url: ORG.url },
-    ...(registration ? { offers: { "@type": "Offer", url: registration, availability: "https://schema.org/InStock" } } : {}),
+    ...(registration && eventPhase(e) !== "past" ? { offers: { "@type": "Offer", url: registration, availability: "https://schema.org/InStock" } } : {}),
   };
 };
 /** schema.org FAQPage. */
