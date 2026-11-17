@@ -23,7 +23,7 @@ Bu politika KVKK Aydınlatma Metni, Çerez Politikası ve Kullanım Koşulları 
 
 2. Kayıt ve Doğruluk — Kayıt formunda verilen bilgilerin doğru ve güncel olması kullanıcının sorumluluğundadır. 18 yaş altı katılımcılar için mentor/veli onayı zorunludur. RECF Türkiye, eksik veya yanıltıcı başvuruları reddetme hakkını saklı tutar.
 
-3. Fikri Mülkiyet — Sitedeki metin, tasarım, illüstrasyon, rozet ve logolar Intechne Teknoloji A.Ş.'ye; RECF program adları ve oyun kılavuzları RECF'e aittir. Oyun kuralları için bağlayıcı kaynak games.recf.org üzerindeki İngilizce kılavuzdur; Türkçe çeviriler yardımcı niteliktedir. RECF ve VEX Robotics ayrı kuruluşlardır.
+3. Fikri Mülkiyet — Sitedeki metin, tasarım, illüstrasyon, rozet ve logolar Intechne Teknoloji A.Ş.'ye; RECF program adları ve oyun kılavuzları RECF'e aittir. Oyun kuralları için bağlayıcı kaynak games.recf.org üzerindeki İngilizce kılavuzdur; Türkçe çeviriler yardımcı niteliktedir.
 
 4. Kabul Edilebilir Kullanım — Siteye zarar verecek, yetkisiz erişim sağlayacak veya diğer kullanıcıların haklarını ihlal edecek eylemler yasaktır.
 

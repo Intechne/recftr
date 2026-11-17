@@ -38,6 +38,14 @@ DRAFT_OUT = os.path.join(ROOT, "docs", "belgeler-taslak")
 LOGO = os.path.join(ROOT, "public", "logos", "recf-turkiye-logo.png")
 
 
+def data_controller():
+    """Veri sorumlusu bilgileri tek kaynaktan: lib/site-config.ts → DATA_CONTROLLER."""
+    import re
+    src = open(os.path.join(ROOT, "lib", "site-config.ts"), encoding="utf-8").read()
+    body = re.search(r"DATA_CONTROLLER\s*=\s*\{(.*?)\}\s*as const;", src, re.S).group(1)
+    return dict(re.findall(r'(\w+):\s*"([^"]*)"', body))
+
+
 def register_fonts(folder):
     for name, file in [("Body", "RobotoCondensed-Regular.ttf"), ("BodyBold", "RobotoCondensed-Bold.ttf"),
                        ("Head", "Montserrat-Bold.ttf"), ("HeadBlack", "Montserrat-ExtraBold.ttf")]:
@@ -377,9 +385,10 @@ def kvkk_notice():
     d = Doc("recf-turkiye-gonullu-kvkk-aydinlatma-metni.pdf", "Jüri ve Hakem Gönüllüsü KVKK Aydınlatma Metni",
             "6698 sayılı Kişisel Verilerin Korunması Kanunu’nun 10. maddesi kapsamında.", notice=False,
             draft_note="Bu metin hukuki gözden geçirme sonrasında yürürlüğe girer. Sitedeki genel KVKK Aydınlatma Metni ile birlikte değerlendirilmelidir.")
+    dc = data_controller()
     d.heading("Veri sorumlusu")
-    d.para("Unvan: INTECHNE TEKNOLOJİ ANONİM ŞİRKETİ · Mersis No: 0465161788400001")
-    d.para("Adres: Ünalan Mah. Ünalan Cad. No: 1 D: 1 Üsküdar / İSTANBUL · E-posta: off-season@intechne.com.tr")
+    d.para(f"Unvan: {dc['title']} · Mersis No: {dc['mersis']}")
+    d.para(f"Adres: {dc['address']} · E-posta: {dc['email']} · Telefon: {dc['phone']}")
     d.heading("İşlenen kişisel veriler")
     d.bullets([
         "Kimlik ve iletişim bilgileri: ad soyad, e-posta, telefon, il.",
@@ -405,8 +414,8 @@ def kvkk_notice():
     d.para("Verileriniz recfturkiye.com üzerindeki başvuru formu, etkinlik öncesi doldurulan formlar ve e-posta yoluyla toplanır; "
            "işleme amacının gerektirdiği süre ve ilgili mevzuatta öngörülen süreler boyunca saklanır, sonrasında silinir, yok edilir veya anonim hâle getirilir.")
     d.heading("Haklarınız")
-    d.para("Kanun’un 11. maddesi kapsamındaki haklarınızı (verilerinizin işlenip işlenmediğini öğrenme, bilgi talep etme, düzeltme, silme, "
-           "itiraz ve zararın giderilmesini talep etme dâhil) off-season@intechne.com.tr adresine yazılı olarak başvurarak kullanabilirsiniz.")
+    d.para(f"Kanun’un 11. maddesi kapsamındaki haklarınızı (verilerinizin işlenip işlenmediğini öğrenme, bilgi talep etme, düzeltme, silme, "
+           "itiraz ve zararın giderilmesini talep etme dâhil) {dc['email']} adresine yazılı olarak başvurarak kullanabilirsiniz.")
     return d.save()
 
 
